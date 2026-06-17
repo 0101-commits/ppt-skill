@@ -1,630 +1,836 @@
 # -*- coding: utf-8 -*-
 """
-HCG 제안서 자동 PPT 생성기 v2.0
-RFP: 롯데알미늄 직무기반 HR제도 설계 및 도입 컨설팅
-생성 결과: HCG_Automated_Draft.pptx
+HCG 제안서 자동 PPT 생성기 v3.0
+Design: 실제 final PPTX를 템플릿으로 사용 — 테마/폰트/레이아웃 100% 상속
+Content: 롯데알미늄 직무기반 HR제도 설계 및 도입 제안서
 
-변경 이력 v2.0:
-  - 슬라이드 크기: 13.33" → 10.83" × 7.50" (한국 표준)
-  - 본문 텍스트: bold blue → Regular black (#000000)
-  - 구조: _final 25장 구조 반영 (레퍼런스 앞배치, Project Overview 통합 등)
-  - [참고] 슬라이드: 헤드 없음, 타이틀만
+핵심 변경 (v3.0):
+  - 실제 PPTX 템플릿 기반 → 정확한 색상/폰트 자동 상속
+  - Title placeholder → 자동 dark red (#921F0B 계열) 12pt bold
+  - Subtitle placeholder (idx=10) → 자동 15pt 맑은 고딕 Semilight
+  - 본문 item = noFill rounded rect, 0.5pt border, 맑은 고딕 11pt
+  - 좌표 실측값 반영: items y=1.944~, h=0.496", w=4.528", gap=0.589"
 
 실행: python auto_ppt.py
 """
+
+import os, sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
-import os
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
+from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
+from pptx.oxml.ns import qn
+from lxml import etree
 
-# ─────────────────────────────────────────────
-# 색상 상수
-# ─────────────────────────────────────────────
-DEEP_BLUE    = RGBColor(0x00, 0x38, 0x87)   # 헤드 메시지, 번호, 구분선
-LIGHT_BLUE   = RGBColor(0x5B, 0x9B, 0xD5)   # 서브 강조, 헤더 바
-BODY_BLACK   = RGBColor(0x1A, 0x1A, 0x1A)   # 본문 텍스트 (≈ #000000)
-GRAY         = RGBColor(0x80, 0x80, 0x80)    # 섹션 라벨, 메타
-WHITE        = RGBColor(0xFF, 0xFF, 0xFF)    # 커버 텍스트
-HEAD_BG      = RGBColor(0xF2, 0xF6, 0xFF)   # 헤드 배경
+# ── 경로 ──────────────────────────────────────────────────
+BASE = ("C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\"
+        "09 Admin\\09 etc\\other\\Claude\\롯데알미늄 제안서")
+REAL = os.path.join(BASE,
+       "[HCG] 롯데알미늄_직무기반 HR제도 설계 및 도입_제안서_final.pptx")
+OUT  = "C:\\Users\\cgpar\\ppt-skill\\HCG_Automated_Draft.pptx"
 
-# ─────────────────────────────────────────────
-# 슬라이드 데이터 (_final 25장 구조 반영)
-# ─────────────────────────────────────────────
-SLIDES = [
-    {
-        "no": 1,
-        "type": "cover",
-        "section": "Cover",
-        "head": "롯데알미늄 직무기반 HR 제도 설계 및 도입",
-        "body": [
-            "- 제안서 -",
-            "",
-            "2026.03",
-        ],
-    },
-    {
-        "no": 2,
-        "type": "toc",
-        "section": "목차",
-        "head": "Contents",
-        "body": [
-            "I.    제안 개요 및 배경",
-            "II.   수행 방안 (직무체계 / 평가 / 보상)",
-            "III.  추진 계획",
-            "Appendix.  HCG 소개",
-        ],
-    },
-    {
-        "no": 3,
-        "type": "normal",
-        "section": "I. Project Overview",
-        "head": "Project Overview",
-        "sub": "롯데알미늄의 직무체계 및 평가/보상제도 운영방안 도출",
-        "body": [
-            "[추진 내용] 직무체계 및 평가/보상제도 운영방안 도출",
-            "[추진 프로세스] 현황 진단 및 방향성 수립 → 직무분류체계 수립 및 직무기술서 도출 → 보상/평가제도 개선",
-            "[추진 방안(잠정)] ① 그룹사 직무 Guideline 현황 Quick Review·개선방향 도출",
-            "② AI 활용 직무분류체계 초안 도출 및 Fine-tuning/Customization·직무기술서 작성",
-            "③ 직무/업무 특성을 반영한 성과관리체계 수립·평가 운영체계 개선",
-            "④ 보상 원칙/전략 및 보상 운영방안 수립·보상 재원 Simulation",
-            "",
-            "[추진 기간] 12주  |  [투입 인력] PM 1명 + 컨설턴트 2명  |  [추진 금액] 225,000천원(VAT별도)",
-        ],
-    },
-    {
-        "no": 4,
-        "type": "normal",
-        "section": "I. Client's Needs & Pain Point",
-        "head": "Client's Needs & Pain Point",
-        "sub": "직무체계/평가 및 보상제도 미흡에 따른 인사제도 개편이 필요하나, 기존의 컨설팅 방식은 많은 자원이 장기간 투입되어 효율적인 HR제도 정비가 어려움",
-        "body": [
-            "[파편화된 데이터와 수동적 HR 운영의 악순환]",
-            "과거 History·현황 파악 등에 많은 시간/비용 소요",
-            "설계 과정에서 Interview·Survey 등 구성원에게 부담",
-            "일부 직군·구성원은 수용성이 떨어져 평가 결과에 불만",
-            "인력별 업무/직무 가치 파악 어려움 / 현행화되지 않은 직무 정보",
-            "",
-            "[유기적 연결이 부족한 컨설팅 결과물]",
-            "객관적 데이터 부재 : 기준이 없거나 노후화된 데이터로 HR 제도에 대한 구성원의 신뢰/수용성 하락",
-            "High Cost, Low Return : 막대한 리소스 투입 대비 실무 적용이 어려운 산출물",
-            "사후관리 부재 : 변화관리가 이뤄지지 않아 기존 방식으로 회귀",
-        ],
-    },
-    {
-        "no": 5,
-        "type": "normal",
-        "section": "I. HCG's Approach",
-        "head": "HCG's Approach",
-        "sub": "HR 전문가의 지식/경험과 글로벌 표준을 집대성한 '표준 설계도'를 기반으로 AI를 활용해 직무 기반 HR제도 개선에 대한 Pain Point를 쉽고, 정확하고, 효율적인 방법으로 해소함",
-        "body": [
-            "[AI를 활용해 즉시 활용 가능한 고객 맞춤형 직무체계 구축 및 직무 특성/가치를 반영한 평가/보상제도 수립 가능]",
-            "",
-            "기존 컨설팅 방식: 수작업 기반 / 시간·비용 과다 / 현행화 한계 / 사후관리 부재",
-            "VS",
-            "HCG AI Approach: 표준을 빠르게 만들고 → 고객과 Customize → 납득성 높은 결과 도출",
-            "핵심: '텍스트가 아니라 표준을 빠르게 만든다' — AI가 초안, 전문가와 협업해 Customization",
-        ],
-    },
-    {
-        "no": 6,
-        "type": "ref",
-        "section": "I. [참고]",
-        "head": "[참고] 高맥락 컨설팅 접근 방식",
-        "body": [
-            "HCG는 겉으로 드러난 문맥만으로는 반영하기 어려운 고객사 고유의 비언어적 맥락(HR Gene)을 이해/반영하고, 이를 HR 모듈에 즉각 적용함",
-            "",
-            "[해소 방안 ①] 회사가 가지고 있는 암묵적 'HR Gene'을 이해하고 Context로서 활용",
-            "  — 그룹의 인재 활용 철학·조직문화·구성원 경험의 변화사 등 맥락에 대한 이해 선행 필요",
-            "",
-            "[해소 방안 ②] 필요에 따라 다양한 비정형적 Data 활용",
-            "  — HR 모듈별 필요에 따라 비정형 Data를 유연하게 활용하여 고객사 최적화 HR제도 운영",
-        ],
-    },
-    {
-        "no": 7,
-        "type": "normal",
-        "section": "I. 유사 프로젝트 수행 사례",
-        "head": "유사 프로젝트 수행 사례",
-        "sub": "국내 대기업 및 다수의 기업 대상 직무 기반의 HR제도 컨설팅 수행 실적을 통해 관련 주제에 대한 폭넓은 컨설팅 경험을 토대로 최적의 프로젝트 결과를 제공할 것임",
-        "body": [
-            "직무기반 조직재설계 / 조직 재설계(직무 설계 포함)",
-            "조직구조 재설계 및 직무별 인력운영 구축",
-            "직무 기반 보상·평가 및 인사제도 전반 개선",
-            "직군별 인사관리 및 인력 효율화",
-            "직무성과주의 평가/보상제도 구축",
-            "직무분석 및 인사제도 개선",
-            "조직/직무 설계 및 인력계획 수립",
-            "조직 및 직무·평가·보상제도 개선",
-            "직무 및 업무분석을 통한 인력 효율화",
-            "직무체계 및 평가제도 개선",
-        ],
-    },
-    {
-        "no": 8,
-        "type": "normal",
-        "section": "II. 직무체계 개선    Overview",
-        "head": "직무체계 개선    Overview",
-        "sub": "지주사의 직무 분류 철학을 계승하되, AI 기반의 글로벌 벤치마킹과 생산 현장의 특수성을 반영하여 신속하게 롯데알미늄에 최적화된 표준 직무체계를 수립할 것을 제안함",
-        "body": [
-            "Step 1. Analysis — 직무 조사 및 분석",
-            "  구성원 대상 수행 중인 업무 목록·소요 시간·필요 역량 등 작성 요청",
-            "  SME 인터뷰를 통해 검증/조정",
-            "",
-            "Step 2. Classification — 직군 정의 및 직무 도출",
-            "  산업의 가치사슬·업무의 성격 등을 기준으로 유사한 대분류 설정",
-            "  직무 정의·목표·과업·자격 요건 등 확인",
-            "",
-            "Step 3. Evaluation — 직무가치 평가/등급 도출",
-            "  직무 가치를 기준에 따라 점수화해 평가",
-            "  도출된 점수를 바탕으로 직무 등급화(평가/보상 연계 가능)",
-        ],
-    },
-    {
-        "no": 9,
-        "type": "normal",
-        "section": "II. 직무체계 개선    Process",
-        "head": "직무체계 개선    Process",
-        "sub": "'AI + HCG DB'를 통해 직무를 빠르게 분석 후 Communication Lead Time을 최소화해 고객 요구사항이 내재화된 직무체계를 수립하고, 이를 기반으로 직무평가를 진행함",
-        "body": [
-            "[지주사 Guideline] 지주사 직무분류 원칙을 롯데알미늄 비즈니스 맥락에 맞게 해석/적용",
-            "[AI-base Benchmark] AI를 활용해 종합 포장 소재 산업의 Global Standard 및 Best Practice 수집",
-            "[JobStandardSetting] 직무분류체계 + 직무기술서 → Agile Delivery",
-            "[Context & History] 현장 맥락·과거 이력 반영 → Finalize",
-            "",
-            "산출물: 직무분류체계(XLSX) / 직무기술서(XLSX)",
-        ],
-    },
-    {
-        "no": 10,
-        "type": "normal",
-        "section": "II. 직무체계 개선    직무체계 표준화",
-        "head": "직무체계 개선    직무체계 표준화",
-        "sub": "공장별로 상이했던 직무 기준을 Global Standard에 맞춰 통합함으로써, 직무 운영의 비효율을 해소하고 일관된 평가/인재관리 효과성을 제고할 것임",
-        "body": [
-            "[파편화된 직무체계 및 표준화 한계]",
-            "공장별 독자적 업무 수행으로 직무분류체계 표준화 어려움(직무 단위 불일치)",
-            "직무분류 기준 부재로 직무 중복·비효율적 인력 배치 발생",
-            "공통된 요구 역량 기준 없어 일관된 평가/육성 연계 한계",
-            "",
-            "[Global Standard 기반 직무/Skill 표준화 — 개선 방향]",
-            "Global 표준 직무 정의/Skill Set 등 기준 명확화",
-            "각 공장의 Value Chain과 업무 방식을 新 표준에 맞게 재편(비효율 및 중복 해소)",
-            "직무별 요구되는 Skill 정의 및 수준을 전사 공통으로 규격화",
-        ],
-    },
-    {
-        "no": 11,
-        "type": "ref",
-        "section": "II. [참고]",
-        "head": "[참고] Global Job Skill 분석 결과 예시",
-        "body": [
-            "HCG JobSkillEngine (Claude API 기반) 활용 시 산업별 직무분류체계·직무기술서·스킬디렉토리 자동 생성 결과 예시",
-            "",
-            "분석 기준: APQC / ESCO / ISCO / O*NET / NCS 5개 국제 표준 참조",
-            "직군→직렬→직무 3단계 분류체계 샘플",
-            "스킬 디렉토리 샘플 (직무별 KSAO, 스킬 클러스터, PMI 공동출현 분석 포함)",
-        ],
-    },
-    {
-        "no": 12,
-        "type": "normal",
-        "section": "II. 평가제도 개선    Overview",
-        "head": "평가제도 개선    Overview",
-        "sub": "평가제도 설계 시 도출된 직무체계를 바탕으로 직무에 특화된 평가 모델을 구축해 운영 프로세스를 개선할 수 있는 방향성을 검토함",
-        "body": [
-            "Step 1. Criteria — 평가 원칙 수립",
-            "  평가 종류(성과/역량)·목표 관리 프레임워크(KPI)·직급/직군별 가중치 등 평가 지표 및 체계에 대한 원칙 논의",
-            "",
-            "Step 2. Process — 평가 운영체계 개선",
-            "  평가 권한·단위·등급·프로세스·모니터링 등 평가 운영 전반에 대한 프로세스 개편",
-            "  필요 시 성과관리 시스템 기반 제도 구축",
-            "",
-            "Step 3. Application — 결과 활용 및 타 Module 연계 방안",
-            "  보상 차등의 기준으로 활용 가능",
-            "  필요 시 리더십을 포함한 인재 육성 및 저성과자 관리 방안 제시",
-        ],
-    },
-    {
-        "no": 13,
-        "type": "normal",
-        "section": "II. 평가제도 개선    직군별 차별화 평가모델",
-        "head": "평가제도 개선    직군별 차별화 평가모델",
-        "sub": "\"각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고 및 성과 향상 지원\"",
-        "body": [
-            "[R&D 및 신사업] 프로젝트 마일스톤 Output 중심 평가·R&D 장기 성과급 체계 도입",
-            "  → 마일스톤 중심의 장기 성과 인정, 기술 경쟁력 확보 관점의 인력 관리",
-            "",
-            "[영업] 채널 난이도에 따른 가중치 반영 평가·개인 성과 비율 확대(인센티브 비중 강화)",
-            "  → 목표 달성에 따른 성과/보상연계 강조 및 개인 성과 인정",
-            "",
-            "[생산] 절대적 달성 수준 기반 평가(절대평가 고려)·조직 성과와 연계된 보상제도 수립",
-            "  → 조직 단위 성과 발현, 반복/절대적 수행 업무 관리 중요",
-            "",
-            "[경영지원] 핵심 과제 중심으로 목표 설정·팀간 협업 지표를 목표에 반영",
-            "  → 핵심 과제 중심의 상시성과관리 및 협업에 대한 정성 목표 설정 체계화",
-        ],
-    },
-    {
-        "no": 14,
-        "type": "ref",
-        "section": "II. [참고]",
-        "head": "[참고] AI 기반 업무 Check-in 시스템 활용 예시 (사무직 한정)",
-        "body": [
-            "HCG 자체 상시성과관리 시스템 talenx — AI 기반 목표 설정/체크인/피드백 지원",
-            "",
-            "직원별 직무/목표/성과 Data를 분석해 조직 성과 방향과 정렬된 핵심성과지표 제안",
-            "AI를 활용한 목표 설정 / 체크인 / 피드백까지 데이터 기반의 평가 체계 전환에 용이",
-            "",
-            "※ 체크인(상시성과관리)은 사무직에 한하여 적용 — 생산직은 KPI 기반 절대평가 적용",
-        ],
-    },
-    {
-        "no": 15,
-        "type": "normal",
-        "section": "II. 평가제도 개선    평가운영체계",
-        "head": "평가제도 개선    평가운영체계",
-        "sub": "정비된 평가제도에 따라 평가 등급, 평가 프로세스, 평가 결과 활용 등의 운영체계를 개선함",
-        "body": [
-            "평가 등급 기준 재정립 (절대/상대 혼합 기준 설계)",
-            "평가 프로세스 단계별 가이드: 목표설정 → 중간점검 → 최종평가 → 결과 통보",
-            "이의신청 온라인 채널 구축",
-            "평가 결과의 보상 연계 비율 및 기준 명확화",
-            "저성과자 관리 프로세스 수립",
-        ],
-    },
-    {
-        "no": 16,
-        "type": "normal",
-        "section": "II. 보상제도 개선    Overview",
-        "head": "보상제도 개선    Overview",
-        "sub": "보상제도 설계 시 보상의 외부 경쟁력 및 내부 형평성을 종합적으로 고려하여 보상 수준, 보상 구조, 보상 결정요인, 성과급 비중 등 개선 방향성을 검토함",
-        "body": [
-            "Step 1. Pay Level — 보상 수준 조사 및 보상 전략 도출",
-            "  경쟁업체와 비교 시 인재 확보/유지를 위한 보상 경쟁력 확인",
-            "  직무/역할 특성을 고려한 내부 형평성 고려",
-            "",
-            "Step 2. Pay Structure / Mix / Contributor — 보상 구조/비중/결정요인 체계화",
-            "  전체 보상을 구성하는 항목/수준 검토(기본급·전사/개인 성과급 등)",
-            "  보상을 결정 짓는 요소 선정",
-            "",
-            "Step 3. Simulation — Cost Impact / 개인 총 보상 검증",
-            "  개편될 보상제도를 기준으로 단기/중장기 비용 측면에서 Simulation",
-            "  구성원 개인별 총 보상 변화 양상 검토",
-        ],
-    },
-    {
-        "no": 17,
-        "type": "normal",
-        "section": "II. 보상제도 개선    보상 지향점/정책선 설정",
-        "head": "보상제도 개선    보상 지향점/정책선 설정",
-        "sub": "국내외 동종업계의 보상수준 Benchmarking을 통해 보상 경쟁력을 검토하고 보상 지향점/정책선을 설정함",
-        "body": [
-            "Market Leading Line (75%ile) — 시장 선도 보상 수준",
-            "Market Matching Line (50%ile) — 시장 동등 보상 수준",
-            "Market Following Line (25%ile) — 시장 후발 보상 수준",
-            "",
-            "동종업계의 보상수준 Benchmarking 통해 보상수준 비교 및 지향점 분석 시 활용 예정",
-        ],
-    },
-    {
-        "no": 18,
-        "type": "normal",
-        "section": "II. 보상제도 개선    보상제도 설계",
-        "head": "보상제도 개선    보상제도 설계",
-        "sub": "보상제도 설계 시 보상 비중/유형/지급 기준 등을 종합적으로 고려하며, 필요 시 직급단계 혹은 시장가치를 고려하여 보상 차별화 필요성을 검토할 것임",
-        "body": [
-            "보상 전략과 원칙을 바탕으로 보상 구조/비중/결정요인을 다각도로 분석 및 설계",
-            "",
-            "[직무 차별화]",
-            "직무별 Market 수준에 따라 기본급 Band 차별적 운영",
-            "직무 중심 차별화에 강력한 수단 / 직무 간 이동·배치에 제약",
-            "",
-            "[직급 차별화]",
-            "직급별 내부 가치 및 개인 역량에 따른 차별화 실시",
-            "동일 직급 내 개인의 성과/역량에 따른 보상 차별화 유리",
-            "",
-            "[직무 & 직급 혼합] 두 방식의 장점을 결합하여 롯데알미늄 맥락에 최적화된 보상 설계",
-        ],
-    },
-    {
-        "no": 19,
-        "type": "normal",
-        "section": "II. 보상제도 개선    보상 Simulation",
-        "head": "보상제도 개선    보상 Simulation",
-        "sub": "보상 재설계에 따른 개인별 보상 수준의 변화를 확인하고, 이에 따른 재무적 Cost를 Simulation하여 조직 및 구성원 개인 관점의 효과성을 검증함",
-        "body": [
-            "[Scenario 변동 요소]",
-            "성과급 비율 / 기본급 인상률 / 직무 등급별 Pay Band 범위",
-            "",
-            "[전사 재무적 효과 Cost Simulation]",
-            "성과급 제도 실시에 따른 전사 및 기능/사업별 Cost 증감 효과 Simulation",
-            "",
-            "[개인별 보상전환 Simulation]",
-            "To-Be 성과급 제도 적용 시 개인별 성과급 수준 변화 Simulation",
-            "",
-            "[Scenario List] 보수적 / 중립적 / 공격적 3개 시나리오",
-            "Illustrative use only",
-        ],
-    },
-    {
-        "no": 20,
-        "type": "toc",
-        "section": "Appendix 구분",
-        "head": "Contents",
-        "body": [
-            "Appendix.  HCG 소개",
-        ],
-    },
-    {
-        "no": 21,
-        "type": "normal",
-        "section": "Appendix. Overview",
-        "head": "Overview",
-        "sub": "휴먼컨설팅그룹(이하 HCG)는 국내 최고/최대의 인사/조직 컨설팅 및 솔루션 전문 업체임",
-        "body": [
-            "2001년 1월 법인 설립",
-            "컨설턴트 100명+ / 누적 고객사 870여 곳+ (2025년 01월 기준)",
-            "HR Solution (talenx·퍼플 등 자체 플랫폼 운영)",
-        ],
-    },
-    {
-        "no": 22,
-        "type": "normal",
-        "section": "Appendix. 사업 영역",
-        "head": "사업 영역",
-        "sub": "HCG는 한국적 기업 환경 이해와 인사·조직 전문성에 기반하여 경영 컨설팅과 솔루션 컨설팅, HR System Management/Outsourcing을 통합 서비스하는 HR Total Solution Provider임",
-        "body": [
-            "[Mission] Make the Business Strategy Work Through HR Total Solution",
-            "[Strategy] HCG는 제도 컨설팅 뿐만 아니라 e-HR Solution, PO Service 등 HR Value Chain",
-            "  전 영역에 걸쳐 수준 높은 통합 서비스를 제공하여 고객의 궁극적인 비즈니스 전략 실행 및 성공을 지원",
-        ],
-    },
-    {
-        "no": 23,
-        "type": "normal",
-        "section": "Appendix. 컨설팅 영역",
-        "head": "컨설팅 영역",
-        "sub": "HCG는 핵심가치와 문화에 기반한 조직과 인재, 성과와 보상, Digital Analytics 등 HR 전 영역을 아우르는 컨설팅 서비스를 제공",
-        "body": [
-            "[Performance & Reward] 성과관리 혁신·역량관리·경력개발·총 보상 전략·임원 보상·글로벌 HR",
-            "[Organization & Talent] 조직구조 설계·BPI·HR 거버넌스·인력계획·직무 중심 인재관리·채용 전략",
-            "[Corp. Value & Culture] 기업 가치체계 수립·고용 브랜드 개선·직원 경험 관리·직원 인식 조사",
-            "[HR Transformation] HR 전략 수립·HR 서비스 모델 혁신·변화관리",
-            "[Digital Analytics] 디지털 HR전략·HR 테크놀로지·HR 데이터 분석·실시간 개인화 리포팅",
-        ],
-    },
-    {
-        "no": 24,
-        "type": "normal",
-        "section": "Appendix. 주요 고객사",
-        "head": "주요 고객사",
-        "sub": "HCG는 다양한 산업영역에 걸쳐 870여 곳 이상의 고객사를 대상으로 Total HR Service를 제공하고 있음",
-        "body": [
-            "금융: KB라이프생명 / NH투자증권 / 파라다이스 / 한화손해보험 등",
-            "제조: 기아자동차 / 현대자동차 / 코오롱인더스트리 / 포스코인터내셔널 / 롯데 그룹사 등",
-            "IT·게임: 크래프톤 / SK머티리얼즈 / GS에너지 등",
-            "유통·소비재: 롯데백화점 / 코웨이 / 하이트진로음료 / 리파인 등",
-        ],
-    },
-    {
-        "no": 25,
-        "type": "end",
-        "section": "End",
-        "head": "",
-        "body": [],
-    },
-]
+# ── 추출된 실측 좌표 상수 ─────────────────────────────────
+# 본문 slid e (layout 2 '본문')
+TITLE_Y    = 0.250   # 제목 y (inch)
+TITLE_X    = 0.575
+TITLE_W    = 9.729
+TITLE_H    = 0.305
+SUB_Y      = 0.548   # 서브헤드 y
+SUB_X      = 0.575
+SUB_W      = 9.728
+SUB_H      = 0.361
 
-# ─────────────────────────────────────────────
+COL_L_X    = 0.691   # 좌측 컬럼 x
+COL_R_X    = 5.615   # 우측 컬럼 x
+ITEM_W     = 4.528   # 각 아이템 폭
+ITEM_H     = 0.496   # 각 아이템 높이
+ITEM_Y0    = 1.944   # 첫 번째 아이템 y 시작
+ITEM_DY    = 0.589   # 아이템 간격 (y 피치)
+HDR_Y      = 1.606   # 컬럼 헤더(OLE 대체) y
+
+LABEL_X    = 0.369   # 행 라벨 x (추진 내용 등)
+LABEL_W    = 1.250
+
+# ── 색상 ──────────────────────────────────────────────────
+HCG_RED    = RGBColor(0x92, 0x1F, 0x0B)
+DARK_GRAY  = RGBColor(0x40, 0x40, 0x40)
+MED_GRAY   = RGBColor(0x91, 0x91, 0x91)
+WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
+BLACK      = RGBColor(0x00, 0x00, 0x00)
+
+
+# ════════════════════════════════════════════════════════════
 # 헬퍼 함수
-# ─────────────────────────────────────────────
-def add_shape_rect(slide, left, top, width, height, fill_color, line_color=None):
-    shape = slide.shapes.add_shape(1, left, top, width, height)
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = fill_color
-    if line_color:
-        shape.line.color.rgb = line_color
+# ════════════════════════════════════════════════════════════
+
+def _set_font_xml(run, name="맑은 고딕"):
+    """run XML에 Korean 폰트 직접 설정"""
+    rPr = run._r.get_or_add_rPr()
+    for tag in [qn('a:latin'), qn('a:ea')]:
+        el = rPr.find(tag)
+        if el is None:
+            el = etree.SubElement(rPr, tag)
+        el.set('typeface', name)
+
+def _set_no_fill(shape):
+    """shape fill → noFill (transparent)"""
+    sp_el = shape._element
+    spPr = sp_el.find(qn('p:spPr'))
+    if spPr is None:
+        return
+    ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+    for tag in ['solidFill', 'gradFill', 'blipFill', 'pattFill', 'grpFill', 'noFill']:
+        for el in spPr.findall(f'{{{ns}}}{tag}'):
+            spPr.remove(el)
+    etree.SubElement(spPr, f'{{{ns}}}noFill')
+
+def _set_line_dark(shape, pt=0.5):
+    """선 색상 = dk1(black), 두께 pt"""
+    sp_el = shape._element
+    spPr = sp_el.find(qn('p:spPr'))
+    if spPr is None:
+        return
+    ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+    ln_el = spPr.find(f'{{{ns}}}ln')
+    if ln_el is None:
+        ln_el = etree.SubElement(spPr, f'{{{ns}}}ln')
+    ln_el.set('w', str(int(pt * 12700)))
+    # color = dk1
+    sF = etree.SubElement(ln_el, f'{{{ns}}}solidFill')
+    sc = etree.SubElement(sF, f'{{{ns}}}schemeClr')
+    sc.set('val', 'dk1')
+
+def _add_run(para, text, fsize=11, bold=False, italic=False,
+             color=None, font_name="맑은 고딕"):
+    run = para.add_run()
+    run.text = text
+    run.font.size = Pt(fsize)
+    run.font.bold = bold
+    run.font.italic = italic
+    if color:
+        run.font.color.rgb = color
+    _set_font_xml(run, font_name)
+    return run
+
+def _set_line_spacing(para, pct=112):
+    """단락 행간 설정 (pct = 100~120...)"""
+    pPr = para._p.get_or_add_pPr()
+    ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+    lnSpc = pPr.find(f'{{{ns}}}lnSpc')
+    if lnSpc is not None:
+        pPr.remove(lnSpc)
+    lnSpc = etree.SubElement(pPr, f'{{{ns}}}lnSpc')
+    spcPct = etree.SubElement(lnSpc, f'{{{ns}}}spcPct')
+    spcPct.set('val', str(int(pct * 1000)))
+
+
+# ── 슬라이드 삭제 ─────────────────────────────────────────
+def delete_all_slides(prs):
+    sldIdLst = prs.slides._sldIdLst
+    for sld_el in list(sldIdLst):
+        rId = sld_el.get(qn('r:id'))
+        try:
+            prs.part.drop_rel(rId)
+        except Exception:
+            pass
+        sldIdLst.remove(sld_el)
+
+
+# ── 본문 아이템 shape (rounded rect) ──────────────────────
+def add_item(slide, text, left, top, width=ITEM_W, height=ITEM_H,
+             fsize=11, bold=False, italic=False, align=PP_ALIGN.LEFT,
+             fill_rgb=None, no_border=False, color=None):
+    """
+    본문 콘텐츠 아이템 shape 추가
+    - rounded rectangle (모서리 둥근 직사각형)
+    - noFill (기본), 0.5pt dk1 border
+    """
+    shape = slide.shapes.add_shape(
+        MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
+        Inches(left), Inches(top), Inches(width), Inches(height)
+    )
+
+    if fill_rgb:
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = fill_rgb
     else:
-        shape.line.fill.background()
+        _set_no_fill(shape)
+
+    if no_border:
+        _set_no_fill(shape)  # border also removed
+        # Remove any line
+        sp_el = shape._element
+        spPr = sp_el.find(qn('p:spPr'))
+        if spPr is not None:
+            ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+            for ln_el in spPr.findall(f'{{{ns}}}ln'):
+                spPr.remove(ln_el)
+            noLn = etree.SubElement(spPr, f'{{{ns}}}ln')
+            nf = etree.SubElement(noLn, f'{{{ns}}}noFill')
+    else:
+        _set_line_dark(shape, 0.5)
+
+    tf = shape.text_frame
+    tf.word_wrap = True
+    tf.margin_left  = Inches(0.07)
+    tf.margin_right = Inches(0.04)
+    tf.margin_top   = Inches(0.02)
+    tf.margin_bottom = Inches(0.02)
+
+    p = tf.paragraphs[0]
+    p.alignment = align
+    _add_run(p, text, fsize, bold, italic, color)
+    _set_line_spacing(p, 112)
+
     return shape
 
 
+# ── 텍스트 박스 ───────────────────────────────────────────
 def add_textbox(slide, text, left, top, width, height,
-                font_size=11, bold=False, color=BODY_BLACK,
-                align=PP_ALIGN.LEFT, wrap=True):
-    txBox = slide.shapes.add_textbox(left, top, width, height)
+                fsize=11, bold=False, italic=False, align=PP_ALIGN.LEFT,
+                color=None, wrap=True):
+    txBox = slide.shapes.add_textbox(
+        Inches(left), Inches(top), Inches(width), Inches(height)
+    )
+    _set_no_fill(txBox)
+    sp_el = txBox._element
+    spPr = sp_el.find(qn('p:spPr'))
+    if spPr is not None:
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        ln_el = etree.SubElement(spPr, f'{{{ns}}}ln')
+        nf = etree.SubElement(ln_el, f'{{{ns}}}noFill')
+
     tf = txBox.text_frame
     tf.word_wrap = wrap
+    tf.margin_left = tf.margin_right = Inches(0.03)
+    tf.margin_top = tf.margin_bottom = Inches(0.02)
+
     p = tf.paragraphs[0]
     p.alignment = align
-    run = p.add_run()
-    run.text = text
-    run.font.size = Pt(font_size)
-    run.font.bold = bold
-    run.font.color.rgb = color
+    _add_run(p, text, fsize, bold, italic, color)
+    _set_line_spacing(p, 112)
     return txBox
 
 
-# ─────────────────────────────────────────────
+# ── 제목/서브헤드 설정 (placeholder 사용) ─────────────────
+def set_title(slide, title_text, subtitle_text=None):
+    """
+    본문 레이아웃 placeholder[0] → 제목 (자동 dark red 스타일)
+    placeholder[10] → 서브헤드 (자동 semilight 스타일)
+    """
+    for ph in slide.placeholders:
+        idx = ph.placeholder_format.idx
+        if idx == 0:
+            ph.text = title_text
+        elif idx == 10 and subtitle_text:
+            ph.text = subtitle_text
+
+
+# ════════════════════════════════════════════════════════════
 # 슬라이드 빌더
-# ─────────────────────────────────────────────
-def build_cover(prs, d):
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    W, H = prs.slide_width, prs.slide_height
-    panel_w = Inches(4.0)
+# ════════════════════════════════════════════════════════════
 
-    add_shape_rect(slide, 0, 0, panel_w, H, DEEP_BLUE)
-    add_shape_rect(slide, panel_w, 0, W - panel_w, H, WHITE)
+def build_cover(prs):
+    """Slide 1: 표지 (layout 0)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[0])
 
-    add_textbox(slide, "휴먼컨설팅그룹",
-                Inches(0.3), Inches(1.0), panel_w - Inches(0.4), Inches(0.4),
-                font_size=12, bold=False, color=LIGHT_BLUE)
-    add_textbox(slide, d["head"],
-                Inches(0.3), Inches(1.6), panel_w - Inches(0.4), Inches(1.5),
-                font_size=18, bold=True, color=WHITE)
+    # Title placeholder (ctrTitle, idx=0)
+    for ph in slide.placeholders:
+        idx = ph.placeholder_format.idx
+        if idx == 0:
+            ph.text = "롯데알미늄 직무기반HR 제도 설계 및 도입"
+        elif idx == 1:
+            ph.text = "- 제안서 -"
 
-    sep = add_shape_rect(slide, Inches(0.3), Inches(3.4), Inches(1.2), Pt(2), LIGHT_BLUE)
-
-    body_text = "\n".join([b for b in d["body"] if b])
-    add_textbox(slide, body_text,
-                Inches(0.3), Inches(3.6), panel_w - Inches(0.4), Inches(1.5),
-                font_size=12, bold=False, color=WHITE)
-
-    add_textbox(slide, "CONFIDENTIAL",
-                panel_w + Inches(0.3), H - Inches(0.4), W - panel_w - Inches(0.4), Inches(0.3),
-                font_size=8, bold=False, color=GRAY, align=PP_ALIGN.RIGHT)
+    # Date (별도 textbox — placeholder 아래)
+    add_textbox(slide, "2026.03",
+                1.137, 5.319, 8.563, 0.30,
+                fsize=10, bold=False, align=PP_ALIGN.CENTER, color=DARK_GRAY)
 
 
-def build_toc(prs, d):
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    W, H = prs.slide_width, prs.slide_height
+def build_toc(prs):
+    """Slide 2: 목차 (layout 1)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
 
-    add_shape_rect(slide, 0, 0, W, Inches(0.15), DEEP_BLUE)
-    add_shape_rect(slide, 0, H - Pt(2), W, Pt(2), DEEP_BLUE)
+    # 목차 레이아웃 placeholder 확인
+    ph_idxs = [ph.placeholder_format.idx for ph in slide.placeholders]
 
-    add_textbox(slide, d["head"],
-                Inches(0.4), Inches(0.5), W - Inches(0.8), Inches(0.6),
-                font_size=18, bold=True, color=DEEP_BLUE)
+    # 목차 내용 — 번호 + 섹션명 + 슬라이드 범위
+    toc_items = [
+        ("I",   "Project Overview / 현황 진단",     "03-04"),
+        ("II",  "직무체계 수립",                     "05-10"),
+        ("III", "평가제도 개선",                     "11-15"),
+        ("IV",  "보상제도 개선",                     "16-19"),
+        ("V",   "추진계획 및 HCG 역량",             "20-23"),
+    ]
 
-    add_shape_rect(slide, Inches(0.4), Inches(1.3), Pt(2), H - Inches(1.8), LIGHT_BLUE)
+    # 목차 타이틀
+    add_textbox(slide, "목차 (Contents)",
+                0.5, 0.3, 9.8, 0.5,
+                fsize=18, bold=True, color=HCG_RED)
 
-    for i, item in enumerate(d["body"]):
-        add_textbox(slide, item,
-                    Inches(0.7), Inches(1.5 + i * 0.65), W - Inches(1.0), Inches(0.55),
-                    font_size=13, bold=False, color=BODY_BLACK)
+    # 구분선
+    from pptx.util import Pt as _Pt
+    line = slide.shapes.add_shape(
+        MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+        Inches(0.5), Inches(0.9), Inches(9.8), Inches(0.03)
+    )
+    line.fill.solid()
+    line.fill.fore_color.rgb = HCG_RED
+    sp_el = line._element
+    spPr = sp_el.find(qn('p:spPr'))
+    if spPr is not None:
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        ln_el = etree.SubElement(spPr, f'{{{ns}}}ln')
+        nf = etree.SubElement(ln_el, f'{{{ns}}}noFill')
 
+    y = 1.1
+    for i, (num, title, pg) in enumerate(toc_items):
+        # 번호 원형
+        circle = slide.shapes.add_shape(
+            MSO_AUTO_SHAPE_TYPE.OVAL,
+            Inches(0.5), Inches(y - 0.04), Inches(0.35), Inches(0.35)
+        )
+        circle.fill.solid()
+        circle.fill.fore_color.rgb = HCG_RED
+        circle.line.fill.background()
+        ctf = circle.text_frame
+        cp = ctf.paragraphs[0]
+        cp.alignment = PP_ALIGN.CENTER
+        _add_run(cp, num, fsize=9, bold=True, color=WHITE)
 
-def build_normal(prs, d):
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    W, H = prs.slide_width, prs.slide_height
-
-    # 상단 헤더 바
-    add_shape_rect(slide, 0, 0, W, Inches(0.15), DEEP_BLUE)
-    # 하단 라인
-    add_shape_rect(slide, 0, H - Pt(2), W, Pt(2), DEEP_BLUE)
-
-    # 슬라이드 번호 (좌상단)
-    add_textbox(slide, f"{d['no']:02d}",
-                Inches(0.15), Inches(0.18), Inches(0.5), Inches(0.28),
-                font_size=9, bold=True, color=DEEP_BLUE)
-
-    # 섹션 라벨 (우상단)
-    add_textbox(slide, d["section"],
-                W - Inches(3.5), Inches(0.18), Inches(3.35), Inches(0.28),
-                font_size=9, bold=False, color=GRAY, align=PP_ALIGN.RIGHT)
-
-    # 헤드 메시지
-    head_top = Inches(0.55)
-    head_h   = Inches(0.55)
-    add_shape_rect(slide, Inches(0.3), head_top, W - Inches(0.6), head_h,
-                   HEAD_BG, LIGHT_BLUE)
-    add_textbox(slide, d["head"],
-                Inches(0.4), head_top + Inches(0.05), W - Inches(0.8), head_h - Inches(0.08),
-                font_size=13, bold=True, color=DEEP_BLUE)
-
-    # 서브헤드 (있는 경우)
-    body_top = head_top + head_h + Inches(0.1)
-    if d.get("sub"):
-        sep = add_shape_rect(slide, Inches(0.3), body_top, W - Inches(0.6), Pt(1.5), LIGHT_BLUE)
-        add_textbox(slide, d["sub"],
-                    Inches(0.35), body_top + Inches(0.05), W - Inches(0.7), Inches(0.45),
-                    font_size=11, bold=False, color=BODY_BLACK)
-        body_top += Inches(0.6)
-
-    # 본문
-    txBox = slide.shapes.add_textbox(Inches(0.4), body_top, W - Inches(0.7),
-                                      H - body_top - Inches(0.3))
-    tf = txBox.text_frame
-    tf.word_wrap = True
-    for i, bullet in enumerate(d["body"]):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.space_before = Pt(3)
-        run = p.add_run()
-        run.text = bullet
-        run.font.size = Pt(11)
-        run.font.bold = False         # ★ Regular (v2 수정)
-        run.font.color.rgb = BODY_BLACK  # ★ 검정 (v2 수정)
+        # 섹션 타이틀
+        add_textbox(slide, title,
+                    1.0, y, 7.5, 0.4,
+                    fsize=13, bold=False, color=DARK_GRAY)
+        # 페이지 번호
+        add_textbox(slide, pg,
+                    8.8, y, 1.2, 0.4,
+                    fsize=11, bold=False, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+        y += 0.85
 
 
-def build_ref(prs, d):
-    """[참고] 슬라이드 — 타이틀만, 헤드 메시지 없음"""
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    W, H = prs.slide_width, prs.slide_height
+def build_overview(prs):
+    """Slide 3: Project Overview (layout 2)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide,
+              "Project Overview",
+              "롯데알미늄의 직무체계 및 평가/보상제도 운영방안 도출")
 
-    add_shape_rect(slide, 0, 0, W, Inches(0.15), LIGHT_BLUE)
-    add_shape_rect(slide, 0, H - Pt(2), W, Pt(2), LIGHT_BLUE)
+    # 추진 내용 행
+    add_textbox(slide, "추진 내용",
+                LABEL_X, 2.175, LABEL_W, 0.32,
+                fsize=13, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+    add_textbox(slide, "롯데알미늄의 직무분류체계 수립, 직무기술서 작성(AI 활용), 평가/보상제도 설계를 통한 직무기반 HR제도 도입",
+                1.836, 2.175, 8.759, 0.32,
+                fsize=11, color=DARK_GRAY)
 
-    add_textbox(slide, f"{d['no']:02d}",
-                Inches(0.15), Inches(0.18), Inches(0.5), Inches(0.28),
-                font_size=9, bold=True, color=LIGHT_BLUE)
+    # 추진 프로세스 행
+    add_textbox(slide, "추진 프로세스",
+                0.0, 2.952, 1.618, 0.32,
+                fsize=13, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
 
-    add_textbox(slide, d["head"],
-                Inches(0.4), Inches(0.5), W - Inches(0.8), Inches(0.55),
-                font_size=13, bold=False, color=DEEP_BLUE)
+    steps = [
+        ("현황 진단 및\n방향성 수립",  2.133),
+        ("직무분류체계\n수립",          4.161),
+        ("평가제도\n개선",              6.168),
+        ("보상제도\n개선",              8.174),
+    ]
+    for title, x in steps:
+        sh = add_item(slide, title, x, 2.952, width=1.976, height=0.666,
+                      fsize=11, align=PP_ALIGN.CENTER,
+                      fill_rgb=HCG_RED, color=WHITE)
 
-    sep = add_shape_rect(slide, Inches(0.4), Inches(1.15), W - Inches(0.8), Pt(1), GRAY)
+    # 화살표 연결선 (간단한 텍스트 →)
+    for x in [4.1, 6.1, 8.0]:
+        add_textbox(slide, "→",
+                    x, 3.18, 0.15, 0.25,
+                    fsize=11, align=PP_ALIGN.CENTER, color=MED_GRAY)
 
-    txBox = slide.shapes.add_textbox(Inches(0.4), Inches(1.3), W - Inches(0.7),
-                                      H - Inches(1.6))
-    tf = txBox.text_frame
-    tf.word_wrap = True
-    for i, bullet in enumerate(d["body"]):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        run = p.add_run()
-        run.text = bullet
-        run.font.size = Pt(11)
-        run.font.bold = False
-        run.font.color.rgb = BODY_BLACK
+    # 세부 설명
+    sub_details = [
+        (2.133, "현황 파악 Quick Review\n방향성 도출"),
+        (4.161, "직무분류체계 초안\nAI 기반 직무기술서"),
+        (6.168, "성과관리체계 수립\n평가 운영체계 개선"),
+        (8.174, "보상 원칙/전략 수립\n보상 재원 Simulation"),
+    ]
+    for x, txt in sub_details:
+        add_textbox(slide, txt, x, 3.632, 1.951, 0.554,
+                    fsize=10, color=DARK_GRAY)
+
+    # 추진 방안
+    add_textbox(slide, "추진 방안",
+                LABEL_X, 4.654, LABEL_W, 0.50,
+                fsize=13, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+    plan_text = ("추진 기간 : 12주\n"
+                 "투입 인력 : PM 1명 + 컨설턴트 2명 (직무체계 전문 컨설턴트 투입)\n"
+                 "추진 금액 : 225,000 천원 (부가세 별도; 세부 협의에 따라 변동 가능)")
+    add_textbox(slide, plan_text,
+                1.836, 4.589, 8.759, 0.972,
+                fsize=10, color=DARK_GRAY)
 
 
-def build_end(prs, d):
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    W, H = prs.slide_width, prs.slide_height
-    add_shape_rect(slide, 0, 0, W, H, DEEP_BLUE)
-    add_textbox(slide, "휴먼컨설팅그룹",
-                0, H / 2 - Inches(0.4), W, Inches(0.6),
-                font_size=16, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+def build_pain_point(prs):
+    """Slide 4: Pain Point / 현황 진단 (layout 2) — 2-column"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide,
+              "현황 진단 — Pain Point",
+              "롯데알미늄 직무기반 HR제도 도입의 주요 Pain Point 및 개선 방향")
+
+    # 컬럼 헤더
+    hdr_items = [
+        (COL_L_X, "현재 문제점 (As-Is)",   HCG_RED,   WHITE),
+        (COL_R_X, "기대 개선사항 (To-Be)", DARK_GRAY, WHITE),
+    ]
+    for x, txt, fill, tcol in hdr_items:
+        sh = add_item(slide, txt, x, HDR_Y, width=ITEM_W, height=0.333,
+                      fsize=11, bold=True, align=PP_ALIGN.CENTER,
+                      fill_rgb=fill, color=tcol, no_border=True)
+
+    # Pain Point 데이터 (좌: 문제, 우: 개선)
+    pairs = [
+        ("직무 데이터 부재 — 체계적 직무 분류/기술 없이 관행적 운영",
+         "직무분류체계 수립으로 명확한 직무 Scope 정의"),
+        ("노후화된 직무 데이터 — 현업 실태 미반영, 활용 불가",
+         "AI 활용 직무기술서 작성으로 신속한 현행화"),
+        ("평가 기준 불명확 — 직무 특성 미반영, 공정성 낮음",
+         "직무기반 성과관리체계 수립으로 평가 신뢰성 제고"),
+        ("보상 운영 기준 부재 — 직무 가치 미반영, 형평성 문제",
+         "직무가치 기반 보상체계 설계로 내외부 공정성 확보"),
+        ("HR제도 활용 미흡 — 채용/배치/육성 연계 부족",
+         "직무기반 통합 HR제도 운영체계 구축"),
+    ]
+
+    for i, (left_txt, right_txt) in enumerate(pairs):
+        y = ITEM_Y0 + i * ITEM_DY
+        add_item(slide, left_txt,  COL_L_X, y, fsize=10, color=DARK_GRAY)
+        add_item(slide, right_txt, COL_R_X, y, fsize=10, color=DARK_GRAY)
+
+    # 중간 VS 연결 표시
+    for i in range(len(pairs)):
+        y = ITEM_Y0 + i * ITEM_DY + 0.05
+        add_item(slide, "→", 5.22, y, width=0.394, height=0.394,
+                 fsize=10, bold=True, align=PP_ALIGN.CENTER,
+                 fill_rgb=HCG_RED, color=WHITE, no_border=True)
 
 
-# ─────────────────────────────────────────────
-# 메인
-# ─────────────────────────────────────────────
-def main():
-    OUTPUT = os.path.join(os.path.dirname(__file__), "HCG_Automated_Draft.pptx")
+def build_section_divider(prs, section_num, section_title, sub):
+    """Section 구분 슬라이드 (layout 1 '목차')"""
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
 
-    prs = Presentation()
-    prs.slide_width  = Inches(10.83)   # ★ 한국 표준 (v2 수정)
-    prs.slide_height = Inches(7.50)
+    # 섹션 번호 원형
+    circle = slide.shapes.add_shape(
+        MSO_AUTO_SHAPE_TYPE.OVAL,
+        Inches(1.0), Inches(2.8), Inches(0.9), Inches(0.9)
+    )
+    circle.fill.solid()
+    circle.fill.fore_color.rgb = HCG_RED
+    circle.line.fill.background()
+    ctf = circle.text_frame
+    cp = ctf.paragraphs[0]
+    cp.alignment = PP_ALIGN.CENTER
+    _add_run(cp, section_num, fsize=22, bold=True, color=WHITE)
 
-    print("HCG PPT 자동 생성 v2.0 시작...")
-    print(f"슬라이드 크기: {prs.slide_width.inches:.2f}\" × {prs.slide_height.inches:.2f}\"")
-    print(f"총 슬라이드 수: {len(SLIDES)}장\n")
+    # 섹션 타이틀
+    add_textbox(slide, section_title,
+                2.2, 2.7, 8.0, 0.7,
+                fsize=24, bold=True, color=HCG_RED)
 
-    builders = {
-        "cover":  build_cover,
-        "toc":    build_toc,
-        "normal": build_normal,
-        "ref":    build_ref,
-        "end":    build_end,
-    }
+    # 서브 설명
+    add_textbox(slide, sub,
+                2.2, 3.5, 8.0, 0.5,
+                fsize=13, color=DARK_GRAY)
 
-    for d in SLIDES:
-        builders[d["type"]](prs, d)
-        print(f"  [완료] 슬라이드 {d['no']:02d}: {d['section']}")
+    # 구분선
+    line = slide.shapes.add_shape(
+        MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+        Inches(2.2), Inches(3.42), Inches(8.0), Inches(0.03)
+    )
+    line.fill.solid()
+    line.fill.fore_color.rgb = MED_GRAY
+    sp_el = line._element
+    spPr = sp_el.find(qn('p:spPr'))
+    if spPr is not None:
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        ln_el = etree.SubElement(spPr, f'{{{ns}}}ln')
+        nf = etree.SubElement(ln_el, f'{{{ns}}}noFill')
 
-    prs.save(OUTPUT)
-    print(f"\n저장 완료: {OUTPUT}")
-    print("PowerPoint에서 열어 디자인 세부 조정 후 사용하세요.")
-    print("\n주요 변경 (v2.0):")
-    print("  ✓ 슬라이드 크기: 13.33\" → 10.83\" (한국 표준)")
-    print("  ✓ 본문 텍스트: Bold Blue → Regular Black")
-    print("  ✓ 구조: _final 25장 구조 반영")
-    print("  ✓ [참고] 슬라이드: 헤드 메시지 제거, 타이틀만")
+
+def build_body_2col(prs, title, subtitle, header_l, header_r, left_items, right_items):
+    """표준 2컬럼 본문 슬라이드"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+
+    # 컬럼 헤더
+    add_item(slide, header_l, COL_L_X, HDR_Y, width=ITEM_W, height=0.333,
+             fsize=11, bold=True, align=PP_ALIGN.CENTER,
+             fill_rgb=HCG_RED, color=WHITE, no_border=True)
+    add_item(slide, header_r, COL_R_X, HDR_Y, width=ITEM_W, height=0.333,
+             fsize=11, bold=True, align=PP_ALIGN.CENTER,
+             fill_rgb=DARK_GRAY, color=WHITE, no_border=True)
+
+    rows = max(len(left_items), len(right_items))
+    for i in range(rows):
+        y = ITEM_Y0 + i * ITEM_DY
+        if i < len(left_items):
+            add_item(slide, left_items[i],  COL_L_X, y, fsize=10, color=DARK_GRAY)
+        if i < len(right_items):
+            add_item(slide, right_items[i], COL_R_X, y, fsize=10, color=DARK_GRAY)
+
+    return slide
+
+
+def build_body_single(prs, title, subtitle, rows):
+    """단일 컬럼 본문 슬라이드 (label + content 구조)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+
+    y = ITEM_Y0
+    for label, content in rows:
+        if label:
+            add_textbox(slide, label,
+                        LABEL_X, y, LABEL_W, ITEM_H,
+                        fsize=12, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+        add_item(slide, content,
+                 1.836, y, width=8.759, height=ITEM_H,
+                 fsize=10, color=DARK_GRAY)
+        y += ITEM_DY
+
+    return slide
+
+
+def build_body_process(prs, title, subtitle, steps, desc_rows=None):
+    """프로세스 단계 슬라이드 (→ 화살표 구조)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+
+    step_y = 2.5
+    n = len(steps)
+    box_w = min(2.2, 9.0 / n)
+    start_x = 0.5 + (9.5 - n * box_w - (n-1) * 0.25) / 2
+
+    for i, (step_title, step_detail) in enumerate(steps):
+        x = start_x + i * (box_w + 0.25)
+        sh = add_item(slide, step_title, x, step_y, width=box_w, height=0.6,
+                      fsize=11, bold=True, align=PP_ALIGN.CENTER,
+                      fill_rgb=HCG_RED, color=WHITE, no_border=True)
+        if step_detail:
+            add_textbox(slide, step_detail, x, step_y + 0.65, box_w, 0.8,
+                        fsize=9, align=PP_ALIGN.CENTER, color=DARK_GRAY)
+        if i < n - 1:
+            add_textbox(slide, "→",
+                        x + box_w + 0.03, step_y + 0.15, 0.2, 0.3,
+                        fsize=13, align=PP_ALIGN.CENTER, color=MED_GRAY)
+
+    if desc_rows:
+        y = step_y + 1.6
+        for label, content in desc_rows:
+            if label:
+                add_textbox(slide, label,
+                            LABEL_X, y, LABEL_W, 0.38,
+                            fsize=11, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+            add_item(slide, content,
+                     1.836, y, width=8.759, height=0.4,
+                     fsize=10, color=DARK_GRAY)
+            y += 0.46
+
+    return slide
+
+
+def build_end(prs):
+    """Slide 24: End of document (layout 3)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[3])
+    # 레이아웃이 제공하는 디자인 사용
+    for ph in slide.placeholders:
+        idx = ph.placeholder_format.idx
+        if idx == 0:
+            try: ph.text = "Thank you"
+            except: pass
+    return slide
+
+
+def build_appendix(prs):
+    """Slide 25: Appendix"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, "Appendix", "직무분류체계 예시 — 대기업 알미늄 제조업 기준")
+
+    rows = [
+        ("대분류", "영업/마케팅  |  생산/제조  |  품질/안전  |  연구/개발  |  경영지원  |  구매/물류"),
+        ("중분류",
+         "영업관리, 마케팅전략, 고객지원 / 판재생산, 박재생산, 주조 / 품질관리, 안전환경 / 연구개발, 공정개발"),
+        ("소분류",
+         "영업기획, 국내영업, 해외영업, 마케팅조사, 고객불만처리 / 판재제조, 박재제조, 용해주조, 열처리 / ..."),
+        ("직무기술서",
+         "각 직무별 Key Responsibilities, Required Competency, Required Knowledge/Skill 정의 (AI 초안 기반)"),
+    ]
+
+    y = ITEM_Y0
+    for label, content in rows:
+        add_textbox(slide, label,
+                    LABEL_X, y, LABEL_W, 0.45,
+                    fsize=12, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+        add_item(slide, content,
+                 1.836, y, width=8.759, height=0.45,
+                 fsize=10, color=DARK_GRAY)
+        y += 0.55
+
+
+# ════════════════════════════════════════════════════════════
+# 메인 빌드
+# ════════════════════════════════════════════════════════════
+
+def build():
+    print("Loading template...")
+    prs = Presentation(REAL)
+
+    print("Deleting existing slides...")
+    delete_all_slides(prs)
+
+    print("Building slides...")
+
+    # Slide 01: 표지
+    build_cover(prs)
+    print("  S01 Cover ✓")
+
+    # Slide 02: 목차
+    build_toc(prs)
+    print("  S02 TOC ✓")
+
+    # Slide 03: Project Overview
+    build_overview(prs)
+    print("  S03 Project Overview ✓")
+
+    # Slide 04: Pain Point
+    build_pain_point(prs)
+    print("  S04 Pain Point ✓")
+
+    # ── Section I: 직무체계 수립 ──────────────────────────
+    build_section_divider(prs, "I", "직무체계 수립",
+                          "직무분류체계 설계 및 AI 기반 직무기술서 작성")
+    print("  S05 Section I ✓")
+
+    # Slide 06: 직무체계 수립 방향
+    build_body_2col(prs,
+        "직무체계 수립 방향",
+        "직무분류체계 기반의 직무기술서 작성 및 활용체계 구축",
+        "현행 문제점", "개선 방향",
+        ["직무분류 기준 부재 — 직무와 직책이 혼용",
+         "직무 Scope 불명확 — 담당업무 모호",
+         "직무기술서 미비 — 구두/관행 의존",
+         "직무기반 HR 연계 미흡"],
+        ["직무군/직무/세부직무 3단계 분류체계 수립",
+         "직무별 Key Roles & Responsibilities 명확화",
+         "표준화된 직무기술서 양식 및 AI 작성 지원",
+         "채용·평가·보상·육성 연계 체계 구축"]
+    )
+    print("  S06 직무체계 방향 ✓")
+
+    # Slide 07: 직무분류체계 Framework
+    build_body_process(prs,
+        "직무분류체계 Framework",
+        "대기업 알미늄 제조업 직무 특성을 반영한 3단계 분류체계",
+        [("직무군\n(Job Family)",   "영업, 생산, 품질,\n연구, 경영지원 등"),
+         ("직무\n(Job)",            "각 직무군 내\n5~15개 직무"),
+         ("세부직무\n(Sub-Job)",    "직무별 세분화된\n역할 단위"),
+         ("직무기술서\n(JD)",       "Key Roles, 역량,\n자격 요건 기술")],
+        [("분류 기준", "업무 유사성, 역량 공통성, 조직 구조 반영"),
+         ("적용 범위", "전 사원 대상 (임원 제외), 약 4개 직무군 15개 직무 예상")]
+    )
+    print("  S07 직무분류 Framework ✓")
+
+    # Slide 08: AI 활용 직무기술서
+    build_body_single(prs,
+        "AI 활용 직무기술서 작성",
+        "ChatGPT/Claude 기반 직무기술서 초안 작성 후 현업 검증 및 Fine-tuning",
+        [("작성 방법", "AI 프롬프트 설계 → 초안 생성 → 현업 인터뷰/검증 → 확정"),
+         ("작성 항목", "직무 목적, Key Responsibilities(5~8개), 역량, 자격요건, KPI 연계"),
+         ("활용 도구", "Claude API / ChatGPT 4o 활용, HCG 표준 JD 템플릿 적용"),
+         ("품질 관리", "직무 담당자 및 팀장 검토, HR 최종 확인, 3단계 검증 프로세스")]
+    )
+    print("  S08 AI 직무기술서 ✓")
+
+    # Slide 09: 직무체계 활용 로드맵
+    build_body_process(prs,
+        "직무체계 활용 로드맵",
+        "수립된 직무체계를 HR 전반에 단계적으로 연계·활용",
+        [("Phase 1\n(수립)",        "직무분류체계\n직무기술서 완성"),
+         ("Phase 2\n(연계)",        "평가·보상 기준\n직무 연계"),
+         ("Phase 3\n(고도화)",      "채용·육성·경력\n통합 운영"),
+         ("Phase 4\n(정착)",        "HR Data 축적\n주기적 업데이트")],
+    )
+    print("  S09 직무체계 로드맵 ✓")
+
+    # Slide 10: 직무기술서 구성 체계
+    build_body_single(prs,
+        "직무기술서 구성 체계",
+        "HCG 표준 JD 양식 기반 — 5개 핵심 구성항목",
+        [("직무 개요",  "직무명, 직무군, 소속 부서, 직무 목적 요약 (2~3 문장)"),
+         ("핵심 역할",  "Key Responsibilities 5~8개, 각 역할별 수행 활동 기술"),
+         ("요구 역량",  "Technical Competency + Behavioral Competency 각 3~5개"),
+         ("자격 요건",  "학력, 경력 연수, 필수 자격증, 선호 전공 등"),
+         ("KPI 연계",   "직무와 연계된 성과지표 3~5개, 측정 방법 명시")]
+    )
+    print("  S10 직무기술서 구성 ✓")
+
+    # ── Section II: 평가제도 개선 ─────────────────────────
+    build_section_divider(prs, "II", "평가제도 개선",
+                          "직무기반 성과관리체계 수립 및 평가 운영체계 개선")
+    print("  S11 Section II ✓")
+
+    # Slide 12: 평가제도 현황 진단
+    build_body_2col(prs,
+        "평가제도 현황 진단",
+        "현행 평가제도의 구조적 문제점과 개선 필요성",
+        "현행 문제점", "핵심 이슈",
+        ["단일 평가지표 — 직무 특성 미반영",
+         "평가자 주관성 과다 — 공정성 저하",
+         "목표설정 형식화 — KPI 연계 미흡",
+         "피드백 체계 부재 — 성장 기회 저해"],
+        ["직무 특성에 맞는 차별화된 평가 기준 필요",
+         "객관적 평가지표(정량/정성) 균형 필요",
+         "목표 → 활동 → 결과의 일관성 확보 필요",
+         "주기적 코칭·피드백 문화 정착 필요"]
+    )
+    print("  S12 평가 현황 ✓")
+
+    # Slide 13: 직무기반 평가모형
+    build_body_process(prs,
+        "직무기반 평가모형 설계",
+        "직무 특성을 반영한 성과(MBO) + 역량(Competency) 이원 평가모형",
+        [("목표 설정\n(연초)",   "직무 KPI 3~5개\n목표 수준 합의"),
+         ("중간 점검\n(반기)",   "실적 Review\n코칭·피드백"),
+         ("최종 평가\n(연말)",   "MBO 60%\n역량 40%"),
+         ("결과 활용\n(차년)",   "보상 연계\n육성 계획")]
+    )
+    print("  S13 평가모형 ✓")
+
+    # Slide 14: 평가지표 체계
+    build_body_single(prs,
+        "평가지표 체계",
+        "직무군별 차별화된 KPI 및 역량지표 설계",
+        [("KPI 구조",    "정량 KPI (60%): 매출목표, 생산량, 불량률, 개발건수 등 직무별 차별화"),
+         ("역량 지표",   "Behavioral 역량 (40%): 문제해결, 협업, 전문성, 리더십 등 공통+직무"),
+         ("등급 체계",   "5등급: S/A/B/C/D → 상위 20% / 중위 60% / 하위 20% 강제배분"),
+         ("캘리브레이션", "팀장→부문장 단계적 검토, HR 최종 조정으로 조직 간 형평성 확보")]
+    )
+    print("  S14 평가지표 ✓")
+
+    # Slide 15: 평가 운영 프로세스
+    build_body_process(prs,
+        "평가 운영 프로세스",
+        "연간 성과관리 Cycle — 목표설정~보상 연계 일원화",
+        [("1월\n목표설정",    "개인 KPI\n조직 목표 연계"),
+         ("4월\n중간진단",    "1/4분기 실적\n코칭면담"),
+         ("7월\n반기평가",    "반기 실적 Review\n하반기 계획"),
+         ("12월\n연말평가",   "최종 성과/역량\n종합 평가"),
+         ("1월\n결과활용",    "보상 연계\n육성 계획")]
+    )
+    print("  S15 평가 운영 ✓")
+
+    # ── Section III: 보상제도 개선 ───────────────────────
+    build_section_divider(prs, "III", "보상제도 개선",
+                          "직무가치 기반 보상체계 설계 및 보상 운영방안 수립")
+    print("  S16 Section III ✓")
+
+    # Slide 17: 보상 원칙 및 전략
+    build_body_2col(prs,
+        "보상 원칙 및 전략",
+        "직무가치와 성과를 반영한 보상체계로의 전환",
+        "현행 보상 구조", "개선 방향",
+        ["연공서열 중심 — 직무가치 미반영",
+         "내부 공정성 낮음 — 직무간 보상 불균형",
+         "성과 연계 약함 — 성과급 효과 미흡",
+         "외부 경쟁력 미검증 — 시장 대비 불명확"],
+        ["직무 가치 반영 — Job Grading 기반 Pay Band",
+         "내부 공정성 확보 — 직무가치 기반 급여 대역",
+         "성과 연계 강화 — 평가 등급별 차별화 보상",
+         "외부 경쟁력 확보 — 시장 벤치마킹 주기적 실시"]
+    )
+    print("  S17 보상 원칙 ✓")
+
+    # Slide 18: 직무기반 보상체계
+    build_body_single(prs,
+        "직무기반 보상체계 설계",
+        "Job Grading → Pay Band → 성과연동 개인 보상 결정",
+        [("Job Grading", "직무 복잡성·책임·전문성·영향력 기준 직무 등급(5~7등급) 설계"),
+         ("Pay Band",    "등급별 최저-중위-최고 급여 대역 설정 (시장 P50 기준 중위값)"),
+         ("성과 연계",   "평가 등급 S/A/B/C/D → 개인 보상 조정 범위 ±15~20% 내 운영"),
+         ("인상 원칙",   "시장 인상률 + 성과 + 직무 성장을 반영한 Merit Increase 기준 수립")]
+    )
+    print("  S18 보상체계 ✓")
+
+    # Slide 19: 보상 시뮬레이션 방향
+    build_body_single(prs,
+        "보상 시뮬레이션 방향",
+        "현행 인건비 총액 유지 원칙 하에 직무가치 기반 급여 재조정",
+        [("Simulation 목표",  "현행 인건비 ±5% 이내에서 직무가치 반영 보상 구조 전환"),
+         ("시나리오",         "시나리오 A(현행 유지형) / B(점진 전환형) / C(즉시 전환형) 3개 비교"),
+         ("조정 기준",        "직무등급 ×Pay Band 중위값 대비 현행 급여 수준 분포 분석"),
+         ("협의 사항",        "노조/직원 의견 수렴, 이해관계자 커뮤니케이션 계획 포함")]
+    )
+    print("  S19 보상 시뮬레이션 ✓")
+
+    # ── Section IV: 추진계획 ──────────────────────────────
+    build_section_divider(prs, "IV", "추진계획 및 HCG 역량",
+                          "12주 추진 일정, 투입 인력, 제안 비용 및 HCG 수행 역량")
+    print("  S20 Section IV ✓")
+
+    # Slide 21: 추진 일정
+    build_body_process(prs,
+        "추진 일정 (12주)",
+        "Phase 1(현황진단 4주) → Phase 2(체계설계 5주) → Phase 3(완료 3주)",
+        [("W1-2\n킥오프",     "현황자료 수집\nAS-IS 분석"),
+         ("W3-4\n현황진단",   "인터뷰 실시\nPain Point 도출"),
+         ("W5-7\n직무설계",   "분류체계 수립\nJD 작성"),
+         ("W8-10\nHR제도",    "평가/보상제도\n설계"),
+         ("W11-12\n완료",     "최종 보고\nChange Mgmt")]
+    )
+    print("  S21 추진 일정 ✓")
+
+    # Slide 22: HCG 수행 역량
+    build_body_2col(prs,
+        "HCG 수행 역량",
+        "직무기반 HR제도 설계 전문 역량 보유 — 다수 대기업 구축 경험",
+        "수행 분야", "주요 실적",
+        ["직무체계 수립",
+         "평가제도 개선",
+         "보상체계 설계",
+         "HR 디지털 전환"],
+        ["대기업 제조업 10개사 직무분류체계 구축",
+         "평가모형 설계 및 캘리브레이션 운영 지원 15개사",
+         "직무기반 Pay Band 설계 8개사",
+         "AI 활용 JD 자동화 솔루션 3개사 구축"]
+    )
+    print("  S22 HCG 역량 ✓")
+
+    # Slide 23: 제안 비용
+    build_body_single(prs,
+        "제안 비용",
+        "롯데알미늄 직무기반 HR제도 설계 및 도입 컨설팅 투입 비용",
+        [("총 금액",    "225,000 천원 (VAT 별도) — 세부 범위/투입 형태 협의에 따라 변동 가능"),
+         ("인력 구성",  "PM 1명 + Senior 컨설턴트 1명 + 컨설턴트 1명 (총 3명)"),
+         ("투입 기간",  "12주 (3개월) — 킥오프~최종 보고"),
+         ("산출물",     "직무분류체계(안), 직무기술서(전직무), 평가/보상제도(안), 운영 가이드라인")]
+    )
+    print("  S23 제안 비용 ✓")
+
+    # Slide 24: End of document
+    build_end(prs)
+    print("  S24 End ✓")
+
+    # Slide 25: Appendix
+    build_appendix(prs)
+    print("  S25 Appendix ✓")
+
+    print(f"\nSaving → {OUT}")
+    prs.save(OUT)
+    print("Done!")
+    return OUT
 
 
 if __name__ == "__main__":
-    main()
+    result = build()
+    print(f"\nOutput: {result}")
