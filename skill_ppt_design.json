@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.2",
+  "version": "1.3",
+  "changelog_v1_3": "v1.3 — 인간 _final XML 딥다이브(OxmlElement) 기반 고급 디자인 보강. 실측 갭: 텍스트윤곽선 1807·그림자 60·투명도 2478·그라디언트 43·자간(-30~-100) vs AI Draft 전부 0. xml_advanced_design(윤곽선/그림자/투명도/그라디언트/자간/세로정렬 헬퍼 6종 + add_item 고급 옵션), bullet_to_shape_rules, mbb_grid_system, master_engine_DeckEngine(데이터 구동 spec 스키마·CLI) 추가. auto_ppt.py 단일 마스터 엔진으로 통합(kia/lotte는 콜러 유지).",
   "changelog_v1_2": "v1.2 — 기아 AI Draft vs 인간 _final 도형 통계 비교(AI 5.5도식/장 vs 인간 23도식/장; AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개). density_diagram_targets, new_helpers_v2(connector_line·arrow_flow·table·icon_placeholder·process_roadmap·compare_table), scale_guidance 추가.",
   "changelog": "v1.1 — 롯데알미늄 _final XML 도형 좌표 전수 실측. 고급 도식 패턴(Pain Point 카테고리화·VS 대비·3컬럼 STEP Overview·직군 차별화 매트릭스·예시적 배지·insight quote) + auto_ppt.py 신규 헬퍼 지시어 추가. 아이콘(PICTURE)은 자동생성 제외(한계).",
   "type": "design",
@@ -241,6 +242,90 @@
     "build_compare_table(prs, title, subtitle, headers, rows, example=False)": "표 기반 비교 장표(BM 결과·pay 구조 등). headers→TABLE 헤더, rows→행."
   },
   "scale_guidance": "진단/BM형 대형 제안서는 40~60장. 섹션 divider는 풀비주얼 1장. 본문은 미니리포트 밀도(350~500자 + 도식). Why HCG·근거는 다(多)장 전개 + [참고] 분리.",
+  "xml_advanced_design": {
+    "_근거": "인간 _final.pptx OxmlElement 전수 파싱. 실측 갭(인간 vs AI Draft): 텍스트윤곽선<a:rPr><a:ln> 1807 vs 0, 그림자<a:outerShdw> 60 vs 0, 투명도<a:alpha> 2478 vs 0, 그라디언트<a:gradFill> 43 vs 0, 자간 spc(-30~-100) vs 없음, 도형 geom 14종 vs 3종. 평면 박스+텍스트를 XML 레벨 표현으로 보강.",
+    "text_outline": {
+      "규칙": "흰 박스 위 흰 텍스트, 색 위 동색 텍스트 등 대비 약한 경우 윤곽선으로 가독성 확보. 인간본 최다 패턴.",
+      "xml": "<a:rPr> 첫 자식으로 <a:ln w=EMU><a:solidFill><a:srgbClr val=HEX/></a:solidFill></a:ln> (ln은 rPr 최상위 순서).",
+      "helper": "set_text_outline(run, color='FFFFFF', width_pt=0.75) 또는 add_item(..., outline={'color':'FFFFFF','width_pt':1.0})",
+      "권장": "강조 제목/배지에 한정. 본문 남발 금지."
+    },
+    "shadow": {
+      "규칙": "원형 배지·핵심 박스에 옅은 드롭섀도로 입체감. 장식 남발 금지(핵심 요소만).",
+      "xml": "<a:spPr><a:effectLst><a:outerShdw blurRad dist dir rotWithShape=0><a:srgbClr val=000000><a:alpha val/></a:srgbClr></a:outerShdw></a:effectLst> (effectLst는 ln 뒤).",
+      "helper": "add_shadow(shape, blur_pt=4, dist_pt=2.5, direction=2700000, alpha_pct=55) 또는 add_item(..., shadow=True)"
+    },
+    "transparency": {
+      "규칙": "겹침(overlap)·강조 오버레이 표현 시 채움 투명도. 배경 위 반투명 색면.",
+      "xml": "solidFill의 <a:srgbClr>/<a:schemeClr>에 <a:alpha val=(100-pct)*1000/> 추가.",
+      "helper": "set_transparency(shape, pct)  # pct=투명도%(0불투명~100투명)"
+    },
+    "gradient": {
+      "규칙": "표지/섹션/핵심 박스 강조에 선형 그라디언트(2색). 본문 박스엔 자제.",
+      "xml": "<a:gradFill><a:gsLst><a:gs pos=0><a:srgbClr val=C1/></a:gs><a:gs pos=100000><a:srgbClr val=C2/></a:gs></a:gsLst><a:lin ang=deg*60000 scaled=1/></a:gradFill> (prstGeom 뒤·ln 앞).",
+      "helper": "set_gradient(shape, color1, color2, angle_deg=90) 또는 add_item(..., grad=(HCG_RED, CORAL_DK, 45))"
+    },
+    "char_spacing": {
+      "규칙": "한글 제목 자간 좁힘으로 밀도·완성도. 본문 -30, 제목 -50~-100(인간본 실측).",
+      "xml": "<a:rPr spc='-50'/> (단위 1/100 pt, 음수=좁힘).",
+      "helper": "set_char_spacing(run, -50) 또는 add_item(..., spc=-50)"
+    },
+    "line_spacing_variable": {
+      "규칙": "행간 고정 112% 탈피. 본문 120%, 밀집 라벨 100%로 가변(인간본 100~120% 혼용).",
+      "helper": "_set_line_spacing(para, pct)  # 100~120 가변"
+    },
+    "text_anchor": {
+      "규칙": "박스 내 텍스트 세로 중앙정렬로 정돈감.",
+      "xml": "<a:bodyPr anchor='ctr'/> (t/ctr/b)",
+      "helper": "set_text_anchor(shape, 'ctr') 또는 add_item(..., anchor='ctr')"
+    },
+    "geometry_palette": "단조로운 rect/roundRect/ellipse 외 rightArrow·homePlate(쉐브론)·flowChartDecision·donut·arc 등 의미 있는 도형 활용. python-pptx MSO_AUTO_SHAPE_TYPE / MSO_SHAPE 사용."
+  },
+  "bullet_to_shape_rules": {
+    "_원칙": "불릿(•) 텍스트 나열 금지 → 구조 도식으로 변환. AI Draft 평면화의 핵심 원인이 불릿 나열.",
+    "병렬_3~5항목": "→ 가로/세로 박스 배열(add_item 그리드). 라벨 태그 + 내용 박스.",
+    "단계/순서": "→ 화살표 흐름(add_arrow_flow) 또는 process_roadmap(phase 박스 + step).",
+    "대조(현행vs개선)": "→ 2컬럼 대비(build_body_2col) 또는 VS 블록(build_approach_vs).",
+    "분류/매트릭스": "→ build_diff_matrix 또는 add_table(행/열 그리드).",
+    "인과/관계": "→ 박스 + connector line(add_connector_line)로 연결.",
+    "변환_판단": "한 박스에 불릿 3개 이상이면 도식 후보. 항목 간 관계(순서·대조·분류·인과)를 파악해 위 패턴 선택."
+  },
+  "mbb_grid_system": {
+    "_원칙": "MBB(맥킨지/베인/BCG)식 모듈러 그리드. 모든 요소를 고정 그리드 라인에 정렬해 시각적 질서 확보.",
+    "안전여백(safe_margin)": "좌우 0.69\", 상단 제목영역 ~1.6\", 하단 takeaway/저작권 ~0.5\". 콘텐츠 영역 = x 0.69~10.14(w 9.451).",
+    "수평_분할": "2컬럼: 좌 x=0.691 / 우 x=5.615 (각 w=4.528, 거터 0.396). 3컬럼: x=[0.69,3.90,7.11] w=3.03 (거터 0.18).",
+    "수직_리듬": "행 피치 dy=0.589\"(본문), 박스 h=0.496\". 동일 피치 반복으로 정렬 리듬.",
+    "황금비_여백": "박스 내부 여백 좌 0.07\"/우 0.04\"/상하 0.02\". 제목:서브헤드:콘텐츠 시각 비중 대략 1:0.7:5. 핵심 강조 박스는 1.618 비율 폭 지향.",
+    "정렬_규칙": "좌측 라벨=우정렬, 본문=좌정렬, 헤더/번호/배지=중앙정렬+세로중앙(anchor=ctr). 같은 행 요소는 baseline/y 일치.",
+    "적용": "coordinate_constants_inch가 이 그리드의 구현. 신규 좌표는 기존 그리드 라인(0.691, 5.615, dy=0.589 등)에 스냅."
+  },
+  "master_engine_DeckEngine": {
+    "_원칙": "auto_ppt.py = 단일 마스터 엔진. '어떤 프로젝트든 auto_ppt.py 하나만 호출 + 외부 데이터(JSON spec) → 최고 디자인 PPT'. kia/lotte는 엔진 import 콜러로 유지(중복 cover/toc/overview는 엔진 메서드로 통합).",
+    "class": "DeckEngine(template=None, out=None) — 템플릿 로드 + delete_all_slides 자동. 메서드: cover(), toc(), project_overview(), demo_advanced(), render(spec), save().",
+    "cli": "python auto_ppt.py <spec.json>  → meta.template/out 사용. 인자 없으면 기본 build()(롯데알미늄 25장, 하위호환).",
+    "spec_schema": {
+      "meta": "{template?: 경로(없으면 REAL), out?: 출력경로(없으면 OUT)}",
+      "slides": "[{type, label?, ...타입별 필드}] 순서대로 렌더"
+    },
+    "slide_types": {
+      "cover": "{title, subtitle?='- 제안서 -', date?}",
+      "toc": "{items:[[번호,섹션명,페이지],...], title?}",
+      "overview": "{subtitle, background?, scope?:[[라벨,x],..], sub_details?:[[x,설명],..], plan?, quote?}",
+      "section": "{num, title, sub?}",
+      "body_2col": "{title, subtitle, header_l, header_r, left:[..], right:[..]}",
+      "body_single": "{title, subtitle, rows:[[라벨,내용],..]}",
+      "body_process": "{title, subtitle, steps:[[제목,설명],..], desc?:[[라벨,내용],..]}",
+      "overview_3col": "{title, subtitle, cols:[{header,desc,ai,detail}×3], bar_label?, example?}",
+      "diff_matrix": "{title, subtitle, rows:[{group,trait,insight,apply}], quote?, example?}",
+      "pain_point_categorized": "{title, subtitle, left_hdr, right_hdr, rows:[[좌라벨,좌내용,중배지,우내용],..], summary_left?, summary_right?}",
+      "approach_vs": "{title, subtitle, left_title, left:[..], right_title, right:[..], quote?}",
+      "process_roadmap": "{title, subtitle, phases:[{name,steps:[..]}]}",
+      "compare_table": "{title, subtitle, headers:[..], rows:[[..]], example?}",
+      "appendix": "{title?, subtitle?, rows:[[라벨,내용],..]}",
+      "demo_advanced": "{title?, subtitle?} — 윤곽선/그림자/그라디언트/투명도/자간 시연",
+      "end": "{}"
+    }
+  },
   "handoff": {
     "from": "skill_ppt_planning.json",
     "입력": "확정 목차 + 장표별 메시지 + 슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end).",

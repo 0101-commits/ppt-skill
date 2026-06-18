@@ -110,7 +110,7 @@ def _set_line_dark(shape, pt=0.5):
     sc.set('val', 'dk1')
 
 def _add_run(para, text, fsize=11, bold=False, italic=False,
-             color=None, font_name="맑은 고딕"):
+             color=None, font_name="맑은 고딕", spc=None, outline=None):
     run = para.add_run()
     run.text = text
     run.font.size = Pt(fsize)
@@ -119,6 +119,14 @@ def _add_run(para, text, fsize=11, bold=False, italic=False,
     if color:
         run.font.color.rgb = color
     _set_font_xml(run, font_name)
+    # 고급 타이포 (옵션, 기본 off → 기존 호출자 불변)
+    if spc is not None:
+        set_char_spacing(run, spc)
+    if outline:
+        if isinstance(outline, dict):
+            set_text_outline(run, **outline)
+        else:
+            set_text_outline(run)
     return run
 
 def _set_line_spacing(para, pct=112):
@@ -148,18 +156,27 @@ def delete_all_slides(prs):
 # ── 본문 아이템 shape (rounded rect) ──────────────────────
 def add_item(slide, text, left, top, width=ITEM_W, height=ITEM_H,
              fsize=11, bold=False, italic=False, align=PP_ALIGN.LEFT,
-             fill_rgb=None, no_border=False, color=None):
+             fill_rgb=None, no_border=False, color=None,
+             shadow=False, grad=None, anchor=None, spc=None, outline=None):
     """
     본문 콘텐츠 아이템 shape 추가
     - rounded rectangle (모서리 둥근 직사각형)
     - noFill (기본), 0.5pt dk1 border
+    고급 옵션 (기본 off → 기존 호출자 불변):
+      shadow  : True → outerShdw 그림자
+      grad    : (color1, color2[, angle_deg]) → 그라디언트 채움 (fill_rgb 무시)
+      anchor  : 't'/'ctr'/'b' 세로 정렬
+      spc     : 자간 (OOXML spc 단위, 예 -30)
+      outline : dict{color,width_pt} → 텍스트 윤곽선
     """
     shape = slide.shapes.add_shape(
         MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
         Inches(left), Inches(top), Inches(width), Inches(height)
     )
 
-    if fill_rgb:
+    if grad:
+        set_gradient(shape, *grad)
+    elif fill_rgb:
         shape.fill.solid()
         shape.fill.fore_color.rgb = fill_rgb
     else:
@@ -188,8 +205,13 @@ def add_item(slide, text, left, top, width=ITEM_W, height=ITEM_H,
 
     p = tf.paragraphs[0]
     p.alignment = align
-    _add_run(p, text, fsize, bold, italic, color)
+    _add_run(p, text, fsize, bold, italic, color, spc=spc, outline=outline)
     _set_line_spacing(p, 112)
+
+    if anchor:
+        set_text_anchor(shape, anchor)
+    if shadow:
+        add_shadow(shape)
 
     return shape
 
@@ -804,6 +826,319 @@ def build_compare_table(prs, title, subtitle, headers, rows, example=False):
     return slide
 
 
+# ════════════════════════════════════════════════════════════
+# 고급 XML 레벨 디자인 헬퍼 (v5.0 — 인간 _final XML 딥다이브 기반)
+#   인간 _final 실측: 텍스트윤곽선 1807건, 그림자 60, 투명도 2478,
+#   그라디언트 43, 자간 -30~-100. AI Draft 전부 0 → 갭 보강.
+# ════════════════════════════════════════════════════════════
+
+A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+
+def _A(tag):
+    return f'{{{A_NS}}}{tag}'
+
+def _hex(color):
+    """RGBColor 또는 hex 문자열 → 6자리 hex 문자열."""
+    s = str(color)
+    return s[-6:].upper() if len(s) >= 6 else s.upper()
+
+def _spPr(shape):
+    """shape의 p:spPr element 반환 (없으면 None)."""
+    return shape._element.find(qn('p:spPr'))
+
+def set_char_spacing(run, val):
+    """자간(kerning) 설정. val = OOXML spc 단위(1/100 pt). 음수=좁힘(예 -30).
+    인간 _final 본문 자간 -30, 제목 -50~-100 패턴."""
+    rPr = run._r.get_or_add_rPr()
+    rPr.set('spc', str(int(val)))
+    return rPr
+
+def set_text_outline(run, color="FFFFFF", width_pt=0.75):
+    """텍스트 윤곽선 <a:rPr><a:ln>. 인간 _final 최다 패턴(1807건) —
+    채움색과 윤곽선 대비로 가독성·강조 확보. ln은 rPr 첫 자식이어야 함."""
+    rPr = run._r.get_or_add_rPr()
+    old = rPr.find(_A('ln'))
+    if old is not None:
+        rPr.remove(old)
+    ln = rPr.makeelement(_A('ln'), {})
+    ln.set('w', str(int(width_pt * 12700)))
+    sf = etree.SubElement(ln, _A('solidFill'))
+    clr = etree.SubElement(sf, _A('srgbClr'))
+    clr.set('val', _hex(color))
+    rPr.insert(0, ln)
+    return ln
+
+def add_shadow(shape, blur_pt=4.0, dist_pt=2.5, direction=2700000,
+               alpha_pct=55, color="000000"):
+    """outerShdw 그림자. spPr 자식 순서상 effectLst는 ln 뒤 → append.
+    alpha_pct = 그림자 자체 투명도(%) (55 → 약간 옅은 그림자)."""
+    spPr = _spPr(shape)
+    if spPr is None:
+        return None
+    old = spPr.find(_A('effectLst'))
+    if old is not None:
+        spPr.remove(old)
+    eff = etree.SubElement(spPr, _A('effectLst'))
+    sh = etree.SubElement(eff, _A('outerShdw'))
+    sh.set('blurRad', str(int(blur_pt * 12700)))
+    sh.set('dist', str(int(dist_pt * 12700)))
+    sh.set('dir', str(int(direction)))
+    sh.set('rotWithShape', '0')
+    clr = etree.SubElement(sh, _A('srgbClr'))
+    clr.set('val', _hex(color))
+    al = etree.SubElement(clr, _A('alpha'))
+    al.set('val', str(int(alpha_pct * 1000)))
+    return eff
+
+def set_transparency(shape, pct):
+    """solidFill 채움 투명도 pct%(0=불투명, 100=완전투명)."""
+    spPr = _spPr(shape)
+    if spPr is None:
+        return
+    sf = spPr.find(_A('solidFill'))
+    if sf is None:
+        return
+    clr = sf.find(_A('srgbClr'))
+    if clr is None:
+        clr = sf.find(_A('schemeClr'))
+    if clr is None:
+        return
+    for a in clr.findall(_A('alpha')):
+        clr.remove(a)
+    al = etree.SubElement(clr, _A('alpha'))
+    al.set('val', str(int((100 - pct) * 1000)))
+
+def set_gradient(shape, color1, color2, angle_deg=90):
+    """선형 그라디언트 채움. color1(0%)→color2(100%), angle_deg(시계방향).
+    spPr fill 위치(prstGeom 뒤, ln 앞)에 삽입."""
+    spPr = _spPr(shape)
+    if spPr is None:
+        return
+    for tag in ['solidFill', 'gradFill', 'noFill', 'blipFill', 'pattFill', 'grpFill']:
+        for el in spPr.findall(_A(tag)):
+            spPr.remove(el)
+    grad = etree.Element(_A('gradFill'))
+    gs = etree.SubElement(grad, _A('gsLst'))
+    for pos, c in [(0, color1), (100000, color2)]:
+        g = etree.SubElement(gs, _A('gs'))
+        g.set('pos', str(pos))
+        cc = etree.SubElement(g, _A('srgbClr'))
+        cc.set('val', _hex(c))
+    lin = etree.SubElement(grad, _A('lin'))
+    lin.set('ang', str(int(angle_deg * 60000)))
+    lin.set('scaled', '1')
+    ln = spPr.find(_A('ln'))
+    if ln is not None:
+        ln.addprevious(grad)
+    else:
+        spPr.append(grad)
+
+def set_text_anchor(shape, anchor='ctr'):
+    """텍스트 세로 정렬: 't'(상), 'ctr'(중앙), 'b'(하)."""
+    try:
+        bodyPr = shape.text_frame._txBody.find(qn('a:bodyPr'))
+        if bodyPr is not None:
+            bodyPr.set('anchor', anchor)
+    except Exception:
+        pass
+
+
+# ════════════════════════════════════════════════════════════
+# 통합 마스터 엔진 — DeckEngine (v5.0)
+#   "어떤 프로젝트든 auto_ppt.py 하나만 호출 → 외부 데이터(spec)로 PPT 생성"
+#   - 템플릿 로드 + 슬라이드 삭제 자동
+#   - cover/toc/overview 일반화 (kia·lotte 중복 3종 통합)
+#   - render(spec): 슬라이드 타입별 디스패치
+#   사용: DeckEngine(template, out).render(spec).save()
+#   CLI : python auto_ppt.py <spec.json>
+# ════════════════════════════════════════════════════════════
+
+class DeckEngine:
+    SLIDE_W = 10.833
+    SLIDE_H = 7.5
+
+    def __init__(self, template=None, out=None):
+        self.template = template or REAL
+        self.out = out or OUT
+        print("Loading template:", self.template)
+        self.prs = Presentation(self.template)
+        delete_all_slides(self.prs)
+        self.count = 0
+
+    def _mark(self, label):
+        self.count += 1
+        print(f"  S{self.count:02d} {label}")
+        return self.count
+
+    # ── 일반화된 cover (kia/lotte 중복 통합) ──────────────────
+    def cover(self, title, subtitle="- 제안서 -", date=None):
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[0])
+        for ph in slide.placeholders:
+            idx = ph.placeholder_format.idx
+            if idx == 0:
+                ph.text = title
+            elif idx == 1:
+                ph.text = subtitle
+        if date:
+            add_textbox(slide, date, 1.137, 5.319, 8.563, 0.30,
+                        fsize=10, align=PP_ALIGN.CENTER, color=DARK_GRAY)
+        return slide
+
+    # ── 일반화된 toc ──────────────────────────────────────────
+    def toc(self, items, title="목차 (Contents)"):
+        """items = [(번호, 섹션명, 페이지범위), ...]"""
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[1])
+        add_textbox(slide, title, 0.5, 0.3, 9.8, 0.5,
+                    fsize=18, bold=True, color=HCG_RED, )
+        ln = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                    Inches(0.5), Inches(0.9), Inches(9.8), Inches(0.03))
+        ln.fill.solid(); ln.fill.fore_color.rgb = HCG_RED; ln.line.fill.background()
+        n = len(items)
+        y = 1.3
+        step = min(1.0, (6.6 - y) / max(1, n))
+        for num, sec, pg in items:
+            c = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL,
+                                       Inches(0.6), Inches(y - 0.04), Inches(0.45), Inches(0.45))
+            c.fill.solid(); c.fill.fore_color.rgb = HCG_RED; c.line.fill.background()
+            add_shadow(c, blur_pt=3, dist_pt=1.5, alpha_pct=65)
+            cp = c.text_frame.paragraphs[0]; cp.alignment = PP_ALIGN.CENTER
+            _add_run(cp, num, fsize=14, bold=True, color=WHITE)
+            add_textbox(slide, sec, 1.3, y, 7.3, 0.5, fsize=14, color=DARK_GRAY)
+            add_textbox(slide, pg, 8.8, y, 1.2, 0.5, fsize=12,
+                        align=PP_ALIGN.RIGHT, color=MED_GRAY)
+            y += step
+        return slide
+
+    # ── 일반화된 Project Overview (kia/lotte 중복 통합) ───────
+    def project_overview(self, subtitle, background=None, scope=None,
+                         sub_details=None, plan=None, quote=None,
+                         bg_label="추진 배경", scope_label="추진 범위",
+                         plan_label="추진 방안"):
+        """scope = [(라벨, x), ...] 4단계 / sub_details = [(x, 설명), ...]
+        plan = 문자열(여러 줄) / background = 문자열 / quote = takeaway."""
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[2])
+        set_title(slide, "Project Overview", subtitle)
+        y = 1.66
+        if background:
+            add_textbox(slide, bg_label, LABEL_X, y, LABEL_W, 0.32,
+                        fsize=12, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+            add_textbox(slide, background, 1.836, y, 8.759, 0.55,
+                        fsize=11, color=DARK_GRAY)
+        if scope:
+            add_textbox(slide, scope_label, 0.0, 2.58, 1.62, 0.32,
+                        fsize=12, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+            for t, x in scope:
+                add_item(slide, t, x, 2.58, width=1.976, height=0.62,
+                         fsize=11, align=PP_ALIGN.CENTER, fill_rgb=HCG_RED,
+                         color=WHITE, no_border=True, shadow=True)
+            centers = [(x + 0.99, 2.89) for _, x in scope]
+            add_arrow_flow(slide, centers)
+        if sub_details:
+            for x, txt in sub_details:
+                add_textbox(slide, txt, x, 3.28, 1.951, 0.55, fsize=9, color=DARK_GRAY)
+        if plan:
+            add_textbox(slide, plan_label, LABEL_X, 4.30, LABEL_W, 0.50,
+                        fsize=12, italic=True, align=PP_ALIGN.RIGHT, color=MED_GRAY)
+            add_textbox(slide, plan, 1.836, 4.30, 8.759, 1.35, fsize=10, color=DARK_GRAY)
+        if quote:
+            add_insight_quote(slide, quote, x=0.691, y=6.55, w=9.451)
+        return slide
+
+    # ── 고급 XML 헬퍼 데모 (Phase 1 갭 보강 시연) ────────────
+    def demo_advanced(self, title="고급 XML 디자인 요소", subtitle=None):
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[2])
+        set_title(slide, title, subtitle or "윤곽선·그림자·그라디언트·투명도·자간 (인간 _final 정합)")
+        # 그라디언트 박스 + 텍스트 윤곽선
+        add_item(slide, "Gradient + Outline", 0.69, 2.2, width=2.9, height=1.1,
+                 fsize=14, bold=True, align=PP_ALIGN.CENTER, color=WHITE,
+                 no_border=True, grad=(HCG_RED, CORAL_DK, 45),
+                 outline={"color": "FFFFFF", "width_pt": 1.0}, shadow=True)
+        # 그림자 박스
+        add_item(slide, "Drop Shadow", 3.95, 2.2, width=2.9, height=1.1,
+                 fsize=14, bold=True, align=PP_ALIGN.CENTER, color=WHITE,
+                 no_border=True, fill_rgb=BLUE, shadow=True)
+        # 반투명 박스 (겹침 표현)
+        base = add_item(slide, "", 7.2, 2.2, width=2.9, height=1.1,
+                        fill_rgb=DARK_GRAY, no_border=True)
+        over = add_item(slide, "Transparency 40%", 7.5, 2.5, width=2.4, height=0.9,
+                        fsize=12, bold=True, align=PP_ALIGN.CENTER, color=WHITE,
+                        no_border=True, fill_rgb=HCG_RED)
+        set_transparency(over, 40)
+        # 자간(tight) 시연
+        add_item(slide, "자간 -50 적용 타이틀", 0.69, 3.7, width=9.45, height=0.6,
+                 fsize=16, bold=True, align=PP_ALIGN.CENTER, color=HCG_RED,
+                 no_border=True, fill_rgb=GRAY_LT, spc=-50, anchor='ctr')
+        add_insight_quote(slide, "XML 레벨 제어로 인간 제작본 디자인 밀도에 근접", 0.69, 6.6, 9.45)
+        return slide
+
+    # ── 데이터 구동 렌더러 ────────────────────────────────────
+    def render(self, spec):
+        """spec = {"meta": {...}, "slides": [ {type, ...}, ... ]}"""
+        prs = self.prs
+        for s in spec.get("slides", []):
+            t = s.get("type")
+            if t == "cover":
+                self.cover(s["title"], s.get("subtitle", "- 제안서 -"), s.get("date"))
+            elif t == "toc":
+                self.toc([tuple(i) for i in s["items"]], s.get("title", "목차 (Contents)"))
+            elif t == "overview":
+                self.project_overview(
+                    s["subtitle"], s.get("background"),
+                    [tuple(x) for x in s.get("scope", [])] or None,
+                    [tuple(x) for x in s.get("sub_details", [])] or None,
+                    s.get("plan"), s.get("quote"))
+            elif t == "section":
+                build_section_divider(prs, s["num"], s["title"], s.get("sub", ""))
+            elif t == "body_2col":
+                build_body_2col(prs, s["title"], s["subtitle"], s["header_l"],
+                                s["header_r"], s["left"], s["right"])
+            elif t == "body_single":
+                build_body_single(prs, s["title"], s["subtitle"],
+                                  [tuple(r) for r in s["rows"]])
+            elif t == "body_process":
+                build_body_process(prs, s["title"], s["subtitle"],
+                                   [tuple(x) for x in s["steps"]],
+                                   [tuple(x) for x in s.get("desc", [])] or None)
+            elif t == "overview_3col":
+                build_overview_3col(prs, s["title"], s["subtitle"], s["cols"],
+                                    s.get("bar_label"), s.get("example", False))
+            elif t == "diff_matrix":
+                build_diff_matrix(prs, s["title"], s["subtitle"], s["rows"],
+                                  s.get("quote"), s.get("example", False))
+            elif t == "pain_point_categorized":
+                build_pain_point_categorized(prs, s["title"], s["subtitle"],
+                                             s["left_hdr"], s["right_hdr"],
+                                             [tuple(r) for r in s["rows"]],
+                                             s.get("summary_left"), s.get("summary_right"))
+            elif t == "approach_vs":
+                build_approach_vs(prs, s["title"], s["subtitle"], s["left_title"],
+                                  s["left"], s["right_title"], s["right"], s.get("quote"))
+            elif t == "process_roadmap":
+                build_process_roadmap(prs, s["title"], s["subtitle"], s["phases"])
+            elif t == "compare_table":
+                build_compare_table(prs, s["title"], s["subtitle"], s["headers"],
+                                    s["rows"], s.get("example", False))
+            elif t == "appendix":
+                build_body_single(prs, s.get("title", "Appendix"), s.get("subtitle", ""),
+                                  [tuple(r) for r in s["rows"]])
+            elif t == "demo_advanced":
+                self.demo_advanced(s.get("title", "고급 XML 디자인 요소"), s.get("subtitle"))
+            elif t == "end":
+                build_end(prs)
+            else:
+                print("  [skip] unknown slide type:", t)
+                continue
+            self._mark(s.get("label", t))
+        return self
+
+    def save(self, out=None):
+        path = out or self.out
+        print(f"\nSaving → {path}")
+        self.prs.save(path)
+        print("Done!")
+        return path
+
+
 def build():
     print("Loading template...")
     prs = Presentation(REAL)
@@ -1053,6 +1388,24 @@ def build():
     return OUT
 
 
+def render_spec_file(spec_path):
+    """JSON spec 파일 → PPT 생성. meta.template/out 사용 (없으면 기본값)."""
+    import json
+    with open(spec_path, encoding="utf-8") as f:
+        spec = json.load(f)
+    meta = spec.get("meta", {})
+    eng = DeckEngine(template=meta.get("template"), out=meta.get("out"))
+    eng.render(spec)
+    return eng.save()
+
+
 if __name__ == "__main__":
-    result = build()
+    # CLI: python auto_ppt.py [spec.json]
+    #   인자에 .json → 외부 데이터 구동 (통합 엔진)
+    #   인자 없음    → 기본 build() (롯데알미늄 25장, 하위호환)
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    if args and args[0].lower().endswith(".json"):
+        result = render_spec_file(args[0])
+    else:
+        result = build()
     print(f"\nOutput: {result}")
