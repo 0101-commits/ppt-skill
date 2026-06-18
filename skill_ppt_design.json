@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.3",
+  "version": "1.4",
+  "changelog_v1_4": "v1.4(=문서 v6.0) — 기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx 58장 전수 역엔지니어링. ★최우선 원칙: 기획 단계부터 '이 슬라이드를 N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 목차=텍스트나열 폐기→create_toc_slide(어젠다카드: 좌측 accent블록+로마숫자+섹션명+활성행 빨간 윤곽 하이라이트, current 이동으로 섹션 디바이더 겸용). 본문=add_structured_content_blocks(리스트→N등분 카드 그리드, 헤더밴드+윤곽선+그림자, margin/padding 계산식 내장). 박스안박스=add_container_box. DeckEngine 베이스=기아 _final(없으면 롯데 폴백), toc/section_divider/content_blocks/container_slide 메서드 + spec 타입(toc섹션명리스트·section_agenda·blocks·container) 추가. 기아 브랜드 팔레트 C72128.",
   "changelog_v1_3": "v1.3 — 인간 _final XML 딥다이브(OxmlElement) 기반 고급 디자인 보강. 실측 갭: 텍스트윤곽선 1807·그림자 60·투명도 2478·그라디언트 43·자간(-30~-100) vs AI Draft 전부 0. xml_advanced_design(윤곽선/그림자/투명도/그라디언트/자간/세로정렬 헬퍼 6종 + add_item 고급 옵션), bullet_to_shape_rules, mbb_grid_system, master_engine_DeckEngine(데이터 구동 spec 스키마·CLI) 추가. auto_ppt.py 단일 마스터 엔진으로 통합(kia/lotte는 콜러 유지).",
   "changelog_v1_2": "v1.2 — 기아 AI Draft vs 인간 _final 도형 통계 비교(AI 5.5도식/장 vs 인간 23도식/장; AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개). density_diagram_targets, new_helpers_v2(connector_line·arrow_flow·table·icon_placeholder·process_roadmap·compare_table), scale_guidance 추가.",
   "changelog": "v1.1 — 롯데알미늄 _final XML 도형 좌표 전수 실측. 고급 도식 패턴(Pain Point 카테고리화·VS 대비·3컬럼 STEP Overview·직군 차별화 매트릭스·예시적 배지·insight quote) + auto_ppt.py 신규 헬퍼 지시어 추가. 아이콘(PICTURE)은 자동생성 제외(한계).",
@@ -309,7 +310,10 @@
     },
     "slide_types": {
       "cover": "{title, subtitle?='- 제안서 -', date?}",
-      "toc": "{items:[[번호,섹션명,페이지],...], title?}",
+      "toc": "{items:['섹션명',..] (권장) | [[번호,섹션명,페이지],..] 호환, title?, current?:int} — v6.0 어젠다카드",
+      "section_agenda": "{sections:['섹션명',..], current:int} — 동일 어젠다카드 하이라이트 이동",
+      "blocks": "{title, subtitle, items:[{title,body|bullets}], y?, h?, numbered?, bar_label?, quote?, example?} — N등분 카드 그리드",
+      "container": "{title, subtitle, containers:[{x,y,w,h,fill?,title?,items:[{head,body}]}]} — 박스 안 박스",
       "overview": "{subtitle, background?, scope?:[[라벨,x],..], sub_details?:[[x,설명],..], plan?, quote?}",
       "section": "{num, title, sub?}",
       "body_2col": "{title, subtitle, header_l, header_r, left:[..], right:[..]}",
@@ -325,6 +329,55 @@
       "demo_advanced": "{title?, subtitle?} — 윤곽선/그림자/그라디언트/투명도/자간 시연",
       "end": "{}"
     }
+  },
+  "text_to_visual_engine_v6": {
+    "_원칙": "★기획 단계부터 'N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 텍스트 줄글 나열 폐기.",
+    "_근거": "기아 _final 58장 전수 shape-tree 파싱(좌표 cm 실측, 그룹 재귀). 산출물: analyze_final.py / final_analysis.json / STRUCTURE_REPORT*.md.",
+    "file_spec_kia": {
+      "슬라이드_크기": "27.52 x 19.05 cm = 10.835\" x 7.5\"",
+      "레이아웃": ["표지", "목차", "본문", "End of document"],
+      "총장수": 58,
+      "주폰트": "맑은 고딕 (미세주석 Malgun Gothic Semilight)"
+    },
+    "brand_palette_kia": {
+      "KIA_RED": {"rgb": "#C72128", "용도": "시그니처 레드 — 활성 섹션 accent/윤곽 하이라이트/헤더밴드"},
+      "KIA_RED_LT": {"rgb": "#E5838A", "용도": "연한 레드 — 비활성 섹션 마커"},
+      "ACCENT_OR": {"rgb": "#F16249", "용도": "강조 폰트 코랄(56회)"},
+      "DEEP_RED": {"rgb": "#C00000", "용도": "진한 강조 레드(18회)"},
+      "CONTAINER_GR": {"rgb": "#E6E6E6", "용도": "컨테이너 박스 회색 배경"},
+      "SKY": {"rgb": "#5D8ECF", "용도": "컨테이너 스카이블루"},
+      "STEEL": {"rgb": "#3265A8", "용도": "차트 스틸블루"},
+      "NAVY": {"rgb": "#002459", "용도": "차트 딥네이비"},
+      "PALE_BLUE": {"rgb": "#D0E7F8", "용도": "옅은 블루 배경"}
+    },
+    "toc_agenda_card": {
+      "_설명": "목차/섹션 디바이더 겸용 어젠다카드(slide 1·17·52 실측, cm).",
+      "외곽카드": {"x": 5.40, "y": 4.93, "w": 20.37, "h": 12.02, "스타일": "white, 0.5pt border, 그림자"},
+      "섹션행": {"x": 5.79, "w": 19.98, "h": 3.54, "pitch": 3.54, "비고": "contiguous, 세로 중앙정렬"},
+      "좌_accent": {"x": 5.79, "w": 2.74, "h": 3.54, "활성": "#C72128", "비활성": "#E5838A"},
+      "로마숫자": {"x": 6.77, "w": 0.79, "스타일": "18pt bold 흰색 (Ⅰ Ⅱ Ⅲ …)"},
+      "섹션명": {"x": 10.54, "w": 12.93, "스타일": "18pt, 활성=#C72128 bold / 비활성=black"},
+      "활성_하이라이트": {"x": 6.16, "w": 19.61, "h": 3.31, "스타일": "빨간(#C72128) 윤곽 0.75~1.5pt, current 행 위"},
+      "함수": "create_toc_slide(prs, sections, current, layout_idx=1, title=None) / DeckEngine.toc(sections, current=i) / DeckEngine.section_divider(sections, current)"
+    },
+    "structured_content_blocks": {
+      "_설명": "리스트형 텍스트 → N등분 카드 그리드 (Text-to-Visual 핵심).",
+      "계산식": "card_w=(W-gap*(n-1))/n, W=24.71\"(본문가용폭, 마진 x=0.575\"), gap=0.26\"",
+      "카드": "ROUNDED_RECTANGLE, white fill, accent 1pt 윤곽, 그림자",
+      "헤더밴드": "상단 header_h=0.62\", accent(#C72128) 채움 + 흰 bold 타이틀(번호 옵션)",
+      "본문": "헤더 아래 padding 0.13\", bullets 또는 단락, 행간 118%",
+      "자동축소": "n>=4 → title11/body9.5pt, n>=5 → 10/9pt",
+      "함수": "add_structured_content_blocks(slide, items, x?, y=2.05, w?, h=4.30, gap=0.26, accent?, numbered=True) / DeckEngine.content_blocks(title, subtitle, items, ...)",
+      "items": "[{'title','body'} | {'title','bullets':[..]} | 문자열]"
+    },
+    "container_box": {
+      "_설명": "박스 안 박스 (slide 3·31 실측). 외곽 SOLID 박스 안 내부 TextBox N개 가로 균등 분할.",
+      "함수": "add_container_box(slide, x, y, w, h, inner_items, fill?, title?) / DeckEngine.container_slide(title, subtitle, containers)",
+      "inner_items": "[{'head','body'} | 문자열]",
+      "비고": "좌표 cm는 CM(v) 헬퍼로 inch 변환"
+    },
+    "architecture": "DeckEngine() 기본 베이스 = 기아 _final(KIA_FINAL, 없으면 롯데 REAL 폴백). 깡통 아님 — master/layout(표지·목차·본문)·테마·폰트 100% 상속 후 덧그림. 레이아웃은 이름('목차','본문')으로 안전 접근.",
+    "run": "python auto_ppt.py → v6.0 쇼케이스(기아 템플릿, 어젠다카드+카드그리드+컨테이너) / legacy → 롯데25장 / spec.json → 데이터구동"
   },
   "handoff": {
     "from": "skill_ppt_planning.json",

@@ -67,6 +67,31 @@ WINE       = RGBColor(0x79, 0x40, 0x39)
 CORAL_DK   = RGBColor(0x40, 0x0A, 0x07)
 BLUE       = RGBColor(0x35, 0x6C, 0xB5)
 
+# ── v6.0 KIA _final 실측 브랜드 팔레트 ────────────────────
+#   (기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx 역추출)
+#   FILL 빈도: E5838A(10) C72128(5) FFFFFF(5) E6E6E6 5D8ECF 3265A8 002459 D0E7F8...
+#   FONT 빈도: 000000(1087) FFFFFF(86) F16249(56) C00000(18) 919191(5)
+KIA_RED      = RGBColor(0xC7, 0x21, 0x28)   # HCG/기아 시그니처 레드 (활성 강조)
+KIA_RED_LT   = RGBColor(0xE5, 0x83, 0x8A)   # 연한 레드 (비활성 마커)
+ACCENT_OR    = RGBColor(0xF1, 0x62, 0x49)   # 강조 폰트 코랄
+DEEP_RED     = RGBColor(0xC0, 0x00, 0x00)   # 진한 강조 레드
+NAVY         = RGBColor(0x00, 0x24, 0x59)   # 차트 딥네이비
+STEEL        = RGBColor(0x32, 0x65, 0xA8)   # 차트 스틸블루
+SKY          = RGBColor(0x5D, 0x8E, 0xCF)   # 컨테이너 스카이블루
+PALE_BLUE    = RGBColor(0xD0, 0xE7, 0xF8)   # 옅은 블루 배경
+CONTAINER_GR = RGBColor(0xE6, 0xE6, 0xE6)   # 컨테이너 회색 배경
+LINE_GRAY    = RGBColor(0x4F, 0x4F, 0x4F)   # 연결선 회색
+
+# 기아 _final 템플릿 (best-practice 베이스). 없으면 REAL(롯데)로 폴백.
+KIA_FINAL = ("C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\"
+             "09 Admin\\09 etc\\other\\Claude\\기아 제안서\\"
+             "기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx")
+
+# cm → inch 헬퍼 (실측 좌표가 cm 단위 → inch 변환)
+def CM(v):
+    """cm 값을 inch float로 변환 (1 inch = 2.54 cm)."""
+    return v / 2.54
+
 
 # ════════════════════════════════════════════════════════════
 # 헬퍼 함수
@@ -944,6 +969,258 @@ def set_text_anchor(shape, anchor='ctr'):
 
 
 # ════════════════════════════════════════════════════════════
+# Phase 2/3 핵심 — Text-to-Visual 구조화 엔진 (v6.0)
+#   인간 _final 역추출 패턴을 그대로 재현하는 좌표·도형 함수.
+#   ① create_toc_slide        : 목차=텍스트나열 폐기 → 인간 어젠다카드 재현
+#   ② add_structured_content_blocks : 리스트 텍스트 → N등분 카드 그리드
+#   ③ add_container_box        : 박스 안 박스(컨테이너) 레이아웃
+# ════════════════════════════════════════════════════════════
+
+# ── 목차/섹션 어젠다 카드 (인간 _final slide 1·17·52 실측 재현) ──
+#   구조(cm): 외곽카드 x5.4 y4.93 w20.37 h(=N행). 행 h=3.54 contiguous.
+#   행 = [좌측 accent블록 w2.74 | 로마숫자 | 섹션명 18pt]. 활성 행만
+#   accent=KIA_RED(C72128)+빨간 윤곽 하이라이트, 비활성 accent=KIA_RED_LT.
+ROMAN = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ"]
+
+
+def create_toc_slide(prs, sections, current=None, layout_idx=1,
+                     title=None):
+    """목차/섹션 디바이더 슬라이드 생성 (인간 _final 어젠다카드 100% 재현).
+
+    sections : ["제안 배경", "수행 방안", "일정 및 조직", ...]  (섹션명 리스트)
+    current  : 강조할 섹션 인덱스(0-base). None이면 전체 목차(첫 섹션 강조).
+    layout_idx : 사용할 레이아웃 (1='목차').
+    title    : 좌상단 제목(옵션). None이면 생략(인간 final은 제목 없음).
+
+    좌표는 실측 cm값을 CM()으로 inch 변환 — 인간본과 픽셀 단위 정합.
+    """
+    slide = prs.slides.add_slide(prs.slide_layouts[layout_idx])
+    n = len(sections)
+
+    # 외곽 카드 (white solid, 0.5pt 테두리)
+    card_x, card_w = CM(5.4), CM(20.37)
+    row_h = CM(3.54)
+    total_h = row_h * n
+    card_y = (DeckEngine.SLIDE_H - total_h) / 2.0 + 0.30   # 살짝 아래 정렬
+    card = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                  Inches(card_x), Inches(card_y - CM(0.64)),
+                                  Inches(card_w), Inches(total_h + CM(1.28)))
+    card.fill.solid(); card.fill.fore_color.rgb = WHITE
+    _set_line_dark(card, 0.5)
+    add_shadow(card, blur_pt=6, dist_pt=3, alpha_pct=70)
+
+    accent_x, accent_w = CM(5.79), CM(2.74)
+    roman_x, roman_w = CM(6.77), CM(0.79)
+    title_x = CM(10.54)
+    title_w = CM(12.93)
+
+    if current is None:
+        current = 0
+
+    for i, sec in enumerate(sections):
+        y = card_y + i * row_h
+
+        # 행 배경 (white, 옅은 테두리) — contiguous 행 구분선 효과
+        row_bg = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                        Inches(accent_x), Inches(y),
+                                        Inches(card_w - CM(0.78)), Inches(row_h))
+        row_bg.fill.solid(); row_bg.fill.fore_color.rgb = WHITE
+        _set_line_dark(row_bg, 0.5)
+
+        # 좌측 accent 블록 (활성=KIA_RED, 비활성=KIA_RED_LT)
+        active = (i == current)
+        accent = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                        Inches(accent_x), Inches(y),
+                                        Inches(accent_w), Inches(row_h))
+        accent.fill.solid()
+        accent.fill.fore_color.rgb = KIA_RED if active else KIA_RED_LT
+        accent.line.fill.background()
+
+        # 로마 숫자 (accent 위, 18pt bold 흰색)
+        rbox = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                      Inches(accent_x), Inches(y),
+                                      Inches(accent_w), Inches(row_h))
+        rbox.fill.background(); rbox.line.fill.background()
+        set_text_anchor(rbox, 'ctr')
+        rp = rbox.text_frame.paragraphs[0]; rp.alignment = PP_ALIGN.CENTER
+        _add_run(rp, ROMAN[i] if i < len(ROMAN) else str(i + 1),
+                 fsize=18, bold=True, color=WHITE)
+
+        # 섹션명 (18pt, 활성=KIA_RED / 비활성=BLACK)
+        tbox = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                      Inches(title_x), Inches(y),
+                                      Inches(title_w), Inches(row_h))
+        tbox.fill.background(); tbox.line.fill.background()
+        set_text_anchor(tbox, 'ctr')
+        tp = tbox.text_frame.paragraphs[0]; tp.alignment = PP_ALIGN.LEFT
+        _add_run(tp, sec, fsize=18, bold=active,
+                 color=KIA_RED if active else BLACK)
+
+        # 활성 행 빨간 윤곽 하이라이트 (인간 final FREEFORM 재현)
+        if active:
+            hl = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                        Inches(accent_x + CM(0.37)),
+                                        Inches(y + CM(0.33)),
+                                        Inches(CM(19.61)), Inches(CM(3.31) * row_h / CM(3.54)))
+            hl.fill.background()
+            hl.line.color.rgb = KIA_RED
+            hl.line.width = Pt(1.5)
+
+    if title:
+        add_textbox(slide, title, CM(1.46), CM(0.64), CM(24.71), CM(0.78),
+                    fsize=18, bold=True, color=KIA_RED)
+    return slide
+
+
+# ── 구조화 콘텐츠 블록: 리스트 텍스트 → N등분 카드 그리드 ──
+#   Phase 2 계산식: 가용폭 W, n개 카드, 카드간 gap → card_w=(W-gap*(n-1))/n.
+#   각 카드 = 모서리 둥근 직사각형 컨테이너 + 상단 헤더밴드(accent) + 본문.
+#   margin/padding 내장, 윤곽선·그림자 XML 적용 (인간본 디자인 밀도).
+def add_structured_content_blocks(slide, items, x=None, y=2.05,
+                                   w=None, h=4.30, gap=0.26,
+                                   accent=None, header_h=0.62,
+                                   pad=0.13, title_size=12,
+                                   body_size=10.5, numbered=True,
+                                   body_align=PP_ALIGN.LEFT,
+                                   shadow=True):
+    """리스트형 텍스트를 자동으로 N개의 카드 그리드로 변환 배치.
+
+    items : [{"title": "...", "body": "...", "bullets": [..](옵션)}, ...]
+            (문자열만 주면 title 없는 단일 본문 카드로 처리)
+    x, w  : 그리드 영역 좌측 x / 전체 폭 (None이면 본문 표준 마진 사용)
+    n     : len(items) (최대 4 권장; 그 이상은 자동 축소 폰트)
+    반환  : 생성된 카드 컨테이너 shape 리스트.
+
+    계산식:
+      card_w = (w - gap*(n-1)) / n
+      카드 내부 본문폭 = card_w - 2*pad
+      헤더밴드 = 카드 상단 header_h, accent 채움 + 흰 bold 타이틀
+      본문영역 = 헤더 아래 (h - header_h - pad)
+    """
+    if x is None:
+        x = CM(1.46)               # 본문 좌측 마진 실측
+    if w is None:
+        w = CM(24.71)              # 본문 가용폭 실측
+    if accent is None:
+        accent = KIA_RED
+    n = max(1, len(items))
+    card_w = (w - gap * (n - 1)) / n
+    # 카드 수 많으면 폰트 자동 축소
+    if n >= 4:
+        title_size = min(title_size, 11)
+        body_size = min(body_size, 9.5)
+    if n >= 5:
+        title_size = min(title_size, 10)
+        body_size = min(body_size, 9)
+
+    shapes = []
+    for i, item in enumerate(items):
+        if isinstance(item, str):
+            item = {"title": "", "body": item}
+        cx = x + i * (card_w + gap)
+
+        # ① 카드 컨테이너 (모서리 둥근 직사각형, 옅은 회색 배경 + 그림자)
+        card = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
+                                      Inches(cx), Inches(y),
+                                      Inches(card_w), Inches(h))
+        card.fill.solid(); card.fill.fore_color.rgb = WHITE
+        card.line.color.rgb = accent
+        card.line.width = Pt(1.0)
+        if shadow:
+            add_shadow(card, blur_pt=5, dist_pt=2.5, alpha_pct=68)
+        shapes.append(card)
+
+        # ② 헤더 밴드 (accent 채움, 흰 bold 타이틀) — 번호 옵션
+        title = item.get("title", "")
+        if title:
+            head_txt = (f"{i+1}. {title}" if numbered else title)
+            hb = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
+                                        Inches(cx), Inches(y),
+                                        Inches(card_w), Inches(header_h))
+            hb.fill.solid(); hb.fill.fore_color.rgb = accent
+            hb.line.fill.background()
+            set_text_anchor(hb, 'ctr')
+            hp = hb.text_frame.paragraphs[0]; hp.alignment = PP_ALIGN.CENTER
+            _add_run(hp, head_txt, fsize=title_size, bold=True, color=WHITE)
+            body_y = y + header_h + pad * 0.6
+            body_h = h - header_h - pad * 1.6
+        else:
+            body_y = y + pad
+            body_h = h - pad * 2
+
+        # ③ 본문 (bullets 리스트 or 단락)
+        tb = slide.shapes.add_textbox(Inches(cx + pad), Inches(body_y),
+                                      Inches(card_w - 2 * pad), Inches(body_h))
+        _set_no_fill(tb)
+        tf = tb.text_frame; tf.word_wrap = True
+        tf.margin_left = tf.margin_right = Inches(0.04)
+        tf.margin_top = tf.margin_bottom = Inches(0.03)
+        bullets = item.get("bullets")
+        if bullets:
+            for j, b in enumerate(bullets):
+                p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
+                p.alignment = body_align
+                _add_run(p, "• " + b, fsize=body_size, color=DARK_GRAY)
+                _set_line_spacing(p, 118)
+        else:
+            p = tf.paragraphs[0]; p.alignment = body_align
+            _add_run(p, item.get("body", ""), fsize=body_size, color=DARK_GRAY)
+            _set_line_spacing(p, 118)
+    return shapes
+
+
+# ── 컨테이너(박스 안 박스) 레이아웃 (인간 _final slide 3·31 재현) ──
+def add_container_box(slide, x, y, w, h, inner_items, fill=None,
+                      title=None, title_size=12, inner_size=9.5,
+                      inner_gap=0.20, label_h=0.0):
+    """외곽 컨테이너 박스 + 내부 N개 텍스트 블록 (가로 분할) 배치.
+
+    inner_items : [{"head":..,"body":..}, ...] 또는 문자열 리스트.
+    fill        : 외곽 박스 채움색 (기본 CONTAINER_GR 회색).
+    title       : 컨테이너 상단 라벨(옵션).
+    인간본: 외곽 SOLID 박스(E6E6E6/5D8ECF) 안에 TextBox 3~4개 균등 배치.
+    """
+    if fill is None:
+        fill = CONTAINER_GR
+    outer = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
+                                   Inches(x), Inches(y), Inches(w), Inches(h))
+    outer.fill.solid(); outer.fill.fore_color.rgb = fill
+    outer.line.fill.background()
+    add_shadow(outer, blur_pt=5, dist_pt=2.5, alpha_pct=72)
+
+    top = y + 0.12
+    if title:
+        add_textbox(slide, title, x + 0.15, y + 0.06, w - 0.30, 0.34,
+                    fsize=title_size, bold=True, color=WHITE
+                    if fill in (KIA_RED, NAVY, STEEL, SKY) else DARK_GRAY)
+        top = y + 0.48
+    n = max(1, len(inner_items))
+    pad = 0.18
+    inner_w = (w - pad * 2 - inner_gap * (n - 1)) / n
+    inner_h = h - (top - y) - 0.18
+    for i, it in enumerate(inner_items):
+        if isinstance(it, str):
+            it = {"head": "", "body": it}
+        ix = x + pad + i * (inner_w + inner_gap)
+        tb = slide.shapes.add_textbox(Inches(ix), Inches(top),
+                                      Inches(inner_w), Inches(inner_h))
+        tf = tb.text_frame; tf.word_wrap = True
+        tf.margin_left = tf.margin_right = Inches(0.04)
+        tf.margin_top = tf.margin_bottom = Inches(0.03)
+        p0 = tf.paragraphs[0]
+        if it.get("head"):
+            p0.alignment = PP_ALIGN.LEFT
+            _add_run(p0, it["head"], fsize=inner_size + 1, bold=True, color=KIA_RED)
+            pb = tf.add_paragraph()
+        else:
+            pb = p0
+        pb.alignment = PP_ALIGN.LEFT
+        _add_run(pb, it.get("body", ""), fsize=inner_size, color=DARK_GRAY)
+        _set_line_spacing(pb, 116)
+    return outer
+
+
+# ════════════════════════════════════════════════════════════
 # 통합 마스터 엔진 — DeckEngine (v5.0)
 #   "어떤 프로젝트든 auto_ppt.py 하나만 호출 → 외부 데이터(spec)로 PPT 생성"
 #   - 템플릿 로드 + 슬라이드 삭제 자동
@@ -954,16 +1231,29 @@ def set_text_anchor(shape, anchor='ctr'):
 # ════════════════════════════════════════════════════════════
 
 class DeckEngine:
-    SLIDE_W = 10.833
-    SLIDE_H = 7.5
+    SLIDE_W = 10.835   # 27.52cm — KIA/HCG 공통 마스터 실측
+    SLIDE_H = 7.5      # 19.05cm
 
     def __init__(self, template=None, out=None):
-        self.template = template or REAL
+        # v6.0: best-practice 베이스 = 기아 _final. 없으면 롯데(REAL) 폴백.
+        if template is None:
+            template = KIA_FINAL if os.path.exists(KIA_FINAL) else REAL
+        self.template = template
         self.out = out or OUT
-        print("Loading template:", self.template)
+        print("Loading base template:", self.template)
         self.prs = Presentation(self.template)
+        # 베이스 템플릿을 '깡통'이 아닌 디자인 상속용으로 사용 →
+        # 슬라이드만 비우고 master/layout(표지·목차·본문)·테마·폰트는 보존.
         delete_all_slides(self.prs)
         self.count = 0
+        # 레이아웃 이름→인덱스 매핑 (이름 기반 안전 접근)
+        self.layout_by_name = {}
+        for i, lay in enumerate(self.prs.slide_layouts):
+            self.layout_by_name[lay.name] = i
+
+    def _layout(self, name, fallback):
+        """레이아웃을 이름으로 우선 탐색, 없으면 fallback 인덱스."""
+        return self.layout_by_name.get(name, fallback)
 
     def _mark(self, label):
         self.count += 1
@@ -984,29 +1274,56 @@ class DeckEngine:
                         fsize=10, align=PP_ALIGN.CENTER, color=DARK_GRAY)
         return slide
 
-    # ── 일반화된 toc ──────────────────────────────────────────
-    def toc(self, items, title="목차 (Contents)"):
-        """items = [(번호, 섹션명, 페이지범위), ...]"""
-        slide = self.prs.slides.add_slide(self.prs.slide_layouts[1])
-        add_textbox(slide, title, 0.5, 0.3, 9.8, 0.5,
-                    fsize=18, bold=True, color=HCG_RED, )
-        ln = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
-                                    Inches(0.5), Inches(0.9), Inches(9.8), Inches(0.03))
-        ln.fill.solid(); ln.fill.fore_color.rgb = HCG_RED; ln.line.fill.background()
-        n = len(items)
-        y = 1.3
-        step = min(1.0, (6.6 - y) / max(1, n))
-        for num, sec, pg in items:
-            c = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL,
-                                       Inches(0.6), Inches(y - 0.04), Inches(0.45), Inches(0.45))
-            c.fill.solid(); c.fill.fore_color.rgb = HCG_RED; c.line.fill.background()
-            add_shadow(c, blur_pt=3, dist_pt=1.5, alpha_pct=65)
-            cp = c.text_frame.paragraphs[0]; cp.alignment = PP_ALIGN.CENTER
-            _add_run(cp, num, fsize=14, bold=True, color=WHITE)
-            add_textbox(slide, sec, 1.3, y, 7.3, 0.5, fsize=14, color=DARK_GRAY)
-            add_textbox(slide, pg, 8.8, y, 1.2, 0.5, fsize=12,
-                        align=PP_ALIGN.RIGHT, color=MED_GRAY)
-            y += step
+    # ── 목차/섹션 어젠다 (v6.0: 텍스트 나열 폐기 → 인간 카드 재현) ──
+    def toc(self, items, title=None, current=None):
+        """목차 슬라이드. items = ["섹션명", ...] 또는 [(번호,섹션명,페이지)..].
+        구버전 튜플 입력도 호환 (섹션명만 추출). current=강조 인덱스.
+        실제 도형 배치는 create_toc_slide()에 위임 (인간 _final 재현)."""
+        sections = []
+        for it in items:
+            if isinstance(it, (list, tuple)):
+                # (번호, 섹션명, 페이지) → 섹션명만 사용
+                sections.append(str(it[1]) if len(it) > 1 else str(it[0]))
+            else:
+                sections.append(str(it))
+        return create_toc_slide(self.prs, sections, current=current,
+                                layout_idx=self._layout('목차', 1), title=title)
+
+    def section_divider(self, sections, current):
+        """섹션 디바이더 = 같은 어젠다카드에서 current 섹션만 강조 이동."""
+        return create_toc_slide(self.prs, sections, current=current,
+                                layout_idx=self._layout('목차', 1))
+
+    # ── 구조화 콘텐츠 블록 슬라이드 (Text-to-Visual 핵심) ────────
+    def content_blocks(self, title, subtitle, items, y=2.05, h=4.30,
+                       accent=None, numbered=True, bar_label=None,
+                       quote=None, example=False):
+        """리스트형 텍스트 → N등분 카드 그리드 본문 슬라이드.
+        items = [{"title","body"|"bullets"}, ...]."""
+        slide = self.prs.slides.add_slide(
+            self.prs.slide_layouts[self._layout('본문', 2)])
+        set_title(slide, title, subtitle)
+        if bar_label:
+            add_header_bar(slide, bar_label)
+            y = max(y, 2.05)
+        add_structured_content_blocks(slide, items, y=y, h=h,
+                                      accent=accent, numbered=numbered)
+        if quote:
+            add_insight_quote(slide, quote, x=CM(1.46), y=6.70, w=CM(24.71))
+        if example:
+            add_example_badge(slide)
+        return slide
+
+    # ── 컨테이너(박스 안 박스) 슬라이드 ──────────────────────────
+    def container_slide(self, title, subtitle, containers):
+        """containers = [{"x","y","w","h","fill","title","items":[...]}...]."""
+        slide = self.prs.slides.add_slide(
+            self.prs.slide_layouts[self._layout('본문', 2)])
+        set_title(slide, title, subtitle)
+        for c in containers:
+            add_container_box(slide, c["x"], c["y"], c["w"], c["h"],
+                              c["items"], fill=c.get("fill"),
+                              title=c.get("title"))
         return slide
 
     # ── 일반화된 Project Overview (kia/lotte 중복 통합) ───────
@@ -1080,7 +1397,19 @@ class DeckEngine:
             if t == "cover":
                 self.cover(s["title"], s.get("subtitle", "- 제안서 -"), s.get("date"))
             elif t == "toc":
-                self.toc([tuple(i) for i in s["items"]], s.get("title", "목차 (Contents)"))
+                # v6.0: 섹션명 리스트(권장) 또는 (번호,섹션명,페이지) 튜플 호환
+                self.toc(s["items"], s.get("title"), s.get("current"))
+            elif t == "section_agenda":
+                self.section_divider(s["sections"], s["current"])
+            elif t == "blocks":
+                self.content_blocks(s["title"], s["subtitle"], s["items"],
+                                    y=s.get("y", 2.05), h=s.get("h", 4.30),
+                                    numbered=s.get("numbered", True),
+                                    bar_label=s.get("bar_label"),
+                                    quote=s.get("quote"),
+                                    example=s.get("example", False))
+            elif t == "container":
+                self.container_slide(s["title"], s["subtitle"], s["containers"])
             elif t == "overview":
                 self.project_overview(
                     s["subtitle"], s.get("background"),
@@ -1388,6 +1717,61 @@ def build():
     return OUT
 
 
+def build_showcase(out=None):
+    """v6.0 쇼케이스 — 기아 _final 템플릿 위에 신규 엔진 기능 시연.
+    목차(어젠다카드) + 섹션 디바이더 + 구조화 카드 그리드(3/4분할) + 컨테이너."""
+    out = out or "C:\\Users\\cgpar\\ppt-skill\\HCG_Automated_Draft.pptx"
+    eng = DeckEngine(template=None, out=out)   # None → KIA_FINAL 자동
+    sections = ["제안 배경", "수행 방안", "일정 및 조직"]
+
+    # S1 표지
+    eng.cover("기아 중장기 보상체계 개선 추진", "- 제안서 -", "2025. 09")
+    eng._mark("Cover")
+
+    # S2 목차 (전체 어젠다 — 첫 섹션 강조)
+    eng.toc(sections, current=0)
+    eng._mark("TOC agenda")
+
+    # S3 섹션 디바이더 (II 강조로 이동 — 동일 카드, 하이라이트만 하강)
+    eng.section_divider(sections, current=1)
+    eng._mark("Section II divider")
+
+    # S4 구조화 3-카드 그리드 (Text-to-Visual)
+    eng.content_blocks(
+        "Why HCG", "HCG는 3대 핵심 역량을 통해 금번 프로젝트를 성공적으로 추진",
+        [{"title": "자동차 산업 이해",
+          "bullets": ["현대/기아 그룹 계열사 다수 수행", "산업 보상 트렌드 보유"]},
+         {"title": "대기업 보상 경험",
+          "bullets": ["국내 대기업 보상 프로젝트 다수", "복잡·세분화 주제 전문성"]},
+         {"title": "직군별 차별화 노하우",
+          "bullets": ["직군 특화 방법론 구축", "Key Question 기반 추진"]}],
+        quote="국내 최고 인사/조직 전문 컨설팅 역량으로 성공적 추진")
+    eng._mark("3-card blocks")
+
+    # S5 구조화 4-카드 그리드 (번호형, 자동 폰트 축소)
+    eng.content_blocks(
+        "수행 방안 Overview", "4단계 접근으로 중장기 보상체계 개선 추진",
+        [{"title": "벤치마킹", "body": "글로벌/로컬 보상 수준 진단 및 시장 경쟁력 분석"},
+         {"title": "현황 진단", "body": "내부 보상 데이터 분석 및 Pain Point 도출"},
+         {"title": "체계 설계", "body": "직무가치 기반 Pay Band 및 성과연동 보상 설계"},
+         {"title": "실행 로드맵", "body": "단계적 전환 계획 및 Change Management"}],
+        bar_label="중장기 보상체계 개선 4-Step Approach")
+    eng._mark("4-card blocks")
+
+    # S6 컨테이너(박스 안 박스)
+    eng.container_slide(
+        "Global Big Data Analytics", "외부 플랫폼 + 자체 데이터 융합 분석 체계",
+        [{"x": CM(4.86), "y": 2.10, "w": CM(20.89), "h": 1.95,
+          "fill": CONTAINER_GR, "title": None,
+          "items": [{"head": "활성 이용자 데이터", "body": "월 1,000만명 제출 보상 데이터"},
+                    {"head": "자체 플랫폼", "body": "실시간 데이터 보유"},
+                    {"head": "서베이 연계", "body": "Mercer/Radford 등 확보"}]}])
+    eng._mark("Container box-in-box")
+
+    eng.save()
+    return out
+
+
 def render_spec_file(spec_path):
     """JSON spec 파일 → PPT 생성. meta.template/out 사용 (없으면 기본값)."""
     import json
@@ -1405,7 +1789,9 @@ if __name__ == "__main__":
     #   인자 없음    → 기본 build() (롯데알미늄 25장, 하위호환)
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     if args and args[0].lower().endswith(".json"):
-        result = render_spec_file(args[0])
+        result = render_spec_file(args[0])         # 외부 데이터 구동
+    elif args and args[0].lower() == "legacy":
+        result = build()                            # 롯데알미늄 25장 (하위호환)
     else:
-        result = build()
+        result = build_showcase()                   # v6.0 신규 엔진 쇼케이스(기본)
     print(f"\nOutput: {result}")

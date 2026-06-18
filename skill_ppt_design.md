@@ -1,13 +1,46 @@
 ---
 name: hcg-ppt-design
 description: >
-  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v5.0.
-  롯데알미늄 _final PPTX 전수 XML 분석 — 25장 구조/레이아웃/색상/좌표 정합 +
+  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v6.0.
+  기아 _final + 롯데알미늄 _final PPTX 전수 역엔지니어링 — 구조/레이아웃/색상/좌표 정합 +
+  Text-to-Visual 구조화 엔진(목차 어젠다카드 / N등분 카드 그리드 / 컨테이너) +
   XML 레벨 고급 디자인(윤곽선/그림자/투명도/그라디언트/자간) + DeckEngine 통합 엔진.
-  도식화·구성·구조화 패턴 포함. 신규 제안서 작성 시 먼저 로드.
+  신규 제안서 작성 시 먼저 로드. 본문은 텍스트 나열 금지 — 반드시 구조화 블록으로 설계.
 ---
 
-# HCG 제안서 PPT 디자인 가이드라인 v5.0
+# ⚡ v6.0 핵심 원칙 (먼저 읽을 것)
+
+> **기획 단계부터 "이 슬라이드를 N개 구조화 블록으로 디자인한다"를 먼저 결정하고
+> auto_ppt.py 신규 함수를 명시적으로 호출하라. 텍스트 줄글 나열은 폐기.**
+
+1. **목차 = 텍스트 나열 금지.** `create_toc_slide(prs, sections, current=i)` 또는
+   `DeckEngine.toc(sections, current=i)` 호출 → 인간 _final 어젠다카드(좌측 accent
+   블록 + 로마숫자 + 섹션명 + 활성 행 빨간 윤곽 하이라이트) 자동 재현. 섹션 디바이더는
+   같은 카드에서 `current`만 다음 섹션으로 이동.
+2. **본문 = 구조화 블록.** 핵심 포인트가 3~4개면 줄글 대신
+   `add_structured_content_blocks(slide, items)` 또는 `DeckEngine.content_blocks(...)`
+   호출 → 화면을 N등분, 각 카드 = 모서리 둥근 직사각형(브랜드색 헤더밴드 + 윤곽선 +
+   그림자) 자동 배치. `items=[{"title","body"|"bullets"}, ...]`.
+3. **박스 안 박스 = 컨테이너.** `add_container_box(...)` / `DeckEngine.container_slide(...)`
+   → 외곽 박스(회색/블루) 안에 내부 텍스트 블록 N개 균등 배치.
+4. **베이스 = 깡통 아님.** `DeckEngine`은 기아 _final을 베이스 템플릿으로 복제하여
+   master/layout(표지·목차·본문)·테마·폰트를 100% 상속한 위에 덧그린다.
+
+```python
+from auto_ppt import DeckEngine
+eng = DeckEngine()                          # 기아 _final 자동 상속(없으면 롯데 폴백)
+eng.cover("기아 중장기 보상체계 개선 추진", "- 제안서 -", "2025. 09")
+eng.toc(["제안 배경","수행 방안","일정 및 조직"], current=0)   # 어젠다카드
+eng.content_blocks("Why HCG", "3대 핵심 역량",
+    [{"title":"자동차 산업 이해","bullets":["현대/기아 계열사 다수","산업 보상 트렌드"]},
+     {"title":"대기업 보상 경험","bullets":["대기업 프로젝트 다수","세분화 전문성"]},
+     {"title":"직군 차별화 노하우","bullets":["직군 특화 방법론","Key Question 추진"]}])
+eng.save()
+```
+
+---
+
+# HCG 제안서 PPT 디자인 가이드라인 v6.0
 
 > **분석 기반:** 롯데알미늄 _final PPTX XML 전수 추출 (v3 대비 추가 분석)
 > - 25장 전수 shape 카운트 / 레이아웃 매핑 / 색상 추출
@@ -442,5 +475,79 @@ python auto_ppt.py               # 기본 build() (롯데알미늄 25장, 하위
 
 ---
 
-*v5.0 — 2026-06-18 | v4.2 + XML 딥다이브(윤곽선/그림자/투명도/그라디언트/자간 헬퍼 6종) + 불릿→도형 규칙 + MBB 그리드 + DeckEngine 통합 엔진(데이터 구동 spec)*
+## 12. v6.0 — 기아 _final 역엔지니어링 & Text-to-Visual 엔진
+
+> **근거:** `기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx` 58장 전수
+> shape-tree 파싱(좌표 cm 실측, 그룹 재귀, fill/line/font 추출). 분석 산출물:
+> `analyze_final.py` / `final_analysis.json` / `STRUCTURE_REPORT*.md`.
+
+### 12-1. 파일 스펙 (기아 _final 실측)
+| 항목 | 값 |
+|------|----|
+| 슬라이드 크기 | **27.52 × 19.05 cm = 10.835″ × 7.5″** |
+| 레이아웃 | **표지 / 목차 / 본문 / End of document** |
+| 총 슬라이드 | 58장 (목차 레이아웃 5회 = 섹션 디바이더 겸용) |
+| 주 폰트 | **맑은 고딕** (Malgun Gothic), 미세주석 Malgun Gothic Semilight |
+
+### 12-2. 브랜드 팔레트 (기아 _final 빈도순 실측)
+| 이름 | RGB | 용도 |
+|------|-----|------|
+| KIA_RED | **#C72128** | 시그니처 레드 — 활성 섹션 accent, 윤곽 하이라이트, 헤더밴드 |
+| KIA_RED_LT | **#E5838A** | 연한 레드 — 비활성 섹션 마커 |
+| ACCENT_OR | **#F16249** | 강조 폰트 코랄(56회) |
+| DEEP_RED | **#C00000** | 진한 강조 레드(18회) |
+| CONTAINER_GR | **#E6E6E6** | 컨테이너 박스 회색 배경 |
+| SKY / STEEL / NAVY | #5D8ECF / #3265A8 / #002459 | 차트·컨테이너 블루 계열 |
+| PALE_BLUE | #D0E7F8 | 옅은 블루 배경 |
+| BLACK / WHITE | #000000(폰트 1087회) / #FFFFFF | 본문 텍스트 / 배경 |
+
+### 12-3. 목차 어젠다카드 (slide 1·17·52 실측, cm)
+```
+외곽 카드      x=5.40  y=4.93  w=20.37  h=12.02     (white, 0.5pt border, 그림자)
+섹션 행(N개)   x=5.79  w=19.98  h=3.54  contiguous  (pitch 3.54, 세로 중앙정렬)
+  ├ 좌 accent  x=5.79  w=2.74   h=3.54  활성=C72128 / 비활성=E5838A
+  ├ 로마숫자   x=6.77  w=0.79   18pt bold 흰색 (Ⅰ Ⅱ Ⅲ …)
+  └ 섹션명     x=10.54 w=12.93  18pt, 활성=C72128 bold / 비활성=black
+활성 하이라이트 x=6.16 w=19.61 h=3.31  빨간(C72128) 윤곽 0.75~1.5pt, current 행 위
+```
+- 섹션 디바이더 = 동일 카드에서 `current`만 다음 섹션으로 이동(하이라이트 하강).
+- 구현: `create_toc_slide(prs, sections, current, layout_idx, title=None)`.
+
+### 12-4. 구조화 카드 그리드 (Text-to-Visual 계산식)
+```
+가용폭 W = 24.71″(=본문 마진 x=1.46cm/0.575″ 기준), n개 카드, gap=0.26″
+card_w  = (W - gap*(n-1)) / n
+카드     = ROUNDED_RECTANGLE, white fill, accent 1pt 윤곽, 그림자
+헤더밴드  = 카드 상단 header_h=0.62″, accent(KIA_RED) 채움 + 흰 bold 타이틀(번호 옵션)
+본문영역  = 헤더 아래, padding 0.13″, bullets 또는 단락, 행간 118%
+n≥4 → title 11/body 9.5pt 자동축소, n≥5 → 10/9pt
+```
+- 구현: `add_structured_content_blocks(slide, items, x?, y=2.05, w?, h=4.30, gap=0.26, accent?, numbered=True)`.
+- `items=[{"title":..,"body":..}]` 또는 `{"title":..,"bullets":[..]}` 또는 문자열.
+
+### 12-5. 컨테이너(박스 안 박스, slide 3·31 실측)
+- 외곽 SOLID 박스(E6E6E6/SKY) 안에 내부 TextBox N개 균등 분할(가로).
+- 구현: `add_container_box(slide, x, y, w, h, inner_items, fill?, title?)`.
+  `inner_items=[{"head":..,"body":..}, ...]`. 좌표 cm는 `CM(v)` 헬퍼로 변환.
+
+### 12-6. DeckEngine v6.0 신규 메서드 & spec 타입
+```python
+eng.toc(sections, title=None, current=None)        # 어젠다카드 (튜플 입력 호환)
+eng.section_divider(sections, current)             # 섹션 디바이더(하이라이트 이동)
+eng.content_blocks(title, subtitle, items, ...)    # N등분 카드 그리드 본문
+eng.container_slide(title, subtitle, containers)   # 박스 안 박스
+```
+| type | 필드 |
+|------|------|
+| toc | items:["섹션명",..] (또는 [[번호,섹션,페이지]] 호환), title?, current? |
+| section_agenda | sections:["섹션명",..], current:int |
+| blocks | title, subtitle, items:[{title,body|bullets}], y?, h?, numbered?, bar_label?, quote?, example? |
+| container | title, subtitle, containers:[{x,y,w,h,fill?,title?,items:[{head,body}]}] |
+
+> 실행: `python auto_ppt.py` → v6.0 쇼케이스(기아 템플릿, 어젠다카드+카드그리드+컨테이너)
+> `python auto_ppt.py legacy` → 롯데 25장(하위호환) · `python auto_ppt.py spec.json` → 데이터 구동
+
+---
+
+*v6.0 — 2026-06-18 | v5.0 + 기아 _final 58장 역엔지니어링 + Text-to-Visual 엔진(목차 어젠다카드 create_toc_slide / N등분 카드 그리드 add_structured_content_blocks / 컨테이너 add_container_box) + 기아 브랜드 팔레트(C72128) + 베이스템플릿 상속 아키텍처*
 *JSON 페어: skill_ppt_design.json | 기획 페어: skill_ppt_planning*

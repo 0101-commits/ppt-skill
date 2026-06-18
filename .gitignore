@@ -8,3 +8,6 @@ __pycache__/
 
 # 스크래치
 _*.py
+
+# 대용량 분석 원본 덤프 (analyze_final.py로 재생성 가능)
+final_analysis.json
