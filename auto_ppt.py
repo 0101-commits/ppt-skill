@@ -14,7 +14,7 @@ Content: 롯데알미늄 직무기반 HR제도 설계 및 도입 제안서
 실행: python auto_ppt.py
 """
 
-import os, sys
+import os, sys, math
 sys.stdout.reconfigure(encoding='utf-8')
 
 from pptx import Presentation
@@ -91,6 +91,120 @@ KIA_FINAL = ("C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\"
 def CM(v):
     """cm 값을 inch float로 변환 (1 inch = 2.54 cm)."""
     return v / 2.54
+
+
+def to_rgb(c):
+    """'#RRGGBB' / 'RRGGBB' 문자열 또는 RGBColor → RGBColor. None은 그대로."""
+    if c is None or isinstance(c, RGBColor):
+        return c
+    s = str(c).lstrip('#')
+    return RGBColor(int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+
+
+# ── v7.0 파라다이스 _final 실측 럭셔리 골드 팔레트 ────────────
+#   (HCG_파라다이스_보상제도 컨설팅_제안서_rev_final.pptx 역추출)
+#   FILL: A49166/AC9A71(골드·샴페인) F1E5CA(크림) D4E1F2/AAC4E6/ECF6FC(블루)
+#         6D8191(슬레이트). FONT 강조: C00000(딥레드) 356CB5(블루).
+PARADISE_GOLD   = RGBColor(0xA4, 0x91, 0x66)   # 시그니처 골드(활성 accent)
+PARADISE_GOLD2  = RGBColor(0xAC, 0x9A, 0x71)   # 보조 골드
+PARADISE_CREAM  = RGBColor(0xF1, 0xE5, 0xCA)   # 크림 배경(컨테이너)
+PARADISE_SLATE  = RGBColor(0x6D, 0x81, 0x91)   # 슬레이트 그레이
+PARADISE_BLUE   = RGBColor(0xD4, 0xE1, 0xF2)   # 옅은 블루 배경
+PARADISE_BLUE2  = RGBColor(0xAA, 0xC4, 0xE6)   # 블루 강조
+PARADISE_EMPH   = RGBColor(0xC0, 0x00, 0x00)   # 폰트 강조 딥레드
+
+# ── 테마 시스템 (v7.0) — 프로젝트별 브랜드 팔레트 전환 ────────
+#   신규 도식 함수(create_toc_slide / add_structured_content_blocks /
+#   add_container_box / content_blocks / 헤더·인사이트 헬퍼)가 THEME를
+#   참조 → 한 줄로 전체 덱 브랜드 정합. 레드 2종 혼용 방지.
+THEMES = {
+    "hcg": {       # 기아/HCG 기본 (레드)
+        "accent": RGBColor(0xC7, 0x21, 0x28),     # C72128
+        "accent_lt": RGBColor(0xE5, 0x83, 0x8A),  # E5838A
+        "container": RGBColor(0xE6, 0xE6, 0xE6),  # 회색
+        "emphasis": RGBColor(0xC0, 0x00, 0x00),
+        "ink": RGBColor(0x00, 0x00, 0x00),
+        "on_accent": RGBColor(0xFF, 0xFF, 0xFF),
+    },
+    "paradise": {  # 파라다이스 (럭셔리 골드)
+        "accent": PARADISE_GOLD,
+        "accent_lt": PARADISE_GOLD2,
+        "container": PARADISE_CREAM,
+        "emphasis": PARADISE_EMPH,
+        "ink": RGBColor(0x00, 0x00, 0x00),
+        "on_accent": RGBColor(0xFF, 0xFF, 0xFF),
+    },
+}
+# 어두운 배경(제목 흰색 처리)으로 간주할 색 집합 — 테마 무관 공통
+DARK_FILLS = set()
+THEME = dict(THEMES["hcg"])   # 현재 활성 테마 (기본 hcg)
+
+
+def apply_theme(name):
+    """활성 테마 전환. name in THEMES (모르면 hcg). 반환=테마 dict.
+    전역 HCG_RED도 테마 accent로 재바인딩 → 기존 빌더(build_body_2col/
+    process_roadmap/diff_matrix/add_table 등)가 자동으로 테마색 사용.
+    (레거시 build()는 apply_theme 미호출 → 원래 921F0B 유지)."""
+    global THEME, HCG_RED
+    THEME = dict(THEMES.get(name, THEMES["hcg"]))
+    HCG_RED = THEME["accent"]
+    return THEME
+
+
+def _dark_bg(color):
+    """채움색이 어두워(텍스트 흰색 필요) 보이는지 판정 (상대휘도)."""
+    c = to_rgb(color)
+    if c is None:
+        return False
+    r, g, b = c[0], c[1], c[2]
+    lum = 0.299 * r + 0.587 * g + 0.114 * b
+    return lum < 140   # 140 미만이면 어두움 → 흰 텍스트
+
+
+# ── 텍스트 오버플로 제어 (v7.0) ───────────────────────────────
+def set_autofit_shrink(text_frame, font_scale=None, lnSpcReduction=None):
+    """텍스트 프레임에 normAutofit(자동 축소) 적용 → 박스 넘침 방지.
+    인간 _final이 noAutofit/spAutoFit를 544/452건 사용한 갭 보강.
+    font_scale=None이면 PowerPoint가 열 때 자동 계산(권장)."""
+    try:
+        body = text_frame._txBody
+    except Exception:
+        return
+    bodyPr = body.find(qn('a:bodyPr'))
+    if bodyPr is None:
+        bodyPr = body.makeelement(qn('a:bodyPr'), {})
+        body.insert(0, bodyPr)
+    # 기존 autofit 제거
+    for tag in ('a:normAutofit', 'a:spAutoFit', 'a:noAutofit'):
+        e = bodyPr.find(qn(tag))
+        if e is not None:
+            bodyPr.remove(e)
+    na = etree.SubElement(bodyPr, qn('a:normAutofit'))
+    if font_scale is not None:
+        na.set('fontScale', str(int(font_scale * 1000)))
+    if lnSpcReduction is not None:
+        na.set('lnSpcReduction', str(int(lnSpcReduction * 1000)))
+    return na
+
+
+def fit_font_size(paragraphs_text, box_w_in, box_h_in, start_pt,
+                  min_pt=7.0, ls=1.18, pad_in=0.10):
+    """파이썬 측 동적 폰트 리사이징 — 추정 줄 수가 박스 높이를 넘으면
+    start_pt부터 0.5pt씩 줄여 min_pt까지 맞춤. (한글 1자 ≈ font_pt 폭)
+    paragraphs_text = [문단문자열,...]. 반환 = 결정된 pt."""
+    usable_w_pt = max(1.0, (box_w_in - pad_in * 2) * 72.0)
+    usable_h_pt = max(1.0, (box_h_in - pad_in * 2) * 72.0)
+    fs = start_pt
+    while fs > min_pt:
+        cpl = max(1, int(usable_w_pt / (fs * 1.05)))   # 줄당 글자수
+        lines = 0
+        for t in paragraphs_text:
+            L = len(t)
+            lines += max(1, math.ceil(L / cpl)) if L else 1
+        if lines * fs * ls <= usable_h_pt:
+            break
+        fs -= 0.5
+    return round(max(fs, min_pt), 1)
 
 
 # ════════════════════════════════════════════════════════════
@@ -674,7 +788,7 @@ def add_insight_quote(slide, text, x=0.691, y=6.79, w=9.451, h=0.30, color=None)
     if not (text.startswith("“") or text.startswith('"')):
         text = "“" + text + "”"
     return add_textbox(slide, text, x, y, w, h, fsize=11, bold=True, italic=True,
-                       align=PP_ALIGN.CENTER, color=color or HCG_RED)
+                       align=PP_ALIGN.CENTER, color=color or THEME["accent"])
 
 
 def build_overview_3col(prs, title, subtitle, cols, bar_label=None, example=False):
@@ -1027,13 +1141,13 @@ def create_toc_slide(prs, sections, current=None, layout_idx=1,
         row_bg.fill.solid(); row_bg.fill.fore_color.rgb = WHITE
         _set_line_dark(row_bg, 0.5)
 
-        # 좌측 accent 블록 (활성=KIA_RED, 비활성=KIA_RED_LT)
+        # 좌측 accent 블록 (활성=THEME accent, 비활성=accent_lt)
         active = (i == current)
         accent = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
                                         Inches(accent_x), Inches(y),
                                         Inches(accent_w), Inches(row_h))
         accent.fill.solid()
-        accent.fill.fore_color.rgb = KIA_RED if active else KIA_RED_LT
+        accent.fill.fore_color.rgb = THEME["accent"] if active else THEME["accent_lt"]
         accent.line.fill.background()
 
         # 로마 숫자 (accent 위, 18pt bold 흰색)
@@ -1046,29 +1160,29 @@ def create_toc_slide(prs, sections, current=None, layout_idx=1,
         _add_run(rp, ROMAN[i] if i < len(ROMAN) else str(i + 1),
                  fsize=18, bold=True, color=WHITE)
 
-        # 섹션명 (18pt, 활성=KIA_RED / 비활성=BLACK)
+        # 섹션명 (18pt, 활성=THEME accent / 비활성=BLACK)
         tbox = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
                                       Inches(title_x), Inches(y),
                                       Inches(title_w), Inches(row_h))
         tbox.fill.background(); tbox.line.fill.background()
         set_text_anchor(tbox, 'ctr')
         tp = tbox.text_frame.paragraphs[0]; tp.alignment = PP_ALIGN.LEFT
-        _add_run(tp, sec, fsize=18, bold=active,
-                 color=KIA_RED if active else BLACK)
+        _add_run(tp, sec, fsize=18, bold=active, spc=-30,
+                 color=THEME["accent"] if active else BLACK)
 
-        # 활성 행 빨간 윤곽 하이라이트 (인간 final FREEFORM 재현)
+        # 활성 행 윤곽 하이라이트 (인간 final FREEFORM 재현, 테마 accent)
         if active:
             hl = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
                                         Inches(accent_x + CM(0.37)),
                                         Inches(y + CM(0.33)),
                                         Inches(CM(19.61)), Inches(CM(3.31) * row_h / CM(3.54)))
             hl.fill.background()
-            hl.line.color.rgb = KIA_RED
+            hl.line.color.rgb = THEME["accent"]
             hl.line.width = Pt(1.5)
 
     if title:
         add_textbox(slide, title, CM(1.46), CM(0.64), CM(24.71), CM(0.78),
-                    fsize=18, bold=True, color=KIA_RED)
+                    fsize=18, bold=True, color=THEME["accent"])
     return slide
 
 
@@ -1101,8 +1215,7 @@ def add_structured_content_blocks(slide, items, x=None, y=2.05,
         x = CM(1.46)               # 본문 좌측 마진 실측
     if w is None:
         w = CM(24.71)              # 본문 가용폭 실측
-    if accent is None:
-        accent = KIA_RED
+    accent = to_rgb(accent) if accent is not None else THEME["accent"]
     n = max(1, len(items))
     card_w = (w - gap * (n - 1)) / n
     # 카드 수 많으면 폰트 자동 축소
@@ -1130,7 +1243,7 @@ def add_structured_content_blocks(slide, items, x=None, y=2.05,
             add_shadow(card, blur_pt=5, dist_pt=2.5, alpha_pct=68)
         shapes.append(card)
 
-        # ② 헤더 밴드 (accent 채움, 흰 bold 타이틀) — 번호 옵션
+        # ② 헤더 밴드 (accent 채움, 흰 bold 타이틀) — 자간·윤곽선 적용
         title = item.get("title", "")
         if title:
             head_txt = (f"{i+1}. {title}" if numbered else title)
@@ -1141,31 +1254,38 @@ def add_structured_content_blocks(slide, items, x=None, y=2.05,
             hb.line.fill.background()
             set_text_anchor(hb, 'ctr')
             hp = hb.text_frame.paragraphs[0]; hp.alignment = PP_ALIGN.CENTER
-            _add_run(hp, head_txt, fsize=title_size, bold=True, color=WHITE)
+            # 인간 _final 정합: 제목 자간 좁힘(-30) + 흰 윤곽선(가독성)
+            _add_run(hp, head_txt, fsize=title_size, bold=True, color=WHITE,
+                     spc=-30, outline={"color": "FFFFFF", "width_pt": 0.5})
+            set_autofit_shrink(hb.text_frame)
             body_y = y + header_h + pad * 0.6
             body_h = h - header_h - pad * 1.6
         else:
             body_y = y + pad
             body_h = h - pad * 2
 
-        # ③ 본문 (bullets 리스트 or 단락)
+        # ③ 본문 (bullets 리스트 or 단락) — 동적 폰트 리사이징 + normAutofit
+        bullets = item.get("bullets")
+        body_w = card_w - 2 * pad
+        if bullets:
+            para_texts = ["• " + b for b in bullets]
+        else:
+            para_texts = [item.get("body", "")]
+        # 파이썬 측 사전 리사이징(추정 줄수 기반) → 넘침 방지
+        eff_size = fit_font_size(para_texts, body_w, body_h, body_size,
+                                 min_pt=7.5)
         tb = slide.shapes.add_textbox(Inches(cx + pad), Inches(body_y),
-                                      Inches(card_w - 2 * pad), Inches(body_h))
+                                      Inches(body_w), Inches(body_h))
         _set_no_fill(tb)
         tf = tb.text_frame; tf.word_wrap = True
         tf.margin_left = tf.margin_right = Inches(0.04)
         tf.margin_top = tf.margin_bottom = Inches(0.03)
-        bullets = item.get("bullets")
-        if bullets:
-            for j, b in enumerate(bullets):
-                p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
-                p.alignment = body_align
-                _add_run(p, "• " + b, fsize=body_size, color=DARK_GRAY)
-                _set_line_spacing(p, 118)
-        else:
-            p = tf.paragraphs[0]; p.alignment = body_align
-            _add_run(p, item.get("body", ""), fsize=body_size, color=DARK_GRAY)
-            _set_line_spacing(p, 118)
+        for j, t in enumerate(para_texts):
+            p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
+            p.alignment = body_align
+            _add_run(p, t, fsize=eff_size, color=DARK_GRAY, spc=-20)
+            _set_line_spacing(p, 116)
+        set_autofit_shrink(tf)   # PowerPoint 자동 축소 안전망
     return shapes
 
 
@@ -1180,19 +1300,22 @@ def add_container_box(slide, x, y, w, h, inner_items, fill=None,
     title       : 컨테이너 상단 라벨(옵션).
     인간본: 외곽 SOLID 박스(E6E6E6/5D8ECF) 안에 TextBox 3~4개 균등 배치.
     """
-    if fill is None:
-        fill = CONTAINER_GR
+    fill = to_rgb(fill) if fill is not None else THEME["container"]
     outer = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
                                    Inches(x), Inches(y), Inches(w), Inches(h))
     outer.fill.solid(); outer.fill.fore_color.rgb = fill
     outer.line.fill.background()
     add_shadow(outer, blur_pt=5, dist_pt=2.5, alpha_pct=72)
 
+    # 상대휘도로 어두운 배경 판정 → 텍스트 흰색 자동 전환
+    dark_bg = _dark_bg(fill)
+    head_color = WHITE if dark_bg else THEME["accent"]
+    body_color = WHITE if dark_bg else DARK_GRAY
     top = y + 0.12
     if title:
         add_textbox(slide, title, x + 0.15, y + 0.06, w - 0.30, 0.34,
-                    fsize=title_size, bold=True, color=WHITE
-                    if fill in (KIA_RED, NAVY, STEEL, SKY) else DARK_GRAY)
+                    fsize=title_size, bold=True,
+                    color=WHITE if dark_bg else DARK_GRAY)
         top = y + 0.48
     n = max(1, len(inner_items))
     pad = 0.18
@@ -1202,6 +1325,9 @@ def add_container_box(slide, x, y, w, h, inner_items, fill=None,
         if isinstance(it, str):
             it = {"head": "", "body": it}
         ix = x + pad + i * (inner_w + inner_gap)
+        # 동적 리사이징(head 1줄 + body) 추정
+        ptexts = ([it["head"]] if it.get("head") else []) + [it.get("body", "")]
+        eff = fit_font_size(ptexts, inner_w, inner_h, inner_size, min_pt=7.5)
         tb = slide.shapes.add_textbox(Inches(ix), Inches(top),
                                       Inches(inner_w), Inches(inner_h))
         tf = tb.text_frame; tf.word_wrap = True
@@ -1210,13 +1336,15 @@ def add_container_box(slide, x, y, w, h, inner_items, fill=None,
         p0 = tf.paragraphs[0]
         if it.get("head"):
             p0.alignment = PP_ALIGN.LEFT
-            _add_run(p0, it["head"], fsize=inner_size + 1, bold=True, color=KIA_RED)
+            _add_run(p0, it["head"], fsize=eff + 1, bold=True,
+                     color=head_color, spc=-20)
             pb = tf.add_paragraph()
         else:
             pb = p0
         pb.alignment = PP_ALIGN.LEFT
-        _add_run(pb, it.get("body", ""), fsize=inner_size, color=DARK_GRAY)
+        _add_run(pb, it.get("body", ""), fsize=eff, color=body_color, spc=-20)
         _set_line_spacing(pb, 116)
+        set_autofit_shrink(tf)
     return outer
 
 
@@ -1234,13 +1362,15 @@ class DeckEngine:
     SLIDE_W = 10.835   # 27.52cm — KIA/HCG 공통 마스터 실측
     SLIDE_H = 7.5      # 19.05cm
 
-    def __init__(self, template=None, out=None):
+    def __init__(self, template=None, out=None, theme="hcg"):
         # v6.0: best-practice 베이스 = 기아 _final. 없으면 롯데(REAL) 폴백.
         if template is None:
             template = KIA_FINAL if os.path.exists(KIA_FINAL) else REAL
         self.template = template
         self.out = out or OUT
-        print("Loading base template:", self.template)
+        # v7.0: 프로젝트 브랜드 테마 적용 (hcg/paradise). 도식 함수가 THEME 참조.
+        self.theme = apply_theme(theme)
+        print(f"Loading base template (theme={theme}):", self.template)
         self.prs = Presentation(self.template)
         # 베이스 템플릿을 '깡통'이 아닌 디자인 상속용으로 사용 →
         # 슬라이드만 비우고 master/layout(표지·목차·본문)·테마·폰트는 보존.
@@ -1778,7 +1908,8 @@ def render_spec_file(spec_path):
     with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
     meta = spec.get("meta", {})
-    eng = DeckEngine(template=meta.get("template"), out=meta.get("out"))
+    eng = DeckEngine(template=meta.get("template"), out=meta.get("out"),
+                     theme=meta.get("theme", "hcg"))
     eng.render(spec)
     return eng.save()
 

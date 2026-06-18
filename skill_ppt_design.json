@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.4",
+  "version": "1.5",
+  "changelog_v1_5": "v1.5(=문서 v7.0) — 파라다이스 _final(rev_final 52장) vs AI Draft 정밀비교(paradise_compare.py). 발견 1% 갭: ①고객사 브랜드 불일치(카지노=럭셔리 골드인데 기아 레드 C72128+롯데 921F0B 혼용) ②텍스트 오버플로 무방비(autofit 미설정) ③윤곽선/자간 0. 보강: theme_system_v7(apply_theme로 THEME+HCG_RED 전역 재바인딩 → 신규 도식함수+기존 빌더 전부 테마색 자동; hcg 레드/paradise 골드 A49166), text_overflow_control_v7(set_autofit_shrink=normAutofit + fit_font_size=파이썬 사전 리사이징 → 오버플로 0건), 카드 헤더 자간 spc=-30+흰 윤곽선, 본문 spc=-20. DeckEngine(theme=) + spec meta.theme. 결과: 골드 A49166 지배·윤곽선37·자간163·normAutofit80.",
   "changelog_v1_4": "v1.4(=문서 v6.0) — 기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx 58장 전수 역엔지니어링. ★최우선 원칙: 기획 단계부터 '이 슬라이드를 N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 목차=텍스트나열 폐기→create_toc_slide(어젠다카드: 좌측 accent블록+로마숫자+섹션명+활성행 빨간 윤곽 하이라이트, current 이동으로 섹션 디바이더 겸용). 본문=add_structured_content_blocks(리스트→N등분 카드 그리드, 헤더밴드+윤곽선+그림자, margin/padding 계산식 내장). 박스안박스=add_container_box. DeckEngine 베이스=기아 _final(없으면 롯데 폴백), toc/section_divider/content_blocks/container_slide 메서드 + spec 타입(toc섹션명리스트·section_agenda·blocks·container) 추가. 기아 브랜드 팔레트 C72128.",
   "changelog_v1_3": "v1.3 — 인간 _final XML 딥다이브(OxmlElement) 기반 고급 디자인 보강. 실측 갭: 텍스트윤곽선 1807·그림자 60·투명도 2478·그라디언트 43·자간(-30~-100) vs AI Draft 전부 0. xml_advanced_design(윤곽선/그림자/투명도/그라디언트/자간/세로정렬 헬퍼 6종 + add_item 고급 옵션), bullet_to_shape_rules, mbb_grid_system, master_engine_DeckEngine(데이터 구동 spec 스키마·CLI) 추가. auto_ppt.py 단일 마스터 엔진으로 통합(kia/lotte는 콜러 유지).",
   "changelog_v1_2": "v1.2 — 기아 AI Draft vs 인간 _final 도형 통계 비교(AI 5.5도식/장 vs 인간 23도식/장; AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개). density_diagram_targets, new_helpers_v2(connector_line·arrow_flow·table·icon_placeholder·process_roadmap·compare_table), scale_guidance 추가.",
@@ -305,7 +306,7 @@
     "class": "DeckEngine(template=None, out=None) — 템플릿 로드 + delete_all_slides 자동. 메서드: cover(), toc(), project_overview(), demo_advanced(), render(spec), save().",
     "cli": "python auto_ppt.py <spec.json>  → meta.template/out 사용. 인자 없으면 기본 build()(롯데알미늄 25장, 하위호환).",
     "spec_schema": {
-      "meta": "{template?: 경로(없으면 REAL), out?: 출력경로(없으면 OUT)}",
+      "meta": "{template?: 경로(없으면 기아 KIA_FINAL→롯데 폴백), out?: 출력경로, theme?: 'hcg'|'paradise'(v7.0 브랜드 팔레트)}",
       "slides": "[{type, label?, ...타입별 필드}] 순서대로 렌더"
     },
     "slide_types": {
@@ -329,6 +330,34 @@
       "demo_advanced": "{title?, subtitle?} — 윤곽선/그림자/그라디언트/투명도/자간 시연",
       "end": "{}"
     }
+  },
+  "theme_system_v7": {
+    "_원칙": "★제안서 생성 전 고객사 브랜드 정체성에 맞는 테마 선택. 레드 2종 혼용 같은 불일치 차단.",
+    "_근거": "파라다이스 _final 실측 = 럭셔리 골드(A49166/AC9A71)·크림(F1E5CA)·슬레이트(6D8191). 1차 AI는 기아 레드 사용 → 브랜드 불일치가 최대 갭.",
+    "사용": "DeckEngine(theme='paradise') 또는 spec meta {'theme':'paradise'}. apply_theme(name)이 전역 THEME + HCG_RED 재바인딩 → 신규 도식함수 + 기존 빌더(build_body_2col/process_roadmap/diff_matrix/add_table 등) 전부 자동 테마색.",
+    "themes": {
+      "hcg": {"accent": "#C72128", "accent_lt": "#E5838A", "container": "#E6E6E6", "emphasis": "#C00000", "용도": "기아/제조/일반 (레드)"},
+      "paradise": {"accent": "#A49166", "accent_lt": "#AC9A71", "container": "#F1E5CA", "emphasis": "#C00000", "용도": "카지노/럭셔리 (골드·크림)"}
+    },
+    "paradise_palette_full": {"골드": "#A49166", "보조골드": "#AC9A71", "크림": "#F1E5CA", "슬레이트": "#6D8191", "블루": ["#D4E1F2", "#AAC4E6", "#ECF6FC"], "폰트강조": "#C00000"},
+    "확장": "신규 고객사 = THEMES dict에 항목 1개 추가. accent/accent_lt/container/emphasis 지정."
+  },
+  "text_overflow_control_v7": {
+    "_원칙": "텍스트가 카드/박스를 넘지 않도록 이중 안전망. 인간 _final은 noAutofit544/spAutoFit452 사용, AI 1차는 0.",
+    "set_autofit_shrink(text_frame, font_scale=None)": "<a:normAutofit> 삽입 → PowerPoint 열람 시 폰트 자동 축소(오버플로 방지 안전망).",
+    "fit_font_size(para_texts, w_in, h_in, start_pt, min_pt=7.5)": "파이썬 측 사전 리사이징 — 추정 줄수(한글 1자≈font_pt)가 박스 높이 초과 시 0.5pt씩 축소. 반환=결정 pt.",
+    "_dark_bg(color)": "상대휘도(<140) 판정 → 어두운 컨테이너는 텍스트 흰색 자동 전환.",
+    "적용": "add_structured_content_blocks/add_container_box 본문에 fit_font_size + set_autofit_shrink 기본 적용. 결과 오버플로 0건.",
+    "자간_윤곽선": "카드 헤더 spc=-30 + 흰 윤곽선 0.5pt, 본문 spc=-20, 행간 116% — 인간본 밀도 정합."
+  },
+  "paradise_gap_learnings": {
+    "_근거": "paradise_compare.py 실측. 1차 AI vs 인간 rev_final → 보강 후.",
+    "윤곽선_aln": {"ai_1차": 0, "인간": 2806, "보강후": 37},
+    "자간_spc": {"ai_1차": 0, "인간": 2856, "보강후": 163},
+    "autofit": {"ai_1차": "none/spAuto만", "인간": "noAuto544/spAuto452", "보강후": "normAutofit80"},
+    "브랜드_fill": {"ai_1차": "C72128+921F0B 레드 혼용(불일치)", "인간": "A49166 골드", "보강후": "A49166 골드 지배"},
+    "오버플로": {"보강후": "0건"},
+    "의도적_잔여갭": "도형/장 12.8 vs 44, 투명도/그라디언트 < 인간 = 30장 발표용 초안의 절제. 대형 최종본 밀도 필요시 도식분할+set_transparency/set_gradient 추가."
   },
   "text_to_visual_engine_v6": {
     "_원칙": "★기획 단계부터 'N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 텍스트 줄글 나열 폐기.",

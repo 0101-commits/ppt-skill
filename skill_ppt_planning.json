@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-planning",
-  "version": "1.2",
+  "version": "1.3",
+  "changelog_v1_3": "v1.3 — 파라다이스 케이스(RFP·회의록·storyline + 리더 전략 fb 2025.04.29 CSP + AI vs 인간 rev_final 비교). paradise_case_v13: brand_identity_theme(고객사 정체성→테마: 카지노/럭셔리=골드 paradise / 제조=레드 hcg, 레드·골드 혼용 차단), leader_fb_priority_v2(_fb 텍스트 부재 시 회의록·storyline 1순위 대체·날조 금지; 왜 별도 프로젝트=approach_vs, 직무평가 함정 회피=diff_matrix, 30장 제약, 회사소개 후치), overflow_safe_sizing(카드당 3~4불릿·40~70자 → 엔진 동적 리사이징 정합), diagram_type_pretagging(슬라이드별 도식타입 사전 지정) 추가.",
   "changelog_v1_2": "v1.2 — 기아 AI Draft(32장/213자·5.5도식) vs 인간 _final(58장/502자·23도식) 비교 기반. depth_and_scale_v2, named_frameworks, mece_submodules, transition_governance 추가 — 분량·근거 깊이·고유 프레임워크·MECE 하위모듈 강화.",
   "changelog": "v1.1 — 롯데알미늄 _final XML 실측 + 리더 _fb/회의록(2026.02.26·03.04) 반영. 고급 스토리 패턴(3step Overview·Pain Point 카테고리화·VS 대비·직군 차별화 매트릭스·보상 4P), insight quote 규칙, salespoint framing, subhead doctrine, module tailoring 추가.",
   "type": "planning",
@@ -207,6 +208,23 @@
   },
   "mece_submodules": "수행방안 하위는 1)/2)/3) 번호로 MECE 전개. 예: 벤치마킹 = 1) Benchmarking Connect, 2) Global Big Data Analytics, 3) Local Compensation. 섹션 prefix + 번호를 전 장표 일관 유지.",
   "transition_governance": "섹션 간지(divider)는 풀비주얼 1장. 섹션 진입 직후 Overview/Framework로 전체 그림 제시 후 하위 모듈 전개(도입→전개→결론). 장표 제목에 '섹션  대모듈  소모듈' 3단 카테고리 일관.",
+  "paradise_case_v13": {
+    "_근거": "파라다이스 보상제도 제안서 — RFP·회의록·storyline + 리더 전략 fb(2025.04.29 CSP) + AI vs 인간 rev_final 비교.",
+    "brand_identity_theme": {
+      "_원칙": "★기획 단계에서 고객사 브랜드 정체성을 규정하고 design 테마를 지정. 브랜드 불일치(레드·골드 혼용) 차단.",
+      "매핑": "카지노/럭셔리(파라다이스) → 골드·크림(theme=paradise) / 제조·일반 → 레드(theme=hcg)",
+      "전달": "spec meta.theme 또는 DeckEngine(theme=). design 스킬 theme_system_v7 참조."
+    },
+    "leader_fb_priority_v2": {
+      "_원칙": "_fb 텍스트 부재 시 회의록(전략 논의)·storyline 문서를 1순위 규칙으로 대체. 날조 금지.",
+      "왜_별도_프로젝트": "'인사제도 끝냈는데 왜 별도 보상?' → 제안 배경을 approach_vs(기존 인사제도 vs 금번 성과동인 기반 보상)로 구조화",
+      "직무평가_함정_회피": "직무 세분화/직무평가 단어 집착 금지 → CSF+시장가치 재정의 → diff_matrix(커리어 단계별 성과동인: Host→Executive Host)",
+      "분량": "30장 내외(발표 20분)를 기획 제약으로 고정",
+      "기타": "회사소개 후치, 벤치마킹 메인, 총인건비 유지·성과급↑(CFO/형평성), 시뮬(성과%→매출/이익→PS·인센 비용비중)"
+    },
+    "overflow_safe_sizing": "키 메시지/근거를 카드당 3~4불릿·40~70자로 기획 → 엔진 fit_font_size/normAutofit(min 7.5pt)과 정합. 한 항목 3불릿↑이면 도식 후보.",
+    "diagram_type_pretagging": "기획안에 슬라이드별 도식타입 태그 명시: toc/section_agenda/blocks(N그리드)/container/approach_vs/diff_matrix/process_roadmap/compare_table/body_2col/body_process. '3등분 그리드'·'골드 컨테이너' 식으로 사전 지정."
+  },
   "handoff": {
     "to": "skill_ppt_design.json / skill_ppt_design.md",
     "전달물": "확정 목차, 장표별 헤드 메시지, 슬라이드 타입 태그. 좌표/색상/폰트/레이아웃은 design 스킬이 결정.",

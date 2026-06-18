@@ -1,7 +1,11 @@
 ---
 name: hcg-ppt-design
 description: >
-  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v6.0.
+  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v7.0.
+  v6.0(기아 Text-to-Visual) + 파라다이스 _final 정밀비교 → 테마 시스템(고객사 브랜드
+  팔레트 1줄 전환: hcg 레드 / paradise 골드), 텍스트 동적 제어(normAutofit + 파이썬
+  사전 리사이징으로 오버플로 무결점), 카드 자간/윤곽선 기본 적용.
+  v6.0 description ↓ (유지):
   기아 _final + 롯데알미늄 _final PPTX 전수 역엔지니어링 — 구조/레이아웃/색상/좌표 정합 +
   Text-to-Visual 구조화 엔진(목차 어젠다카드 / N등분 카드 그리드 / 컨테이너) +
   XML 레벨 고급 디자인(윤곽선/그림자/투명도/그라디언트/자간) + DeckEngine 통합 엔진.
@@ -549,5 +553,61 @@ eng.container_slide(title, subtitle, containers)   # 박스 안 박스
 
 ---
 
-*v6.0 — 2026-06-18 | v5.0 + 기아 _final 58장 역엔지니어링 + Text-to-Visual 엔진(목차 어젠다카드 create_toc_slide / N등분 카드 그리드 add_structured_content_blocks / 컨테이너 add_container_box) + 기아 브랜드 팔레트(C72128) + 베이스템플릿 상속 아키텍처*
+## 13. v7.0 — 파라다이스 _final 정밀비교 & 무결점 고도화
+
+> **근거:** `HCG_파라다이스_보상제도 컨설팅_제안서_rev_final.pptx`(52장) vs AI Draft(28장)
+> OxmlElement 정밀 비교. 산출물: `paradise_compare.py` / `PARADISE_COMPARE.md`.
+
+### 13-0. 실측 갭 (1차 AI Draft vs 인간 rev_final) → 보강 결과
+| 항목 | AI 1차 | 인간 | 보강 후 AI | 헬퍼 |
+|---|---|---|---|---|
+| 윤곽선 a:ln | 0 | 2806 | 37 | 카드 헤더 `set_text_outline` |
+| 자간 spc | 0 | 2856 | 163 | 카드 `spc=-20~-30` |
+| Autofit(오버플로 제어) | 없음 | noAuto544/spAuto452 | normAutofit 80 | `set_autofit_shrink` |
+| **브랜드 FILL** | ❌레드 C72128+921F0B 혼용 | 골드 A49166/AC9A71/크림 | ✅골드 A49166 지배 | **테마 시스템** |
+| 텍스트 오버플로 | 위험 | — | **0건** | `fit_font_size` |
+
+> ★ 1% 갭의 핵심 = (1) **고객사 브랜드 불일치**(카지노=럭셔리 골드인데 기아 레드 사용) (2) **오버플로 무방비**(autofit 미설정).
+
+### 13-1. 테마 시스템 (브랜드 팔레트 1줄 전환)
+```python
+DeckEngine(theme="paradise")          # 또는 spec meta: {"theme":"paradise"}
+apply_theme("paradise")               # 전역 THEME + HCG_RED 재바인딩
+```
+- 신규 도식 함수(create_toc_slide/add_structured_content_blocks/add_container_box/
+  content_blocks/add_insight_quote)와 **기존 빌더 전부**가 `THEME["accent"]` 자동 사용 →
+  레드 2종 혼용 같은 브랜드 불일치 원천 차단.
+- 내장 테마:
+
+| theme | accent | accent_lt | container | 용도 |
+|---|---|---|---|---|
+| **hcg** | #C72128 | #E5838A | #E6E6E6 | 기아/제조/일반 (레드) |
+| **paradise** | #A49166 | #AC9A71 | #F1E5CA | 카지노/럭셔리 (골드·크림) |
+
+- 파라다이스 _final 실측 팔레트: 골드 **A49166/AC9A71**, 크림 **F1E5CA**, 슬레이트 **6D8191**,
+  블루 D4E1F2/AAC4E6, 폰트 강조 **C00000**.
+- **신규 고객사 = 신규 테마 1개 추가**(`THEMES` dict). 제안서 생성 전 고객사 브랜드 컬러 확인 필수.
+
+### 13-2. 텍스트 동적 제어 (오버플로 무결점)
+```python
+set_autofit_shrink(text_frame)                 # <a:normAutofit> — PPT 자동 축소 안전망
+fit_font_size(para_texts, w_in, h_in, start_pt, min_pt=7.5)  # 파이썬 사전 리사이징
+```
+- 이중 안전망: ① 파이썬이 추정 줄 수로 박스 높이 초과 시 0.5pt씩 사전 축소(min 7.5pt)
+  ② `normAutofit`으로 PowerPoint 열람 시 재보정. → **긴 텍스트도 카드 밖으로 안 넘침.**
+- `add_structured_content_blocks` / `add_container_box` 본문에 기본 적용.
+- 휘도 자동 판정(`_dark_bg`): 컨테이너 채움이 어두우면 텍스트 흰색 자동 전환.
+
+### 13-3. 자간·윤곽선 기본화
+- 카드 헤더: `spc=-30` + 흰 윤곽선 0.5pt (밀도·가독성). 본문: `spc=-20`, 행간 116%.
+- 인간 _final의 자간(-30~)·윤곽선(2806건) 패턴에 정합.
+
+### 13-4. 남은(의도적) 갭
+- 도형/장 12.8 vs 44, 투명도/그라디언트 < 인간: **30장 발표용 초안**의 의도적 절제.
+  대형 최종본 수준 밀도가 필요하면 도식 분할·`set_transparency`/`set_gradient` 추가 적용.
+
+---
+
+*v7.0 — 2026-06-18 | v6.0 + 파라다이스 _final 정밀비교 → 테마 시스템(hcg 레드/paradise 골드, apply_theme로 HCG_RED 재바인딩) + 텍스트 동적 제어(set_autofit_shrink + fit_font_size, 오버플로 0건) + 카드 자간/윤곽선 기본화*
+*v6.0 — v5.0 + 기아 _final 58장 역엔지니어링 + Text-to-Visual 엔진(create_toc_slide / add_structured_content_blocks / add_container_box) + 베이스템플릿 상속*
 *JSON 페어: skill_ppt_design.json | 기획 페어: skill_ppt_planning*
