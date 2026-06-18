@@ -21,7 +21,7 @@ from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
-from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
+from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_CONNECTOR
 from pptx.oxml.ns import qn
 from lxml import etree
 
@@ -720,6 +720,87 @@ def build_approach_vs(prs, title, subtitle, left_title, left_items, right_title,
     add_vs_badge(slide, 5.22, 3.95, 0.39, 0.39, fill=HCG_RED, text="VS")
     if bottom_quote:
         add_insight_quote(slide, bottom_quote, 1.10, 6.60, 8.64)
+    return slide
+
+
+# ════════════════════════════════════════════════════════════
+# 고급 도식 헬퍼 v2 (v4.2 — 기아 _final 비교: 도식화/밀도 강화)
+# ════════════════════════════════════════════════════════════
+
+def add_connector_line(slide, x1, y1, x2, y2, color=None, w_pt=1.0):
+    """박스 간 직선 연결선 (흐름·관계 시각화)."""
+    conn = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,
+                                      Inches(x1), Inches(y1), Inches(x2), Inches(y2))
+    conn.line.color.rgb = color or MED_GRAY
+    conn.line.width = Pt(w_pt)
+    return conn
+
+def add_arrow_flow(slide, centers, color=None):
+    """중심점 리스트 사이에 ▶ 화살표 자동 배치."""
+    for (x1, y1), (x2, y2) in zip(centers, centers[1:]):
+        mx, my = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+        add_textbox(slide, "▶", mx - 0.12, my - 0.15, 0.26, 0.30,
+                    fsize=12, align=PP_ALIGN.CENTER, color=color or MED_GRAY)
+
+def add_icon_placeholder(slide, x, y, d=0.5, fill=None):
+    """아이콘 대체 원형 도형 (PICTURE 자동생성 불가 대응)."""
+    sh = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL,
+                                Inches(x), Inches(y), Inches(d), Inches(d))
+    sh.fill.solid(); sh.fill.fore_color.rgb = fill or BLUE
+    sh.line.fill.background()
+    return sh
+
+def add_table(slide, x, y, w, h, data, header=True, fsize=9):
+    """비교용 TABLE. data=2차원 리스트. header행 HCG_RED·흰 bold."""
+    rows, cols = len(data), len(data[0])
+    gf = slide.shapes.add_table(rows, cols, Inches(x), Inches(y), Inches(w), Inches(h))
+    tbl = gf.table
+    for r in range(rows):
+        for c in range(cols):
+            cell = tbl.cell(r, c)
+            cell.text = str(data[r][c])
+            for p in cell.text_frame.paragraphs:
+                p.alignment = PP_ALIGN.CENTER
+                for run in p.runs:
+                    run.font.size = Pt(fsize)
+                    _set_font_xml(run)
+                    if header and r == 0:
+                        run.font.bold = True
+                        run.font.color.rgb = WHITE
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = HCG_RED if (header and r == 0) else WHITE
+    return gf
+
+def build_process_roadmap(prs, title, subtitle, phases):
+    """Process Overview 로드맵 — phase 박스 + 하위 step + ▶ 연결. phases=[{name,steps:[...]}]"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    n = len(phases); gap = 0.30; total_w = 9.451; x0 = 0.691
+    pw = (total_w - gap * (n - 1)) / n
+    add_connector_line(slide, x0, 2.41, x0 + total_w, 2.41, color=MED_GRAY, w_pt=1.5)  # phase baseline
+    for i, ph in enumerate(phases):
+        x = x0 + i * (pw + gap)
+        add_item(slide, ph.get("name", ""), x, 2.10, width=pw, height=0.62, fsize=11, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=HCG_RED, color=WHITE, no_border=True)
+        sy = 3.00
+        for st in ph.get("steps", []):
+            add_item(slide, st, x, sy, width=pw, height=0.66, fsize=9, align=PP_ALIGN.CENTER,
+                     fill_rgb=GRAY_LT, color=DARK_GRAY, no_border=True)
+            sy += 0.74
+        if i < n - 1:
+            ax = x + pw + (gap - 0.26) / 2.0
+            add_textbox(slide, "▶", ax, 2.22, 0.26, 0.34, fsize=14, align=PP_ALIGN.CENTER, color=MED_GRAY)
+    return slide
+
+def build_compare_table(prs, title, subtitle, headers, rows, example=False):
+    """표 기반 비교 장표. headers=리스트, rows=[[...]]."""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    data = [headers] + rows
+    h = min(4.6, 0.55 * len(data) + 0.2)
+    add_table(slide, 0.691, 2.05, 9.451, h, data, header=True)
+    if example:
+        add_example_badge(slide)
     return slide
 
 
