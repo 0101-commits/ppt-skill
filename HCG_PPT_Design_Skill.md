@@ -1,280 +1,253 @@
 ---
 name: hcg-ppt-design
 description: >
-  HCG(휴먼컨설팅그룹) 제안서 PPT 디자인 & 자동생성 가이드라인 v3.0.
-  롯데알미늄 _final PPTX XML 전수 추출 + 테마 색상 직접 분석으로 정확도 극대화.
-  실제 PPTX를 템플릿으로 사용하는 auto_ppt.py v3 구현 패턴 포함.
-  신규 제안서 작성 또는 리뷰 시 이 스킬을 먼저 로드할 것.
+  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v4.0.
+  롯데알미늄 _final PPTX 전수 XML 분석 — 실제 25장 구조/레이아웃/색상/좌표 완전 정합.
+  도식화·구성·구조화 패턴 포함. 신규 제안서 작성 시 먼저 로드.
 ---
 
-# HCG 제안서 PPT 디자인 가이드라인 v3.0
+# HCG 제안서 PPT 디자인 가이드라인 v4.0
 
-> **분석 기반:** 롯데알미늄 _final PPTX XML 전수 추출 (테마/레이아웃/shape/폰트/색상)
-> python-pptx + zipfile 직접 파싱으로 실제 값 확인
-> auto_ppt.py v3 = 실제 PPTX 템플릿 기반 재생성 구현 완료
-
----
-
-## 0. 파일 스펙 (절대 준수)
-
-| 항목 | 실제 값 | 비고 |
-|------|---------|------|
-| **슬라이드 크기** | **10.833" × 7.5"** | US 와이드(13.33") 아님 |
-| **레이아웃 수** | **4개** | 표지/목차/본문/End of document |
-| **테마 파일** | theme1.xml (slide master 참조) | |
-| **본문 배경** | **흰색** (master bg1 = #FFFFFF) | 배경 이미지/색상 없음 |
+> **분석 기반:** 롯데알미늄 _final PPTX XML 전수 추출 (v3 대비 추가 분석)
+> - 25장 전수 shape 카운트 / 레이아웃 매핑 / 색상 추출
+> - TOC, Pain Point, Overview 슬라이드 shape 좌표 실측
+> - 슬라이드 순서/섹션 구조 완전 확인
 
 ---
 
-## 1. 테마 색상 실제 RGB 값
-
-| 테마 키 | 이름 | RGB | 용도 |
-|---------|------|-----|------|
-| dk1 (tx1) | TEXT_1 | **#000000** | 선, 테두리, 일부 텍스트 |
-| lt1 (bg1) | BG_1 | **#FFFFFF** | 슬라이드 배경, 텍스트 |
-| lt2 (bg2) | BG_2 | **#919191** | 본문 body 텍스트 색상 |
-| accent1 | — | **#FFFFFF** | 커버 텍스트 (outline에 사용) |
-| accent2 | — | **#A1D1F1** | 연파랑 강조 |
-| accent3 | — | **#356CB5** | 중파랑 강조 |
-| accent4 | — | **#FFCC66** | 황금색 강조 |
-| accent5 | — | **#F16249** | 코랄/살몬 강조 |
-| accent6 | — | **#50B8B6** | 틸 강조 |
-
-> **핵심:** `accent5 × lumMod=50000(50%)` ≈ **#921F0B** (다크 레드) = HCG 타이틀 텍스트 색상
-> `lt2 = #919191` = 본문 body 텍스트 기본색 (회색, 흰 배경에 가독성 확보)
-
----
-
-## 2. 폰트 시스템
+## 0. 파일 스펙
 
 | 항목 | 값 |
-|------|-----|
-| **Major font** | **맑은 고딕** (latin + EA 모두) |
-| **Minor font** | **맑은 고딕** (latin + EA 모두) |
-| **+mn-ea 참조** | → 맑은 고딕 (동아시아 마이너) |
-| **+mj-ea 참조** | → 맑은 고딕 (동아시아 메이저) |
+|------|----|
+| 슬라이드 크기 | **10.833" × 7.5"** |
+| 레이아웃 수 | **4개** (표지/목차/본문/End) |
+| 본문 배경 | **흰색** |
+| 총 슬라이드 | **25장** |
 
-모든 텍스트 latin/EA 모두 `맑은 고딕` 명시. 코드에서: `typeface="맑은 고딕"`
+---
+
+## 1. 실제 25장 구조 (확인 완료)
+
+| # | 레이아웃 | 제목 | 섹션 |
+|---|---------|------|------|
+| S01 | 표지(0) | 롯데알미늄 직무기반 HR제도 설계 및 도입 | — |
+| S02 | **목차(1)** | — | Ⅰ active |
+| S03 | 본문(2) | Project Overview | 추진 내용 |
+| S04 | 본문(2) | Client's Needs & Pain Point | 직무체계 / 평가보상 |
+| S05 | 본문(2) | HCG's Approach | HR 전문가 지식 경험 |
+| S06 | 본문(2) | [참고] | 高맥락 컨설팅 접근 방식 |
+| S07 | 본문(2) | 유사 프로젝트 수행 사례 | 다수 기업 HR 컨설팅 |
+| S08 | 본문(2) | 직무체계 개선 Overview | 직무체계 개선 |
+| S09 | 본문(2) | 직무체계 개선 Process | 직무체계 개선 |
+| S10 | 본문(2) | 직무체계 표준화 | 직무체계 개선 |
+| S11 | 본문(2) | [참고] | Global Job Skill 분석 결과 |
+| S12 | 본문(2) | 평가제도 개선 Overview | 평가제도 개선 |
+| S13 | 본문(2) | 직군별 차별화 평가모델 | 평가제도 개선 |
+| S14 | 본문(2) | [참고] | AI 기반 업무 Check-in |
+| S15 | 본문(2) | 평가운영체계 | 평가제도 개선 |
+| S16 | 본문(2) | 보상제도 개선 Overview | 보상제도 개선 |
+| S17 | 본문(2) | 보상 지향점 / 정책선 설정 | 보상제도 개선 |
+| S18 | 본문(2) | 보상제도 설계 | 보상제도 개선 |
+| S19 | 본문(2) | 보상 Simulation | 보상제도 개선 |
+| S20 | **목차(1)** | — | Ⅱ active |
+| S21 | 본문(2) | Overview | 휴먼컨설팅그룹 |
+| S22 | 본문(2) | 사업 영역 | HCG |
+| S23 | 본문(2) | 컨설팅 영역 | HCG |
+| S24 | 본문(2) | 주요 고객사 | HCG (870여 곳) |
+| S25 | End(3) | — | — |
+
+> **핵심:** 목차는 S02, S20 두 번 등장. 섹션은 Ⅰ(Overview) / Ⅱ(HCG 소개) 2개만.
+> 전통적 섹션 구분 슬라이드 없음 — 모든 콘텐츠 슬라이드가 본문(Layout 2) 사용.
+
+---
+
+## 2. 테마 색상 (실측)
+
+| 이름 | RGB | 용도 |
+|------|-----|------|
+| HCG_RED | **#921F0B** | 제목 텍스트 (accent5 × lumMod50%) |
+| CORAL | **#F16249** | accent5, 코랄/살몬 강조 |
+| CORAL_DK | **#400A07** | accent5 × lumMod20% = 우측 항목 배경 |
+| CORAL_MED | **#B23B25** | accent5 × lumMod60% = 요약 항목 |
+| GRAY | **#919191** | bg2 = 중간 회색, 헤더 바 |
+| GRAY_DK | **#1D1D1D** | bg2 × lumMod20% = 좌측 항목 배경 |
+| GRAY_LT | **#D9D9D9** | bg1 × lumMod85% = 연회색 배경 |
+| BLUE | **#356CB5** | accent3 = 프로세스 단계 박스 |
+| WINE | **#794039** | TOC 활성 섹션 번호 배경 |
+| WHITE | **#FFFFFF** | bg1, accent1 |
+| BLACK | **#000000** | dk1 = 선, 테두리 |
 
 ---
 
 ## 3. 레이아웃별 디자인
 
-### Layout 0: 표지 (`표지`)
+### Layout 1: 목차 (TOC)
 
-| 요소 | 위치 | 크기 | 스타일 |
-|------|------|------|--------|
-| 커버 이미지 | (0.131", 0.118") | 10.571" × 2.867" | layout에서 상속 |
-| Strictly Confidential | (0.127", 3.002") | 1.166" × 0.236" | Arial 8pt italic, #FFFFFF 65% lum |
-| 블랙 템플릿 바 | (1.135", 4.042") | 8.564" × 0.474" | fill: tx1(black), layout |
-| 회사/저작권 바 | (0.828", 6.976") | 9.177" × 0.269" | fill: tx1(black), layout |
-| **타이틀 placeholder** | **(1.135", 3.559")** | 8.564" × 0.474" | 22pt bold 맑은 고딕, 검정 |
-| **서브타이틀 placeholder** | **(1.135", 4.523")** | 8.564" × 0.305" | 검정 |
-| **날짜 텍스트** | **(1.137", 5.319")** | 8.563" × 0.3" | 10.5pt 맑은 고딕, CENTER |
+레이아웃 자체 shape: `TextBox "CONTENTS"` at (0.944", 1.759"), 1.090"×0.323", bg2 fill
 
-> 표지 배경 = 흰색. 커버 이미지가 상단 2.867" 채움. 하단은 흰 배경.
-> 타이틀 텍스트는 이미지 아래 흰 영역에 검정으로 배치.
+슬라이드 위에 수동 추가:
 
-### Layout 2: 본문 (`본문`)
+| 요소 | x | y (Ⅰ) | y (Ⅱ) | w | h | 스타일 |
+|------|---|-------|-------|---|---|--------|
+| 섹션 번호 원형 | 2.120" | 2.002" | 2.868" | 0.906" | 0.866" | active=#794039, inactive=white |
+| 섹션 제목 텍스트 | 3.457" | 2.280" | 3.147" | 2.230" | 0.309" | 16pt, active=wine bold, inactive=black |
+| 저작권 텍스트 | 2.120" | 3.829" | — | 8.020" | 0.254" | 6pt, bg1 fill |
+| 수직 연결선 | 2.182" | 2.002" | 2.868" | — | — | CONN at section y |
 
-| 요소 | 위치 | 크기 | 스타일 |
-|------|------|------|--------|
-| **제목 placeholder** | **(0.575", 0.250")** | 9.729" × 0.305" | 12pt bold 맑은 고딕, **color≈#921F0B** (accent5×50% lum) |
-| **서브헤드 placeholder (idx=10)** | **(0.575", 0.548")** | 9.728" × 0.361" | 15pt 맑은 고딕 Semilight, 텍스트 outline 1pt, 거의 검정 |
+> 섹션 제목 y = 섹션 번호 y + 0.278" (= number circle 내부 수직 중앙)
+> S02 = Ⅰ active, S20 = Ⅱ active
 
-> 본문 레이아웃 background = 없음 (흰색 상속). 컬러 헤더 바 없음.
-> 제목은 다크 레드 텍스트 (배경 아님). 서브헤드는 텍스트 윤곽선 포함.
+### Layout 2: 본문
 
----
-
-## 4. 본문 콘텐츠 배치 좌표 (실측)
-
-| 요소 | x (inch) | y 시작 | width | height | 간격(y) |
-|------|---------|--------|-------|--------|--------|
-| 좌측 컬럼 아이템 | **0.691** | **1.944** | **4.528** | **0.496** | **0.589** |
-| 우측 컬럼 아이템 | **5.615** | **1.944** | **4.528** | **0.496** | **0.589** |
-| 컬럼 헤더(색상) | 0.691 / 5.615 | **1.606** | 4.528 | **0.333** | — |
-| 중간 연결(VS 등) | **5.22** | row_y+0.05 | **0.394** | **0.394** | — |
-| 행 라벨 (우측정렬) | **0.369** | row_y | **1.250** | 0.318 | — |
-| 넓은 콘텐츠 박스 | **1.836** | row_y | **8.759** | 0.496 | — |
-
-### 아이템 y 위치 (6행 기준)
-
-| 행 | y |
-|----|---|
-| 1 | 1.944 |
-| 2 | 2.533 |
-| 3 | 3.122 |
-| 4 | 3.712 |
-| 5 | 4.301 |
-| 6 | 4.891 |
+| 요소 | x | y | w | h | 스타일 |
+|------|---|---|---|---|--------|
+| 제목 ph (idx=0) | 0.575" | 0.250" | 9.729" | 0.305" | 12pt bold, 자동 HCG_RED |
+| 서브헤드 ph (idx=10) | 0.575" | 0.548" | 9.728" | 0.361" | 15pt Semilight |
+| 헤더 바 | 0.691" | 1.595" | 9.451" | 0.333" | bg2(#919191) fill |
+| 수평 구분선 | 0.691" | 1.928" | 9.451" | 0" | dk1 선 |
+| 좌컬럼 items | 0.691" | 1.944" | 4.528" | 0.496" | 간격 0.589" |
+| 우컬럼 items | 5.615" | 1.944" | 4.528" | 0.496" | 간격 0.589" |
+| 중간 연결 박스 | 4.752" | 1.994" | 1.251" | 0.394" | bg2(gray) |
 
 ---
 
-## 5. Shape 스타일
+## 4. 슬라이드 타입별 도식화 패턴
 
-### 본문 콘텐츠 아이템 (Rounded Rectangle)
+### 4-1. TOC 슬라이드 (S02, S20)
 
-```python
-shape = slide.shapes.add_shape(
-    MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
-    Inches(0.691), Inches(1.944), Inches(4.528), Inches(0.496)
-)
-# fill: noFill (transparent)
-# line: 0.5pt, dk1(#000000) color
-# font: 맑은 고딕 11pt, color #919191 (lt2)
-# margin: left 0.07", right 0.04", top/bot 0.02"
-# line_spacing: 112%
+```
+CONTENTS (레이아웃 제공)
+
+[■ Ⅰ]  Project Overview     ← active: #794039, bold
+ 
+[□ Ⅱ]  HCG 소개             ← inactive: white
+
+저작권 텍스트 (6pt)
 ```
 
-### 컬럼 헤더 (색상 배경)
+### 4-2. 2컬럼 대조 슬라이드 (Pain Point, S04)
 
-```python
-# fill: HCG_RED = #921F0B or DARK_GRAY = #404040
-# line: noFill
-# font: 맑은 고딕 11pt bold WHITE
-# height: 0.333" (아이템보다 낮음)
+```
+[헤더 바 bg2 = 전통적 Consulting    │    HCG Approach]
+─────────────────────────────────────────────────────
+[항목1 #1D1D1D dark gray]  [연결]  [항목1 #400A07 dark red]
+[항목2 #1D1D1D dark gray]  [연결]  [항목2 #400A07 dark red]
+...
+[요약 #D9D9D9 light gray]           [요약 #B23B25 med coral]
+```
+- 좌: GRAY_DK (#1D1D1D), 우: CORAL_DK (#400A07), 텍스트 모두 흰색
+- 중간 연결박스: GRAY (#919191)
+
+### 4-3. 프로세스 단계 슬라이드 (Overview, S03/S08/S12/S16)
+
+```
+라벨        내용 텍스트 (x=1.836", w=8.759")
+(x=0.369")
+           ┌─────┐ → ┌─────┐ → ┌─────┐ → ┌─────┐
+           │Step1│   │Step2│   │Step3│   │Step4│  ← accent3 blue
+           └─────┘   └─────┘   └─────┘   └─────┘
+           [설명]      [설명]    [설명]    [설명]   ← bg2 gray
+```
+- 프로세스 박스: BLUE (#356CB5) fill, 1.976"×0.666", y=2.952"
+- 시작 x=2.133", 간격=2.006"
+- 설명 박스: GRAY fill, y=3.632", h=0.554"
+- 라벨: x=0.369", w=1.250", white fill, 우정렬
+
+### 4-4. 단일 컬럼 슬라이드 (본문 기본)
+
+```
+[헤더 바 bg2]
+─────────────
+라벨 │ 내용 (x=1.836", w=8.759")
+라벨 │ 내용
+...
 ```
 
-### 라벨 텍스트 (행 구분)
+### 4-5. 참고 슬라이드 (S06, S11, S14)
 
-```python
-# font: 맑은 고딕 13pt italic
-# color: MED_GRAY = #919191
-# alignment: RIGHT
-# no fill, no border
-```
+- 제목: "[참고]" prefix
+- 본문: 복잡한 그리드/표/이미지 (실제는 그룹 shapes + 그림)
+- 자동 생성 시: 단순화된 텍스트 박스 구현
 
 ---
 
-## 6. auto_ppt.py 구현 패턴 (v3 핵심)
-
-### 템플릿 사용법
+## 5. 좌표 상수 (실측)
 
 ```python
-# 실제 PPTX를 템플릿으로 로드 — 테마/폰트/레이아웃 완전 상속
-prs = Presentation("..._final.pptx")
+# 레이아웃
+TITLE_X, TITLE_Y = 0.575, 0.250    # 제목 placeholder
+SUB_X, SUB_Y = 0.575, 0.548        # 서브헤드 placeholder
 
-# 기존 슬라이드 전부 삭제
-sldIdLst = prs.slides._sldIdLst
-for sld_el in list(sldIdLst):
-    rId = sld_el.get(qn('r:id'))
-    prs.part.drop_rel(rId)
-    sldIdLst.remove(sld_el)
+# 본문 그리드
+HDR_X, HDR_Y, HDR_W, HDR_H = 0.691, 1.595, 9.451, 0.333
+LINE_Y = 1.928
+COL_L_X, COL_R_X = 0.691, 5.615
+ITEM_W, ITEM_H = 4.528, 0.496
+ITEM_Y0, ITEM_DY = 1.944, 0.589
+MID_X, MID_W, MID_H = 4.752, 1.251, 0.394  # 중간 연결
 
-# 새 슬라이드 추가 (레이아웃 인덱스)
-# 0: 표지, 1: 목차, 2: 본문, 3: End of document
-slide = prs.slides.add_slide(prs.slide_layouts[2])
-```
+# 단일 컬럼
+LBL_X, LBL_W = 0.369, 1.250
+CONTENT_X, CONTENT_W = 1.836, 8.759
 
-### Placeholder 텍스트 설정
+# 프로세스 단계
+PROC_X0, PROC_W_STEP = 2.133, 2.006
+PROC_W, PROC_H, PROC_Y = 1.976, 0.666, 2.952
+STEP_Y, STEP_H = 3.632, 0.554
 
-```python
-for ph in slide.placeholders:
-    idx = ph.placeholder_format.idx
-    if idx == 0:           # title → 자동 dark red 12pt bold
-        ph.text = "슬라이드 제목"
-    elif idx == 10:        # body subtitle → 자동 15pt Semilight
-        ph.text = "서브헤드 텍스트"
-```
-
-### Korean 폰트 명시 설정
-
-```python
-def _set_font_xml(run, name="맑은 고딕"):
-    rPr = run._r.get_or_add_rPr()
-    for tag in [qn('a:latin'), qn('a:ea')]:
-        el = rPr.find(tag)
-        if el is None:
-            el = etree.SubElement(rPr, tag)
-        el.set('typeface', name)
-```
-
-### noFill 설정
-
-```python
-def _set_no_fill(shape):
-    spPr = shape._element.find(qn('p:spPr'))
-    ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
-    for tag in ['solidFill','gradFill','blipFill','pattFill','grpFill','noFill']:
-        for el in spPr.findall(f'{{{ns}}}{tag}'):
-            spPr.remove(el)
-    etree.SubElement(spPr, f'{{{ns}}}noFill')
-```
-
-### 선 색상 (dk1) 설정
-
-```python
-def _set_line_dark(shape, pt=0.5):
-    spPr = shape._element.find(qn('p:spPr'))
-    ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
-    ln_el = etree.SubElement(spPr, f'{{{ns}}}ln')
-    ln_el.set('w', str(int(pt * 12700)))
-    sF = etree.SubElement(ln_el, f'{{{ns}}}solidFill')
-    sc = etree.SubElement(sF, f'{{{ns}}}schemeClr')
-    sc.set('val', 'dk1')
+# TOC
+TOC_NUM_X = 2.120
+TOC_NUM_W, TOC_NUM_H = 0.906, 0.866
+TOC_TITLE_X, TOC_TITLE_W, TOC_TITLE_H = 3.457, 2.230, 0.309
+TOC_SEC1_Y, TOC_SEC2_Y = 2.002, 2.868
 ```
 
 ---
 
-## 7. 자주 쓰는 슬라이드 패턴
+## 6. auto_ppt.py 구현 패턴 (v4)
 
-### 2-Column 비교 슬라이드
+### 필수 색상 상수
 
-```
-[헤더 좌: HCG_RED fill]        [헤더 우: DARK fill]
- y=1.606" h=0.333"              y=1.606" h=0.333"
-
-[아이템 1-1]  x=0.691"          [아이템 1-2]  x=5.615"
-[아이템 2-1]  y=2.533"          [아이템 2-2]
-[아이템 3-1]  y=3.122"          [아이템 3-2]
-...  (최대 5행)
-```
-
-### Process 슬라이드 (→ 화살표)
-
-```
-[단계1] → [단계2] → [단계3] → [단계4]
-   설명        설명        설명        설명
+```python
+HCG_RED   = RGBColor(0x92, 0x1F, 0x0B)
+CORAL_DK  = RGBColor(0x40, 0x0A, 0x07)  # Pain Point 우측
+CORAL_MED = RGBColor(0xB2, 0x3B, 0x25)  # 요약 우측
+GRAY      = RGBColor(0x91, 0x91, 0x91)  # 헤더/중간
+GRAY_DK   = RGBColor(0x1D, 0x1D, 0x1D)  # Pain Point 좌측
+GRAY_LT   = RGBColor(0xD9, 0xD9, 0xD9)  # 요약 좌측
+BLUE      = RGBColor(0x35, 0x6C, 0xB5)  # 프로세스 단계
+WINE      = RGBColor(0x79, 0x40, 0x39)  # TOC 활성
+WHITE     = RGBColor(0xFF, 0xFF, 0xFF)
+BLACK     = RGBColor(0x00, 0x00, 0x00)
 ```
 
-### Single Column 슬라이드 (라벨+내용)
+### 핵심 헬퍼
 
-```
-라벨 ▶│ 내용 텍스트 (x=1.836", w=8.759")
-(우정렬│italic, 13pt, #919191)
+```python
+def _add_box(slide, x, y, w, h, fill_rgb=None, border_rgb=None, radius=True):
+    t = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE if radius else MSO_AUTO_SHAPE_TYPE.RECTANGLE
+    s = slide.shapes.add_shape(t, Inches(x), Inches(y), Inches(w), Inches(h))
+    if fill_rgb: s.fill.solid(); s.fill.fore_color.rgb = fill_rgb
+    else: _set_no_fill(s)
+    if border_rgb: _set_line_color(s, border_rgb)
+    else: s.line.fill.background()
+    return s
 ```
 
 ---
 
-## 8. 검증 항목 체크리스트
-
-- [ ] 슬라이드 크기 10.833" × 7.5"
-- [ ] 실제 PPTX 템플릿 기반 (`Presentation(real_file)`)
-- [ ] 슬라이드 수 25장
-- [ ] 제목 placeholder idx=0 사용 → 자동 dark red 스타일
-- [ ] 서브헤드 placeholder idx=10 사용 (없으면 textbox 대체)
-- [ ] 본문 아이템 = rounded rectangle, noFill, 0.5pt border
-- [ ] 폰트 = `맑은 고딕` (latin+EA 모두 명시)
-- [ ] 좌컬럼 x=0.691", 우컬럼 x=5.615"
-- [ ] 아이템 높이 0.496", 폭 4.528"
-- [ ] y 시작 1.944", 간격 0.589"
-
----
-
-## 9. 주요 오류 및 해결
+## 7. 오류 레퍼런스
 
 | 오류 | 원인 | 해결 |
 |------|------|------|
-| `ValueError: must be in range 100~400000, got 0` | positional arg 순서 오류 → fsize=0 전달 | `_add_run(para, text, fsize, bold, italic, color)` 순서 일치 확인 |
-| `AttributeError: list has no attribute 'rId'` | `prs.slides[:n]` 슬라이싱 | `list(prs.slides)[:n]` 사용 |
-| 한글 경로 깨짐 (PowerShell) | inline string 인코딩 | `.py` 파일로 저장 후 실행 |
-| `fill_err: cannot import PP_ALIGN from dml` | 잘못된 import 위치 | fill 함수에서 PP_ALIGN import 제거 |
-| Git push rejected | remote 커밋 존재 | `git pull --rebase origin main` 먼저 |
+| `ValueError: range 100~400000, got 0` | positional arg 순서 틀림 → fsize=0 | `_add_run(p, text, fsize, bold, ...)` 순서 확인 |
+| `fill_err: cannot import PP_ALIGN from dml` | 잘못된 import | fill 함수에서 PP_ALIGN 제거 |
+| 한글 폰트 깨짐 | latin/ea 미지정 | `typeface="맑은 고딕"` XML 직접 설정 |
+| Git push rejected | remote ahead | `git pull --rebase origin main` 먼저 |
 
 ---
 
-## 10. 실행 방법
+## 8. 실행
 
 ```bash
 cd C:\Users\cgpar\ppt-skill
@@ -284,5 +257,5 @@ python auto_ppt.py
 
 ---
 
-*v3.0 업데이트: 2026-06-17*
-*XML 전수 추출 기반 정확도 극대화 — 실제 PPTX 템플릿 사용 방식으로 근본적 디자인 복제 구현*
+*v4.0 — 2026-06-17*
+*25장 구조 완전 정합 / TOC 2섹션(Ⅰ/Ⅱ) / Pain Point 다크 fill / 프로세스 accent3 파랑*

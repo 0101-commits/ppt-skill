@@ -1,0 +1,165 @@
+{
+  "skill": "hcg-ppt-design",
+  "version": "1.0",
+  "type": "design",
+  "language": "ko",
+  "title": "HCG 제안서 디자인(Design) 스킬",
+  "description": "HCG 제안서 PPT의 톤앤매너, 색상/폰트 규정, 레이아웃 표준, 좌표 상수, 시각적 계층 구조, 슬라이드 타입별 도식화 패턴을 담당하는 디자인 스킬. 스토리/목차/메시지는 skill_ppt_planning.json이 결정하고, 본 스킬은 그것을 실제 슬라이드로 구현한다.",
+  "when_to_use": "기획이 확정된 목차/장표 타입을 실제 PPTX로 구현할 때, 색상·폰트·좌표를 적용할 때, auto_ppt.py로 자동 생성할 때.",
+  "source_analysis": {
+    "기반": "롯데알미늄 _final.pptx XML 전수 추출 — 25장 구조/레이아웃/색상/좌표 실측 (HCG_PPT_Design_Skill.md v4.0 정합).",
+    "교차_검증": "한림제약_fin, 코웨이_final, 크래프톤 Draft_v2.0, 매일그룹 신인사 final 슬라이드 구조와 일치 확인.",
+    "최우선_반영": "_final 최종본의 실측 색상/좌표가 모든 초안보다 우선한다."
+  },
+  "file_spec": {
+    "슬라이드_크기_inch": [10.833, 7.5],
+    "레이아웃_수": 4,
+    "레이아웃": {"0": "표지", "1": "목차(TOC)", "2": "본문", "3": "End"},
+    "본문_배경": "흰색(#FFFFFF)",
+    "구현_원칙": "신규 제작 시에도 실제 _final PPTX를 템플릿으로 열어 테마/폰트/레이아웃을 100% 상속한 뒤 슬라이드만 교체한다."
+  },
+  "tone_and_manner": {
+    "전체_톤": "절제된 전문성. 컨설팅 그레이드. 화이트 배경 + 와인/코랄 포인트 + 그레이 무채색 베이스의 차분한 대비.",
+    "원칙": [
+      "여백을 살린다. 한 장표 한 메시지에 맞는 정보 밀도.",
+      "강조색은 제한적으로 — 제목(HCG_RED)과 핵심 박스에만. 남발 금지.",
+      "장식 금지: 불필요한 그림자/그라데이션/3D/클립아트 배제.",
+      "정렬 일관성: 좌측 라벨 우정렬, 본문 좌정렬, 헤더/번호 중앙정렬.",
+      "한글은 맑은 고딕 계열로 통일(폰트 깨짐 방지 위해 latin/ea 모두 지정)."
+    ]
+  },
+  "theme_colors": {
+    "HCG_RED": {"rgb": "#921F0B", "용도": "제목 텍스트 (accent5 x lumMod50%)"},
+    "CORAL": {"rgb": "#F16249", "용도": "accent5 코랄/살몬 강조"},
+    "CORAL_DK": {"rgb": "#400A07", "용도": "Pain Point 우측 항목 배경 (accent5 x lumMod20%)"},
+    "CORAL_MED": {"rgb": "#B23B25", "용도": "요약 항목 우측 (accent5 x lumMod60%)"},
+    "GRAY": {"rgb": "#919191", "용도": "bg2 중간 회색, 헤더 바, 중간 연결 박스"},
+    "GRAY_DK": {"rgb": "#1D1D1D", "용도": "Pain Point 좌측 항목 배경 (bg2 x lumMod20%)"},
+    "GRAY_LT": {"rgb": "#D9D9D9", "용도": "요약 항목 좌측, 연회색 배경 (bg1 x lumMod85%)"},
+    "BLUE": {"rgb": "#356CB5", "용도": "accent3 프로세스 단계 박스"},
+    "WINE": {"rgb": "#794039", "용도": "TOC 활성 섹션 번호 배경"},
+    "WHITE": {"rgb": "#FFFFFF", "용도": "bg1, accent1, 박스 위 텍스트"},
+    "BLACK": {"rgb": "#000000", "용도": "dk1 선/테두리"}
+  },
+  "fonts": {
+    "한글": "맑은 고딕",
+    "지정_방법": "run XML의 a:latin, a:ea 모두 typeface='맑은 고딕' 설정 (한쪽만 지정 시 한글 깨짐).",
+    "사이즈_규정": {
+      "제목_placeholder": "12pt Bold (자동 HCG_RED)",
+      "서브헤드_placeholder": "15pt 맑은 고딕 Semilight",
+      "본문_item": "10~11pt",
+      "라벨": "12~13pt italic, GRAY, 우정렬",
+      "저작권": "6pt",
+      "TOC_섹션제목": "16pt (active=wine bold)"
+    },
+    "행간": "112% (lnSpc spcPct 112000)"
+  },
+  "visual_hierarchy": [
+    "1순위 제목(idx=0): 최상단 HCG_RED 12pt Bold — 장표의 카테고리/메시지.",
+    "2순위 서브헤드(idx=10): 제목 아래 15pt Semilight — 한 줄 핵심 요약.",
+    "3순위 헤더 바: GRAY(#919191) 막대 + 하단 dk1 수평 구분선 — 콘텐츠 영역 시작.",
+    "4순위 콘텐츠 박스: noFill 0.5pt 테두리 또는 색상 채움(대비/강조 시).",
+    "5순위 라벨/캡션: GRAY italic 소형 — 행 의미 안내.",
+    "최하단: 저작권 6pt 고정."
+  ],
+  "layout_specs": {
+    "TOC_layout1": {
+      "고정요소": "TextBox 'CONTENTS' at (0.944, 1.759) 1.090x0.323 bg2 fill",
+      "섹션_번호_원형": {"x": 2.120, "w": 0.906, "h": 0.866, "y_sec1": 2.002, "y_sec2": 2.868, "active": "#794039", "inactive": "white"},
+      "섹션_제목": {"x": 3.457, "w": 2.230, "h": 0.309, "size": 16, "active": "wine bold", "inactive": "black", "y": "번호 y + 0.278"},
+      "저작권": {"x": 2.120, "y": 3.829, "w": 8.020, "h": 0.254, "size": 6},
+      "수직_연결선": "CONN at 2.182, 섹션 y에 맞춤"
+    },
+    "본문_layout2": {
+      "제목_ph_idx0": {"x": 0.575, "y": 0.250, "w": 9.729, "h": 0.305, "style": "12pt bold 자동 HCG_RED"},
+      "서브헤드_ph_idx10": {"x": 0.575, "y": 0.548, "w": 9.728, "h": 0.361, "style": "15pt Semilight"},
+      "헤더_바": {"x": 0.691, "y": 1.595, "w": 9.451, "h": 0.333, "fill": "GRAY #919191"},
+      "수평_구분선": {"x": 0.691, "y": 1.928, "w": 9.451, "h": 0, "color": "dk1"},
+      "좌컬럼": {"x": 0.691, "w": 4.528, "item_h": 0.496, "y0": 1.944, "dy": 0.589},
+      "우컬럼": {"x": 5.615, "w": 4.528, "item_h": 0.496, "y0": 1.944, "dy": 0.589},
+      "중간_연결_박스": {"x": 4.752, "w": 1.251, "h": 0.394, "fill": "GRAY"},
+      "단일컬럼_라벨": {"x": 0.369, "w": 1.250},
+      "단일컬럼_내용": {"x": 1.836, "w": 8.759}
+    }
+  },
+  "coordinate_constants_inch": {
+    "TITLE_X": 0.575, "TITLE_Y": 0.250, "TITLE_W": 9.729, "TITLE_H": 0.305,
+    "SUB_X": 0.575, "SUB_Y": 0.548, "SUB_W": 9.728, "SUB_H": 0.361,
+    "HDR_X": 0.691, "HDR_Y": 1.595, "HDR_W": 9.451, "HDR_H": 0.333,
+    "LINE_Y": 1.928,
+    "COL_L_X": 0.691, "COL_R_X": 5.615, "ITEM_W": 4.528, "ITEM_H": 0.496,
+    "ITEM_Y0": 1.944, "ITEM_DY": 0.589,
+    "MID_X": 4.752, "MID_W": 1.251, "MID_H": 0.394,
+    "LBL_X": 0.369, "LBL_W": 1.250, "CONTENT_X": 1.836, "CONTENT_W": 8.759,
+    "PROC_X0": 2.133, "PROC_W_STEP": 2.006, "PROC_W": 1.976, "PROC_H": 0.666, "PROC_Y": 2.952,
+    "STEP_Y": 3.632, "STEP_H": 0.554,
+    "TOC_NUM_X": 2.120, "TOC_NUM_W": 0.906, "TOC_NUM_H": 0.866,
+    "TOC_TITLE_X": 3.457, "TOC_TITLE_W": 2.230, "TOC_TITLE_H": 0.309,
+    "TOC_SEC1_Y": 2.002, "TOC_SEC2_Y": 2.868
+  },
+  "slide_type_patterns": {
+    "toc": {
+      "설명": "목차/섹션 간지. CONTENTS + 로마자 섹션 리스트.",
+      "active": "현재 섹션 번호=WINE(#794039) 배경, 제목=wine bold. 나머지 inactive=white/black."
+    },
+    "painpoint_2col": {
+      "설명": "As-Is(문제) vs To-Be(해법) 2컬럼 대조.",
+      "좌측_배경": "GRAY_DK #1D1D1D (텍스트 흰색)",
+      "우측_배경": "CORAL_DK #400A07 (텍스트 흰색)",
+      "중간_연결": "GRAY #919191 또는 화살표(→) HCG_RED 박스",
+      "요약행": "좌 GRAY_LT / 우 CORAL_MED"
+    },
+    "process": {
+      "설명": "프로세스 N단계 → 화살표 흐름.",
+      "단계_박스": "BLUE #356CB5 fill, 1.976x0.666, y=2.952, 시작 x=2.133, 간격=2.006",
+      "설명_박스": "GRAY fill, y=3.632, h=0.554",
+      "라벨": "x=0.369, w=1.250, white fill, 우정렬"
+    },
+    "single_col": {
+      "설명": "라벨 + 내용 단일 컬럼.",
+      "라벨": "x=0.369 GRAY italic 우정렬",
+      "내용": "x=1.836, w=8.759, noFill rounded rect"
+    },
+    "reference": {
+      "설명": "[참고]/[Back-up] 장표. 제목에 prefix. 복잡 그리드/표/이미지는 자동 생성 시 단순 텍스트 박스로 대체."
+    },
+    "cover_end": {
+      "설명": "표지(layout0)/End(layout3)는 레이아웃 제공 디자인 사용. 표지=제목 ph + '- 제안서 -' + 날짜 textbox."
+    }
+  },
+  "implementation": {
+    "engine": "auto_ppt.py (python-pptx)",
+    "color_constants": {
+      "HCG_RED": "RGBColor(0x92,0x1F,0x0B)",
+      "CORAL_DK": "RGBColor(0x40,0x0A,0x07)",
+      "CORAL_MED": "RGBColor(0xB2,0x3B,0x25)",
+      "GRAY": "RGBColor(0x91,0x91,0x91)",
+      "GRAY_DK": "RGBColor(0x1D,0x1D,0x1D)",
+      "GRAY_LT": "RGBColor(0xD9,0xD9,0xD9)",
+      "BLUE": "RGBColor(0x35,0x6C,0xB5)",
+      "WINE": "RGBColor(0x79,0x40,0x39)",
+      "WHITE": "RGBColor(0xFF,0xFF,0xFF)",
+      "BLACK": "RGBColor(0x00,0x00,0x00)"
+    },
+    "core_helpers": [
+      "_add_box(slide,x,y,w,h,fill_rgb,border_rgb,radius): ROUNDED_RECTANGLE 기본, fill/border 선택, noFill 가능.",
+      "_set_font_xml(run,'맑은 고딕'): a:latin + a:ea 동시 지정.",
+      "_add_run(para,text,fsize,bold,italic,color): 위치인자 순서 고정.",
+      "_set_line_spacing(para,112): 행간 112%.",
+      "set_title(slide,title,subtitle): ph idx0=제목, idx10=서브헤드.",
+      "delete_all_slides(prs): 템플릿 슬라이드 비우고 재생성."
+    ],
+    "run_cmd": "cd C:\\Users\\cgpar\\ppt-skill && python auto_ppt.py  → HCG_Automated_Draft.pptx"
+  },
+  "error_reference": [
+    {"오류": "ValueError: range 100~400000, got 0", "원인": "positional arg 순서 오류로 fsize=0", "해결": "_add_run(p,text,fsize,bold,...) 인자 순서 확인"},
+    {"오류": "cannot import PP_ALIGN from dml", "원인": "잘못된 import", "해결": "fill 함수에서 PP_ALIGN 제거"},
+    {"오류": "한글 폰트 깨짐", "원인": "latin/ea 미지정", "해결": "typeface='맑은 고딕' XML 직접 설정(양쪽)"},
+    {"오류": "Git push rejected (remote ahead)", "원인": "원격이 앞섬", "해결": "git pull --rebase origin main 먼저"}
+  ],
+  "handoff": {
+    "from": "skill_ppt_planning.json",
+    "입력": "확정 목차 + 장표별 메시지 + 슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end).",
+    "출력": "타입 태그를 slide_type_patterns + coordinate_constants에 매핑해 PPTX 슬라이드 생성."
+  }
+}
