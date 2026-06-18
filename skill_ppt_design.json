@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.0",
+  "version": "1.1",
+  "changelog": "v1.1 — 롯데알미늄 _final XML 도형 좌표 전수 실측. 고급 도식 패턴(Pain Point 카테고리화·VS 대비·3컬럼 STEP Overview·직군 차별화 매트릭스·예시적 배지·insight quote) + auto_ppt.py 신규 헬퍼 지시어 추가. 아이콘(PICTURE)은 자동생성 제외(한계).",
   "type": "design",
   "language": "ko",
   "title": "HCG 제안서 디자인(Design) 스킬",
@@ -158,6 +159,70 @@
     {"오류": "한글 폰트 깨짐", "원인": "latin/ea 미지정", "해결": "typeface='맑은 고딕' XML 직접 설정(양쪽)"},
     {"오류": "Git push rejected (remote ahead)", "원인": "원격이 앞섬", "해결": "git pull --rebase origin main 먼저"}
   ],
+  "advanced_slide_patterns": {
+    "_근거": "롯데알미늄 _final XML 도형 좌표 실측(inch). auto_ppt.py에 헬퍼로 구현. PICTURE(아이콘)은 자동생성 제외.",
+    "pain_point_categorized": {
+      "용도": "Client's Needs & Pain Point (S04)",
+      "헤더_바": "좌 '고객사의 HR 운영 Issue' / 우 '전통적 Consulting의 한계' — y=1.61 h=0.33, bg2 GRAY",
+      "행": "6행, y0=1.94 dy=0.59 h=0.50",
+      "좌_라벨태그": "x=0.69 w=1.02 h=0.50, GRAY_DK fill 흰 텍스트 (내용 박스 위 오버레이)",
+      "좌_내용": "x=0.69 w=4.53", "우_내용": "x=5.61 w=4.53",
+      "중앙_커넥터_배지": "x=4.75 w=1.25 h=0.39, GRAY fill (해소 키워드)",
+      "하단_요약": "y=5.53, 좌/우 각 x=0.69·5.61 w=4.53 h=1.37 (묶음 메시지, 강조 fill)"
+    },
+    "vs_comparison": {
+      "용도": "HCG's Approach (S05)",
+      "블록": "좌(Legacy) x=0.69 w=4.52 / 우(HCG) x=5.65 w=4.45, y=2.20 h=4.21",
+      "헤더": "좌 'Pain Point' / 우 'HCG's Approach' y=1.60 h=0.34",
+      "VS_배지": "x=5.22 y=1.61 w=0.39 h=0.39, HCG_RED/WINE fill 'VS' 흰 bold",
+      "하단_quote": "x=1.10 y=6.66 w=8.64 h=0.32 텍스트박스 takeaway"
+    },
+    "overview_3col_step": {
+      "용도": "모듈 Overview (직무체계 S08 / 평가 S12 / 보상 S16)",
+      "컬럼_x": [0.69, 3.90, 7.11], "컬럼_w": 3.03,
+      "헤더박스": "y=2.10 h=0.79 (예: 'Step 1. 직무 분석')",
+      "컨테이너": "y=2.88 h=4.17 (연회색 배경 박스)",
+      "상단_설명": "y=2.94 h=0.96 텍스트",
+      "AI_콜아웃": "y=3.83 h=1.88 (예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona')",
+      "하단_상세": "y=5.76 h=1.18",
+      "아이콘": "PICTURE 0.51² — 자동생성 제외(텍스트로 대체)"
+    },
+    "differentiated_matrix": {
+      "용도": "직군별 차별화 평가모델 (S13)",
+      "직군_라벨": "x=0.69 w=1.25 h=0.97, HCG_RED fill (R&D및신사업/영업/생산/경영지원)",
+      "업무특성": "x=2.00 w=2.07",
+      "중앙_insight_quote": "x=4.21 w=2.68 h=0.97, 큰따옴표 핵심 메시지 (예: '마일스톤 중심의 장기 성과 인정, 기술 경쟁력 확보 관점의 인력 관리')",
+      "화살표_배지": "x=6.99 w=0.47 h=0.57",
+      "반영방안": "x=7.57 w=2.59",
+      "행_y": [2.46, 3.55, 4.63, 5.74], "행_구분선": "각 행 사이 수평선(GROUP/LINE)",
+      "하단_quote": "x=0.69 y=6.79 w=9.45 (예: '각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고')"
+    },
+    "example_badge": {
+      "위치": "우상단 x=9.56 y=1.61 w=0.58 h=0.27",
+      "텍스트": "'예시적' (GRAY_LT fill, 작은 배지)",
+      "용도": "가설/예시 데이터 장표 표시 — 단정 회피"
+    },
+    "insight_quote_textbox": {
+      "원칙": "핵심 장표는 하단/중앙에 큰따옴표(“ ”)로 감싼 한 줄 takeaway. italic, 강조색(HCG_RED 또는 DARK_GRAY).",
+      "예": "“각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고”"
+    }
+  },
+  "new_helpers_for_auto_ppt": {
+    "_지침": "auto_ppt.py에 아래 헬퍼를 추가해 고급 패턴 구현. 좌표는 advanced_slide_patterns 값 사용. 기존 add_item/add_textbox 재사용.",
+    "add_header_bar(slide, text, x=0.69, y=1.61, w=9.451, h=0.333)": "GRAY(#919191) fill 막대 + 흰색 bold 11pt 텍스트. 콘텐츠 영역 헤더.",
+    "add_label_tag(slide, text, x, y, w=1.02, h=0.5, fill=GRAY_DK)": "미니 카테고리 라벨 박스(흰 텍스트, no_border).",
+    "add_connector_badge(slide, text, x=4.752, y, w=1.25, h=0.39, fill=GRAY)": "중앙 커넥터/키워드 배지.",
+    "add_vs_badge(slide, x=5.22, y=1.61, w=0.39, fill=HCG_RED, text='VS')": "VS 대비 배지(흰 bold).",
+    "add_example_badge(slide, x=9.56, y=1.61, w=0.58, h=0.27)": "'예시적' 우상단 배지(GRAY_LT).",
+    "add_insight_quote(slide, text, x=0.69, y=6.79, w=9.451)": "큰따옴표 italic 강조 takeaway 텍스트박스(자동으로 “ ” 부착).",
+    "build_overview_3col(prs, title, subtitle, cols)": "cols=[{header, desc, ai_callout, detail}×3] → 3컬럼 STEP Overview.",
+    "build_diff_matrix(prs, title, subtitle, rows, bottom_quote)": "rows=[{group, trait, insight_quote, apply}] → 직군 차별화 매트릭스 + 행 구분선 + 하단 quote."
+  },
+  "limitations": {
+    "아이콘/이미지": "PICTURE(아이콘·이미지)는 python-pptx 자동생성 불가 → 텍스트/도형으로 대체하거나 템플릿 슬라이드 복제로 처리.",
+    "복잡_GROUP": "_final의 다단계 GROUP/FREEFORM 화살표는 단순 도형 조합으로 근사.",
+    "TABLE": "직무분류 예시 표는 add_table 또는 텍스트 박스 그리드로 구현."
+  },
   "handoff": {
     "from": "skill_ppt_planning.json",
     "입력": "확정 목차 + 장표별 메시지 + 슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end).",

@@ -257,5 +257,64 @@ python auto_ppt.py
 
 ---
 
-*v4.0 — 2026-06-17*
-*25장 구조 완전 정합 / TOC 2섹션(Ⅰ/Ⅱ) / Pain Point 다크 fill / 프로세스 accent3 파랑*
+## 9. 고급 도식 패턴 v4.1 (롯데알미늄 _final XML 실측)
+
+> 신규 제안서 생성 시 평면 텍스트 대신 아래 패턴 우선. 좌표 inch. **PICTURE(아이콘)는 자동생성 제외(한계)** → 텍스트/도형 대체.
+
+### 9-1. Pain Point 카테고리화 (S04)
+| 요소 | 좌표 |
+|------|------|
+| 헤더 바 (좌 '고객사 HR 운영 Issue' / 우 '전통 Consulting 한계') | y=1.61 h=0.33, GRAY |
+| 행 (6행) | y0=1.94 dy=0.59 h=0.50 |
+| 좌 라벨태그 | x=0.69 w=1.02 h=0.50, GRAY_DK 흰 텍스트 |
+| 좌/우 내용 | x=0.69 / 5.61, w=4.53 |
+| 중앙 커넥터 배지 | x=4.75 w=1.25 h=0.39, GRAY |
+| 하단 요약 2개 | y=5.53, w=4.53 h=1.37 |
+
+### 9-2. VS 대비 (S05 HCG's Approach)
+- 블록: 좌 x=0.69 w=4.52 / 우 x=5.65 w=4.45, y=2.20 h=4.21
+- `VS` 배지: x=5.22 y=1.61 0.39², HCG_RED/WINE fill 흰 bold
+- 하단 quote: x=1.10 y=6.66 w=8.64
+
+### 9-3. 3-컬럼 STEP Overview (S08/12/16)
+- 컬럼 x=[0.69, 3.90, 7.11] w=3.03
+- 헤더박스 y=2.10 h=0.79 / 컨테이너 y=2.88 h=4.17 / 상단설명 y=2.94 h=0.96
+- **AI 콜아웃** y=3.83 h=1.88 (예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona')
+- 하단 상세 y=5.76 h=1.18 / 아이콘 0.51²(제외)
+
+### 9-4. 직군 차별화 매트릭스 (S13)
+| 열 | 좌표 |
+|----|------|
+| 직군 라벨 | x=0.69 w=1.25 h=0.97, HCG_RED |
+| 업무 특성 | x=2.00 w=2.07 |
+| 중앙 insight quote (큰따옴표) | x=4.21 w=2.68 h=0.97 |
+| 화살표 배지 | x=6.99 w=0.47 h=0.57 |
+| 반영방안 | x=7.57 w=2.59 |
+| 행 y | 2.46 / 3.55 / 4.63 / 5.74 (사이 구분선) |
+| 하단 quote | x=0.69 y=6.79 w=9.45 |
+
+### 9-5. 예시적 배지 & Insight Quote
+- `예시적` 배지: 우상단 x=9.56 y=1.61 w=0.58 h=0.27, GRAY_LT — 가설/예시 데이터 단정 회피
+- Insight Quote: 하단/중앙 큰따옴표(“ ”) italic 강조색 한 줄 takeaway
+
+### 9-6. auto_ppt.py 신규 헬퍼 (구현 지시어)
+```python
+add_header_bar(slide, text, x=0.69, y=1.61, w=9.451, h=0.333)   # GRAY 바 + 흰 bold
+add_label_tag(slide, text, x, y, w=1.02, h=0.5, fill=GRAY_DK)   # 미니 카테고리 라벨
+add_connector_badge(slide, text, x=4.752, y, w=1.25, h=0.39)    # 중앙 키워드 배지
+add_vs_badge(slide, x=5.22, y=1.61, w=0.39, text='VS')          # VS 대비 배지
+add_example_badge(slide, x=9.56, y=1.61, w=0.58, h=0.27)        # '예시적' 배지
+add_insight_quote(slide, text, x=0.69, y=6.79, w=9.451)         # “ ” italic takeaway
+build_overview_3col(prs, title, subtitle, cols)                 # 3컬럼 STEP Overview
+build_diff_matrix(prs, title, subtitle, rows, bottom_quote)     # 직군 차별화 매트릭스
+```
+
+### 9-7. 한계
+- 아이콘/이미지(PICTURE) 자동생성 불가 → 도형/텍스트 대체 또는 템플릿 슬라이드 복제
+- 다단계 GROUP/FREEFORM 화살표 → 단순 도형 조합 근사
+- 직무분류 예시 표 → add_table 또는 텍스트 그리드
+
+---
+
+*v4.1 — 2026-06-18 | v4.0(좌표 실측) + 고급 도식 패턴(Pain Point 카테고리·VS·3컬럼 STEP·직군 매트릭스·예시적 배지·insight quote) + auto_ppt 헬퍼 지시어*
+*JSON 페어: skill_ppt_design.json | 기획 페어: skill_ppt_planning*
