@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+
+# MS Office 임시/잠금 파일
+~$*
+*.tmp
+
+# 스크래치
+_*.py
