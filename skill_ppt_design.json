@@ -7,7 +7,8 @@
   "description": "HCG 제안서 PPT의 톤앤매너, 색상/폰트 규정, 레이아웃 표준, 좌표 상수, 시각적 계층 구조, 슬라이드 타입별 도식화 패턴을 담당하는 디자인 스킬. 스토리/목차/메시지는 skill_ppt_planning.json이 결정하고, 본 스킬은 그것을 실제 슬라이드로 구현한다.",
   "when_to_use": "기획이 확정된 목차/장표 타입을 실제 PPTX로 구현할 때, 색상·폰트·좌표를 적용할 때, auto_ppt.py로 자동 생성할 때.",
   "source_analysis": {
-    "기반": "롯데알미늄 _final.pptx XML 전수 추출 — 25장 구조/레이아웃/색상/좌표 실측 (HCG_PPT_Design_Skill.md v4.0 정합).",
+    "기반": "롯데알미늄 _final.pptx XML 전수 추출 — 25장 구조/레이아웃/색상/좌표 실측 (skill_ppt_design.md v4.0 정합).",
+    "버전_관리": "skill_ppt_design.md(사람 판독·v4.0 상세) + skill_ppt_design.json(프롬프트용) 페어로 별도 관리. 기획은 skill_ppt_planning.json/.md.",
     "교차_검증": "한림제약_fin, 코웨이_final, 크래프톤 Draft_v2.0, 매일그룹 신인사 final 슬라이드 구조와 일치 확인.",
     "최우선_반영": "_final 최종본의 실측 색상/좌표가 모든 초안보다 우선한다."
   },
