@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-planning",
-  "version": "1.1",
+  "version": "1.2",
+  "changelog_v1_2": "v1.2 — 기아 AI Draft(32장/213자·5.5도식) vs 인간 _final(58장/502자·23도식) 비교 기반. depth_and_scale_v2, named_frameworks, mece_submodules, transition_governance 추가 — 분량·근거 깊이·고유 프레임워크·MECE 하위모듈 강화.",
   "changelog": "v1.1 — 롯데알미늄 _final XML 실측 + 리더 _fb/회의록(2026.02.26·03.04) 반영. 고급 스토리 패턴(3step Overview·Pain Point 카테고리화·VS 대비·직군 차별화 매트릭스·보상 4P), insight quote 규칙, salespoint framing, subhead doctrine, module tailoring 추가.",
   "type": "planning",
   "language": "ko",
@@ -193,6 +194,19 @@
     "거버넌스_분량": "직무가 주력. 평가·보상은 프로세스 위주 간략 터치. 회사소개 제외 핵심 10장 내 권장(고객 요청 시 확장). 제출 전 임원 리뷰→컨펌."
   },
   "module_tailoring": "직무 모듈 비중 최대. 평가/보상은 프로세스맵 위주로 간결(변동급 상세설계 등 제외). 생산직 specific 콘텐츠 과다 금지 — '표준+custom' 프레임 유지. '예시적' 데이터는 배지로 표시해 단정 회피(RULE-4).",
+  "depth_and_scale_v2": {
+    "_근거": "기아 AI Draft 32장·213자/장·5.5도식/장 vs 인간 _final 58장·502자/장·23도식/장. AI는 분량·근거 깊이가 과소.",
+    "분량_스케일": "진단·BM형 대형 제안서는 40~60장이 표준. 기본 30장대는 과소 — 핵심 섹션을 충분히 전개. (단 고객이 분량 제한 명시 시 그 우선)",
+    "why_hcg_전개": "Why HCG는 1~3장 압축 금지. (1)산업 이해(고객·계열·관계사 각각), (2)대기업 보상 경험, (3)직군별 차별화 노하우(사명 익명 K社/D社 등)를 각각 별도 장표로 전개.",
+    "backup_적극분리": "핵심 근거·사례·제도 상세·법 리스크는 [참고]/Back-up 장표로 적극 분리(인간본은 [참고] 다수). 본문=거버닝 메시지, [참고]=증빙.",
+    "mini_report_density": "본문 장표 = 미니리포트. 거버닝 메시지 1줄 + 구조화된 근거(목표 350~500자). 4줄 평면 텍스트 금지 — 도식 + 근거로 채운다."
+  },
+  "named_frameworks": {
+    "원칙": "방법론·진단에 고유명(Proprietary)을 부여해 차별화·기억성 확보. 인간본 예: 'Benchmarking Connect', 'Global Big Data Analytics', 'Local Compensation', 'HCG HR Maturity', 'Process Overview'.",
+    "적용": "① 수행방안 진입에 시각적 'Process Overview' 로드맵 1장 ② 진단에 성숙도 모델/프레임워크 장표(예: HR Maturity) 포함 ③ 핵심 방법론 모듈에 명명된 이름 부여."
+  },
+  "mece_submodules": "수행방안 하위는 1)/2)/3) 번호로 MECE 전개. 예: 벤치마킹 = 1) Benchmarking Connect, 2) Global Big Data Analytics, 3) Local Compensation. 섹션 prefix + 번호를 전 장표 일관 유지.",
+  "transition_governance": "섹션 간지(divider)는 풀비주얼 1장. 섹션 진입 직후 Overview/Framework로 전체 그림 제시 후 하위 모듈 전개(도입→전개→결론). 장표 제목에 '섹션  대모듈  소모듈' 3단 카테고리 일관.",
   "handoff": {
     "to": "skill_ppt_design.json / skill_ppt_design.md",
     "전달물": "확정 목차, 장표별 헤드 메시지, 슬라이드 타입 태그. 좌표/색상/폰트/레이아웃은 design 스킬이 결정.",

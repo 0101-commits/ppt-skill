@@ -1,6 +1,7 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.1",
+  "version": "1.2",
+  "changelog_v1_2": "v1.2 — 기아 AI Draft vs 인간 _final 도형 통계 비교(AI 5.5도식/장 vs 인간 23도식/장; AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개). density_diagram_targets, new_helpers_v2(connector_line·arrow_flow·table·icon_placeholder·process_roadmap·compare_table), scale_guidance 추가.",
   "changelog": "v1.1 — 롯데알미늄 _final XML 도형 좌표 전수 실측. 고급 도식 패턴(Pain Point 카테고리화·VS 대비·3컬럼 STEP Overview·직군 차별화 매트릭스·예시적 배지·insight quote) + auto_ppt.py 신규 헬퍼 지시어 추가. 아이콘(PICTURE)은 자동생성 제외(한계).",
   "type": "design",
   "language": "ko",
@@ -223,6 +224,23 @@
     "복잡_GROUP": "_final의 다단계 GROUP/FREEFORM 화살표는 단순 도형 조합으로 근사.",
     "TABLE": "직무분류 예시 표는 add_table 또는 텍스트 박스 그리드로 구현."
   },
+  "density_diagram_targets": {
+    "_근거": "AI Draft 5.5도식/장·213자/장 vs 인간 _final 23도식/장·502자/장. AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개 = 시각적 평면.",
+    "도식_비율": "본문 장표는 텍스트 박스 나열 금지. 장당 구조 도식(박스 + 연결선/화살표 또는 표) ≥1. 인간본 수준(장당 다수 도식)을 지향.",
+    "텍스트_밀도": "본문 장표 목표 350~500자(거버닝 + 근거). 단 텍스트 벽 금지 — 도식으로 구조화.",
+    "연결_시각화": "흐름은 텍스트 대신 connector line/arrow로 표현. 항목 비교는 TABLE로. 단계는 화살표 흐름으로.",
+    "아이콘_대체": "PICTURE(아이콘) 자동생성 불가 → add_icon_placeholder(도형)로 시각 요소 보강."
+  },
+  "new_helpers_v2": {
+    "_지침": "auto_ppt.py에 추가해 평면 텍스트 → 도식화. 기존 add_item/add_textbox 재사용.",
+    "add_connector_line(slide, x1, y1, x2, y2, color=MED_GRAY, w_pt=1.0)": "박스 간 연결선(직선). 흐름·관계 시각화.",
+    "add_arrow_flow(slide, centers)": "박스 중심점 리스트 사이에 → 화살표(텍스트박스 또는 도형) 자동 배치.",
+    "add_table(slide, x, y, w, h, data, header=True)": "비교용 TABLE 삽입(인간본 8개 사용). header행 HCG_RED fill·흰 bold.",
+    "add_icon_placeholder(slide, x, y, d=0.5, fill=BLUE)": "아이콘 대체 원형/둥근 도형(PICTURE 대신).",
+    "build_process_roadmap(prs, title, subtitle, phases)": "Process Overview 로드맵 — phase 박스 + 하위 step + 연결선(인간본 S19 패턴).",
+    "build_compare_table(prs, title, subtitle, headers, rows, example=False)": "표 기반 비교 장표(BM 결과·pay 구조 등). headers→TABLE 헤더, rows→행."
+  },
+  "scale_guidance": "진단/BM형 대형 제안서는 40~60장. 섹션 divider는 풀비주얼 1장. 본문은 미니리포트 밀도(350~500자 + 도식). Why HCG·근거는 다(多)장 전개 + [참고] 분리.",
   "handoff": {
     "from": "skill_ppt_planning.json",
     "입력": "확정 목차 + 장표별 메시지 + 슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end).",
