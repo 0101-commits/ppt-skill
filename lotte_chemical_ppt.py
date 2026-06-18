@@ -12,11 +12,14 @@ sys.stdout.reconfigure(encoding='utf-8')
 # auto_ppt.py 의 검증된 헬퍼/제너릭 빌더/상수 재사용
 from auto_ppt import (
     Presentation, REAL, Inches, PP_ALIGN, MSO_AUTO_SHAPE_TYPE, qn, etree,
-    HCG_RED, DARK_GRAY, MED_GRAY, WHITE, BLACK,
+    HCG_RED, DARK_GRAY, MED_GRAY, WHITE, BLACK, GRAY_LT, BLUE,
     LABEL_X, LABEL_W, COL_L_X, COL_R_X, ITEM_W, ITEM_Y0, ITEM_DY, HDR_Y,
     delete_all_slides, add_item, add_textbox, set_title,
     build_body_2col, build_body_single, build_body_process,
     build_section_divider, build_end,
+    # v4.1 고급 패턴
+    build_overview_3col, build_diff_matrix, build_pain_point_categorized,
+    build_approach_vs, add_insight_quote, add_example_badge,
 )
 
 OUT = "C:\\Users\\cgpar\\ppt-skill\\HCG_롯데케미칼_직무기반HR_제안서_Draft.pptx"
@@ -127,35 +130,35 @@ def main():
          ("지주 가이드", "지주 표준 직무 가이드는 사무직 중심 — 생산직 적용 기준·구체 설명 미흡")])
     mark("롯데케미칼 이해")
 
-    # Pain Point (As-Is) ↔ Needs
-    build_body_2col(prs, "Client's Needs & Pain Point",
-        "직무체계·평가/보상 미흡에 따른 인사 개편이 필요하나, 전통적 컨설팅은 자원·기간 과다",
-        "현재 문제점 (As-Is)", "기대 개선사항 (To-Be)",
-        ["표준 직무 부재 — 사업장별 직무 정의·R&R 상이",
-         "직무 데이터 노후·분산 — 현행화·활용 곤란",
-         "생산직 평가 기준 미흡 — 직군 특성 미반영",
-         "보상 차등화 근거 부족 — 직무가치 미반영",
-         "전통적 컨설팅 — Interview/Survey로 구성원 부담·장기 소요"],
-        ["글로벌 표준+AI로 직무분류체계 신속 표준화",
-         "AI 직무기술서로 전(全)직무 현행화",
-         "직군별 차별화 평가모델 (성과/투입/역량 지향)",
-         "직무가치 기반 Pay 정책선·차등 설계",
-         "표준 설계도 기반 — 시간/비용/부담 최소화"])
-    mark("Pain Point")
+    # Pain Point — 카테고리화 (고객 HR Issue ↔ 전통 컨설팅 한계)
+    build_pain_point_categorized(prs, "Client's Needs & Pain Point",
+        "직무체계·평가/보상제도 미흡에 따른 인사제도 개편이 필요하나, 전통적 컨설팅은 많은 자원이 장기간 투입되어 효율적 정비가 어려움",
+        "고객사의 HR 운영 Issue", "전통적 Consulting의 한계",
+        [("데이터 부재", "인력별 업무 / 직무 가치 파악 어려움", "Zero-base", "과거 History·현황 파악 등에 많은 시간 / 비용 소요"),
+         ("노후 데이터", "현행화 되지 않은 직무 정보", "현행화", "설계 과정의 Interview / Survey 등 구성원 부담"),
+         ("객관성 시비", "직무가치 평가에 평가자 주관 개입", "기준 확립", "일부 직군·구성원 수용성 저하로 평가 결과 불만"),
+         ("사후적 관리", "실시간성 떨어지는 목표설정 / 성과관리", "시스템 활용", "Global HR System 활용 시 고객사와 잘 맞지 않음"),
+         ("보상 불일치", "직무 가치 / 난이도와 괴리된 보상체계", "보상 Align", "직무체계 없는 보상 Coupling으로 실용성 저하"),
+         ("단편적 접근", "현재 이슈 대응의 프로젝트성 접근", "사후관리", "프로젝트 이후 사후관리 부재로 컨설팅 유명무실화")],
+        summary_left="파편화된 데이터와 수동적 HR 운영의 악순환",
+        summary_right="유기적 연결이 부족한 1회성 컨설팅 결과물")
+    mark("Pain Point (categorized)")
 
-    # HCG Approach (Legacy vs HCG)
-    build_body_2col(prs, "HCG's Approach",
+    # HCG Approach — Legacy vs HCG 'VS' 대비
+    build_approach_vs(prs, "HCG's Approach",
         "HR 전문가 지식/경험 + 글로벌 표준을 집대성한 '표준 설계도'와 AI로 Pain Point를 쉽고·정확하고·빠르게 해소",
-        "Legacy Consulting", "HCG Approach (표준 설계도 + AI)",
+        "Legacy Consulting",
         ["맞춤 구축 — 시간/비용/복잡성 ↑",
          "대량 리소스·구성원 업무조사 부담",
          "산출물 간 低연계·사후관리 부족",
          "글로벌 표준 vs 국내 현장 간 Gap"],
+        "HCG's Proposition (표준 설계도 + AI)",
         ["국제표준(APQC·ESCO·ISCO·O*NET·NCS) 기반 빠른 초안",
          "AI 직무기술서 — 조사 부담 최소화",
          "직무→평가→보상 일관 연계 설계",
-         "지주 가이드·현장 맥락을 Custom으로 정합"])
-    mark("HCG Approach")
+         "지주 가이드·현장 맥락을 Custom으로 정합"],
+        bottom_quote="AI를 활용해 즉시 활용 가능한 고객 맞춤형 직무체계를 구축하고 직무 특성에 맞는 평가·보상으로 연계")
+    mark("HCG Approach (VS)")
 
     build_body_single(prs, "[참고] 高맥락·AI 기반 컨설팅 접근",
         "표면 문맥을 넘어 고객 고유의 비언어적 맥락(HR Gene)을 이해하고 HR 모듈에 즉시 반영",
@@ -223,13 +226,22 @@ def main():
          ("산출물", "표준 직무체계(안), 직무기술서, 평가/보상제도(안), 운영 가이드라인")])
     mark("Overall Approach")
 
-    build_body_process(prs, "M1. 직무체계 표준화  Overview",
-        "지주 가이드와 현장 맥락을 글로벌 표준+AI로 통합해 신속하게 표준 직무를 확립",
-        [("지주 가이드\n해석", "표준 직무\n원칙 decipher"),
-         ("글로벌 BM\n+AI 수집", "국제표준 직무\n체계 수집"),
-         ("표준 직무\n도출", "사업장 공통\n표준 확립"),
-         ("사업장\nCustom", "공정·교대 맥락\n반영 조정")])
-    mark("M1 Overview")
+    build_overview_3col(prs, "직무체계 개선  Overview",
+        "지주사의 직무 분류 철학을 계승하되, AI 기반 글로벌 벤치마킹과 생산직 특성을 반영해 직무체계를 신속히 표준화",
+        [{"header": "Step 1. 직무 분석",
+          "desc": "구성원 업무 목록·소요시간 등 직무 데이터 수집·분석",
+          "ai": "AI 표준 직무체계\n글로벌 표준 직무 DB 활용",
+          "detail": "BM 대상·부서 R&R 기준 등 직무체계 수립 원칙 설정"},
+         {"header": "Step 2. 직무 분류",
+          "desc": "가치사슬 / 업무 성격 기준 직군 정의 및 직무 도출",
+          "ai": "직무 분류 AI Agent\n산업·업무 특성 기반 직무 정의",
+          "detail": "지주 Guide 정합 분류 기준 설정 + 세분화"},
+         {"header": "Step 3. 직무 평가",
+          "desc": "직무가치 기준 점수화·등급 도출",
+          "ai": "직무평가 AI Persona\nTF 합의 기준 기반 평가",
+          "detail": "직무평가 원칙·Calibration·Communication"}],
+        bar_label="직무체계 개선 Overview", example=True)
+    mark("M1 Overview (3col)")
 
     build_body_process(prs, "직무분류체계 Framework",
         "석유화학 직무 특성을 반영한 직군→직렬→직무 3단계 표준 분류체계",
@@ -278,15 +290,19 @@ def main():
          "AI 보조로 공정성·편향 완화"])
     mark("M2 평가 현황")
 
-    build_body_process(prs, "직군별 차별화 평가모델",
-        "직무 특성을 도출해 일의 성격에 따라 평가 방식을 차등 적용",
-        [("성과 지향", "정량 KPI 중심\n(영업·사업)"),
-         ("투입 지향", "공정·시간 기반\n(생산직)"),
-         ("역량/전문", "전문성·Potential\n(연구·기술)"),
-         ("직군 적용", "직군/직렬별\n평가 틀 매핑")],
-        [("도출 방식", "직무 확정 후 일의 특성을 분석해 평가 유형 분류"),
-         ("협의", "TFT 협의로 직군별 적합 평가제도 수립")])
-    mark("직군 차별화 평가")
+    build_diff_matrix(prs, "평가제도 개선  직군별 차별화 평가모델",
+        "각 직군·현장의 업무 특성 차이를 반영해 평가제도의 방향성을 차별화",
+        [{"group": "R&D·신사업", "trait": "사업/제품/신기술 개발에 장기 소요, 프로젝트 위주 수행",
+          "insight": "마일스톤 중심의 장기 성과 인정", "apply": "마일스톤·Output 평가, R&D 장기 성과급 체계"},
+         {"group": "영업", "trait": "B2B 채널별 장기 영업 활동, 성과 가시성 높음",
+          "insight": "목표 달성 기반 개인 성과 인정", "apply": "채널 난이도 가중치 반영, 개인 성과/보상 연계"},
+         {"group": "생산", "trait": "수율·설비·원가 등 반복·절대적 수행 업무",
+          "insight": "조직 단위 성과·절대 수준 관리", "apply": "절대평가 고려, 조직 성과 연계 보상"},
+         {"group": "경영지원", "trait": "전사 과제·글로벌 법인 지원, 가시성 낮음",
+          "insight": "핵심 과제 중심 상시관리·협업", "apply": "핵심과제 목표설정, 협업 지표 반영"}],
+        bottom_quote="각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고",
+        example=True)
+    mark("직군 차별화 평가 (matrix)")
 
     build_body_process(prs, "평가제도 수립 Process Map",
         "가설적 결론이 아닌 '도출 과정'을 보여주는 4단계 수립 프로세스",
@@ -325,13 +341,13 @@ def main():
          "시장 BM 기반 Pay Level 결정"])
     mark("M3 보상 원칙")
 
-    build_body_single(prs, "직무기반 보상제도 설계",
-        "Pay Policy → Pay Mix → Pay Level → 평가 연계의 순차적 보상 개선 프로세스",
+    build_body_single(prs, "보상제도 개선  4P 기반 보상체계 설계",
+        "Pay Policy → Pay Level → Pay Structure → Pay Mix의 4P 관점으로 직무가치·직군 특성을 반영",
         [("Pay Policy", "보상 원칙·정책선(시장 대비 지향 수준) 가이드 수립"),
-         ("Pay Mix", "사무직·생산직 등 직군별 기본급/변동급 구성 설계"),
-         ("Pay Level", "충원 필요 직군 중심 시장 BM으로 외부 경쟁력 확보"),
-         ("평가 연계", "평가 결과를 기본급/변동급에 연동 (Contributor Connection)")])
-    mark("보상제도 설계")
+         ("Pay Level", "충원 필요 직군 중심 시장 BM으로 외부 경쟁력(수준) 확보"),
+         ("Pay Structure", "직무가치 기반 급여 대역(Pay Band)·등급 구조 설계 + 평가-보상 Contributor Connection"),
+         ("Pay Mix", "사무직·생산직 등 직군별 기본급/변동급 조합(Mix) 차별화")])
+    mark("보상제도 설계 (4P)")
 
     build_body_single(prs, "보상 Simulation",
         "변동급 상세 설계보다 재원 영향 Simulation으로 의사결정 지원",

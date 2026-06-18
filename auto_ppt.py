@@ -60,6 +60,12 @@ DARK_GRAY  = RGBColor(0x40, 0x40, 0x40)
 MED_GRAY   = RGBColor(0x91, 0x91, 0x91)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
 BLACK      = RGBColor(0x00, 0x00, 0x00)
+# v4.1 고급 패턴용 (design 스킬 실측 팔레트)
+GRAY_DK    = RGBColor(0x1D, 0x1D, 0x1D)
+GRAY_LT    = RGBColor(0xD9, 0xD9, 0xD9)
+WINE       = RGBColor(0x79, 0x40, 0x39)
+CORAL_DK   = RGBColor(0x40, 0x0A, 0x07)
+BLUE       = RGBColor(0x35, 0x6C, 0xB5)
 
 
 # ════════════════════════════════════════════════════════════
@@ -160,7 +166,7 @@ def add_item(slide, text, left, top, width=ITEM_W, height=ITEM_H,
         _set_no_fill(shape)
 
     if no_border:
-        _set_no_fill(shape)  # border also removed
+        # 선만 제거 (fill 유지 — _set_no_fill 호출 시 fill까지 사라지던 버그 수정)
         # Remove any line
         sp_el = shape._element
         spPr = sp_el.find(qn('p:spPr'))
@@ -581,6 +587,141 @@ def build_appendix(prs):
 # ════════════════════════════════════════════════════════════
 # 메인 빌드
 # ════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════
+# 고급 도식 헬퍼 (v4.1 — 롯데알미늄 _final 실측 패턴)
+# ════════════════════════════════════════════════════════════
+
+def add_header_bar(slide, text, x=0.691, y=1.595, w=9.451, h=0.333, fill=None):
+    """콘텐츠 영역 헤더 바 (GRAY fill + 흰 bold)."""
+    return add_item(slide, text, x, y, width=w, height=h, fsize=11, bold=True,
+                    align=PP_ALIGN.LEFT, fill_rgb=fill or MED_GRAY, color=WHITE, no_border=True)
+
+def add_label_tag(slide, text, x, y, w=1.02, h=0.5, fill=None):
+    """미니 카테고리 라벨 태그."""
+    return add_item(slide, text, x, y, width=w, height=h, fsize=9, bold=True,
+                    align=PP_ALIGN.CENTER, fill_rgb=fill or GRAY_DK, color=WHITE, no_border=True)
+
+def add_connector_badge(slide, text, x=4.752, y=1.994, w=1.25, h=0.39, fill=None):
+    """중앙 커넥터/키워드 배지."""
+    return add_item(slide, text, x, y, width=w, height=h, fsize=9, bold=True,
+                    align=PP_ALIGN.CENTER, fill_rgb=fill or MED_GRAY, color=WHITE, no_border=True)
+
+def add_vs_badge(slide, x=5.22, y=1.61, w=0.39, h=0.39, fill=None, text="VS"):
+    """Legacy vs HCG 'VS' 원형 배지."""
+    sh = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL,
+                                Inches(x), Inches(y), Inches(w), Inches(h))
+    sh.fill.solid(); sh.fill.fore_color.rgb = fill or HCG_RED
+    sh.line.fill.background()
+    p = sh.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+    _add_run(p, text, fsize=10, bold=True, color=WHITE)
+    return sh
+
+def add_example_badge(slide, x=9.56, y=1.61, w=0.58, h=0.27):
+    """'예시적' 우상단 배지 — 가설/예시 데이터 단정 회피."""
+    return add_item(slide, "예시적", x, y, width=w, height=h, fsize=8,
+                    align=PP_ALIGN.CENTER, fill_rgb=GRAY_LT, color=DARK_GRAY, no_border=True)
+
+def add_insight_quote(slide, text, x=0.691, y=6.79, w=9.451, h=0.30, color=None):
+    """큰따옴표 italic 강조 takeaway."""
+    if not (text.startswith("“") or text.startswith('"')):
+        text = "“" + text + "”"
+    return add_textbox(slide, text, x, y, w, h, fsize=11, bold=True, italic=True,
+                       align=PP_ALIGN.CENTER, color=color or HCG_RED)
+
+
+def build_overview_3col(prs, title, subtitle, cols, bar_label=None, example=False):
+    """모듈 Overview — Step1/2/3 3컬럼 + AI 콜아웃. cols=[{header,desc,ai,detail}]×3"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    if bar_label:
+        add_header_bar(slide, bar_label)
+    xs = [0.69, 3.90, 7.11]; w = 3.03
+    for i, col in enumerate(cols[:3]):
+        x = xs[i]
+        add_item(slide, "", x, 2.88, width=w, height=4.17, fill_rgb=GRAY_LT, no_border=True)
+        add_item(slide, col.get("header", ""), x, 2.10, width=w, height=0.79, fsize=11, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=HCG_RED, color=WHITE, no_border=True)
+        add_textbox(slide, col.get("desc", ""), x + 0.10, 2.98, w - 0.20, 0.80, fsize=9, color=DARK_GRAY)
+        add_item(slide, col.get("ai", ""), x + 0.10, 3.86, width=w - 0.20, height=1.45, fsize=9, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=BLUE, color=WHITE, no_border=True)
+        add_textbox(slide, col.get("detail", ""), x + 0.10, 5.45, w - 0.20, 1.45, fsize=8.5, color=DARK_GRAY)
+    if example:
+        add_example_badge(slide)
+    return slide
+
+
+def build_diff_matrix(prs, title, subtitle, rows, bottom_quote=None, example=False):
+    """직군별 차별화 매트릭스. rows=[{group,trait,insight,apply}] (최대 4)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    add_textbox(slide, "업무 특성", 2.00, 2.05, 2.07, 0.30, fsize=9, bold=True, align=PP_ALIGN.CENTER, color=MED_GRAY)
+    add_textbox(slide, "핵심 방향성", 4.21, 2.05, 2.68, 0.30, fsize=9, bold=True, align=PP_ALIGN.CENTER, color=MED_GRAY)
+    add_textbox(slide, "평가 반영방안", 7.57, 2.05, 2.59, 0.30, fsize=9, bold=True, align=PP_ALIGN.CENTER, color=MED_GRAY)
+    ys = [2.46, 3.55, 4.63, 5.74]
+    for i, r in enumerate(rows[:4]):
+        y = ys[i]
+        add_item(slide, r.get("group", ""), 0.69, y, width=1.25, height=0.97, fsize=10, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=HCG_RED, color=WHITE, no_border=True)
+        add_textbox(slide, r.get("trait", ""), 2.00, y, 2.07, 0.97, fsize=8.5, color=DARK_GRAY)
+        ins = r.get("insight", "")
+        if not ins.startswith("“"):
+            ins = "“" + ins + "”"
+        add_item(slide, ins, 4.21, y, width=2.68, height=0.97, fsize=9, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=GRAY_LT, color=HCG_RED)
+        add_textbox(slide, "▶", 6.99, y + 0.30, 0.47, 0.35, fsize=12, align=PP_ALIGN.CENTER, color=MED_GRAY)
+        add_textbox(slide, r.get("apply", ""), 7.57, y, 2.59, 0.97, fsize=8.5, color=DARK_GRAY)
+    if bottom_quote:
+        add_insight_quote(slide, bottom_quote, 0.69, 6.82, 9.45)
+    if example:
+        add_example_badge(slide)
+    return slide
+
+
+def build_pain_point_categorized(prs, title, subtitle, left_hdr, right_hdr, rows,
+                                 summary_left=None, summary_right=None):
+    """Pain Point 카테고리화. rows=[(left_label,left_text,mid,right_text)] (최대 6)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    add_header_bar(slide, left_hdr, 0.691, 1.61, 4.528, 0.333)
+    add_header_bar(slide, right_hdr, 5.615, 1.61, 4.528, 0.333)
+    y0, dy, h = 1.99, 0.585, 0.50
+    for i, row in enumerate(rows[:6]):
+        llab, ltext, mid, rtext = row
+        y = y0 + i * dy
+        add_item(slide, ltext, 1.78, y, width=3.44, height=h, fsize=9, color=DARK_GRAY)
+        add_label_tag(slide, llab, 0.691, y, 1.02, h, fill=GRAY_DK)
+        if mid:
+            add_connector_badge(slide, mid, 4.752, y + 0.05, 1.25, 0.39, fill=MED_GRAY)
+        add_item(slide, rtext, 5.615, y, width=4.528, height=h, fsize=9, color=DARK_GRAY)
+    if summary_left:
+        add_item(slide, summary_left, 0.691, 5.62, width=4.528, height=0.92, fsize=10, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=GRAY_LT, color=DARK_GRAY, no_border=True)
+    if summary_right:
+        add_item(slide, summary_right, 5.615, 5.62, width=4.528, height=0.92, fsize=10, bold=True,
+                 align=PP_ALIGN.CENTER, fill_rgb=HCG_RED, color=WHITE, no_border=True)
+    return slide
+
+
+def build_approach_vs(prs, title, subtitle, left_title, left_items, right_title, right_items, bottom_quote=None):
+    """Legacy vs HCG 'VS' 대비 블록 + 하단 takeaway."""
+    slide = prs.slides.add_slide(prs.slide_layouts[2])
+    set_title(slide, title, subtitle)
+    add_item(slide, "", 0.69, 2.20, width=4.52, height=4.10, fill_rgb=GRAY_LT, no_border=True)
+    add_textbox(slide, left_title, 0.80, 2.30, 4.30, 0.40, fsize=12, bold=True, color=DARK_GRAY)
+    yy = 2.92
+    for it in left_items:
+        add_textbox(slide, "• " + it, 0.92, yy, 4.08, 0.70, fsize=10, color=DARK_GRAY); yy += 0.74
+    add_item(slide, "", 5.65, 2.20, width=4.45, height=4.10, fill_rgb=None, no_border=False)
+    add_textbox(slide, right_title, 5.78, 2.30, 4.20, 0.40, fsize=12, bold=True, color=HCG_RED)
+    yy = 2.92
+    for it in right_items:
+        add_textbox(slide, "• " + it, 5.88, yy, 4.05, 0.70, fsize=10, color=DARK_GRAY); yy += 0.74
+    add_vs_badge(slide, 5.22, 3.95, 0.39, 0.39, fill=HCG_RED, text="VS")
+    if bottom_quote:
+        add_insight_quote(slide, bottom_quote, 1.10, 6.60, 8.64)
+    return slide
+
 
 def build():
     print("Loading template...")
