@@ -42,6 +42,14 @@ printf '"""ppt-skill core package: planner, designer, schema."""\n' > core/__ini
 > config/.gitkeep
 ```
 
+- [ ] **Step 1b: Fix .gitignore so package files are trackable**
+
+The existing `.gitignore` has a `_*.py` scratch rule that also matches `__init__.py`
+(it starts with `_`), which would make `git add core/__init__.py` a silent no-op.
+Edit `.gitignore`: change the line `_*.py` to `_[a-z]*.py` (still ignores scratch
+files like `_foo.py`, no longer ignores dunder files). Leave the rest untouched
+(`final_analysis.json` stays ignored — it is a regenerable dump).
+
 - [ ] **Step 2: Snapshot the engine before any edits (safety copy)**
 
 ```bash
@@ -54,12 +62,14 @@ cp auto_ppt.py archive_history/auto_ppt_legacy.py
 cd /c/Users/cgpar/ppt-skill
 git mv auto_ppt_kia.py lotte_chemical_ppt.py paradise_compare.py archive_history/
 git mv analyze_final.py report2.py report_final.py archive_history/
-git mv final_analysis.json spec_paradise.json paradise_compare.json archive_history/
+git mv spec_paradise.json paradise_compare.json archive_history/
 git mv STRUCTURE_REPORT.md STRUCTURE_REPORT2.md PARADISE_COMPARE.md archive_history/
-git add archive_history/auto_ppt_legacy.py core/__init__.py config/.gitkeep
+# final_analysis.json is gitignored (untracked) — plain mv; it stays ignored in its new home
+mv final_analysis.json archive_history/ 2>/dev/null || true
+git add archive_history/auto_ppt_legacy.py archive_history/README.md core/__init__.py config/.gitkeep .gitignore
 ```
 
-Note: `skill_ppt_planning.json`, `skill_ppt_design.json`, their `.md` pairs, `README.md`, `auto_ppt.py`, and the Draft `.pptx` files stay at root (per §4.1). If any file above does not exist, drop it from the command — do not fail the task.
+Note: `skill_ppt_planning.json`, `skill_ppt_design.json`, their `.md` pairs, `README.md`, `auto_ppt.py`, and the Draft `.pptx` files stay at root (per §4.1). If any tracked file above does not exist, drop it from the command — do not fail the task. (`git mv` only works on git-tracked files; `final_analysis.json` is handled separately above because it is gitignored.)
 
 - [ ] **Step 4: Write the archive README**
 
