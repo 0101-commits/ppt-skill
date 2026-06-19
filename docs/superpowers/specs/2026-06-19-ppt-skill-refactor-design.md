@@ -66,6 +66,22 @@ ppt-skill/
 └── README.md               # updated usage
 ```
 
+### 4.1 Disposition of existing root files
+
+Every current root file has an explicit fate so nothing is left ambiguous:
+
+| File(s) | Action |
+|---------|--------|
+| `auto_ppt.py` | Transform → `core/designer.py`; snapshot → `archive_history/auto_ppt_legacy.py` |
+| `auto_ppt_kia.py`, `lotte_chemical_ppt.py`, `paradise_compare.py` | `git mv` → `archive_history/` (frozen) |
+| `analyze_final.py`, `report2.py`, `report_final.py` | `git mv` → `archive_history/` (one-off analysis) |
+| `skill_ppt_planning.json`, `skill_ppt_design.json` | **Stay at root** — read by planner/designer |
+| `skill_ppt_planning.md`, `skill_ppt_design.md` | **Stay at root** — human-readable skill docs paired with the JSONs |
+| `final_analysis.json` (1.8 MB), `spec_paradise.json`, `paradise_compare.json` | `git mv` → `archive_history/` (analysis/paradise artifacts) |
+| `STRUCTURE_REPORT.md`, `STRUCTURE_REPORT2.md`, `PARADISE_COMPARE.md` | `git mv` → `archive_history/` (analysis reports) |
+| `HCG_Automated_Draft.pptx`, `HCG_롯데케미칼_..._Draft.pptx` | Build outputs — leave as-is this pass; add to `.gitignore` follow-up (not core to refactor) |
+| `README.md`, `.gitignore`, `__pycache__/` | `README.md` updated in place; `.gitignore`/`__pycache__` untouched |
+
 ## 5. Module responsibilities
 
 ### 5.1 core/schema.py (new, ~120 lines)
@@ -224,6 +240,7 @@ config/<client>.json
    without writing a pptx.
 4. An unknown slide type in a config produces `UnknownSlideType`, not a silent skip.
 5. `core/planner.py` imports no pptx module (verifiable by grep).
-6. All legacy scripts live under `archive_history/`; the repo root has only the new
-   framework files + the two skill JSONs + the sample config.
+6. Every root file is dispositioned per §4.1: legacy scripts + analysis artifacts under
+   `archive_history/`; `main.py`/`core/`/`config/` added; skill JSON+MD pairs and
+   `README.md` remain at root.
 7. planner/schema unit tests and the designer smoke test pass.
