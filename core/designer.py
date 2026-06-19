@@ -28,9 +28,8 @@ from lxml import etree
 # ── 경로 ──────────────────────────────────────────────────
 BASE = ("C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\"
         "09 Admin\\09 etc\\other\\Claude\\롯데알미늄 제안서")
-REAL = os.path.join(BASE,
-       "[HCG] 롯데알미늄_직무기반 HR제도 설계 및 도입_제안서_final.pptx")
-OUT  = "C:\\Users\\cgpar\\ppt-skill\\HCG_Automated_Draft.pptx"
+REAL = None  # template-path removed; DeckEngine.template param required
+OUT  = None  # output-path removed; DeckEngine.out param required
 
 # ── 추출된 실측 좌표 상수 ─────────────────────────────────
 # 본문 slid e (layout 2 '본문')
@@ -83,9 +82,7 @@ CONTAINER_GR = RGBColor(0xE6, 0xE6, 0xE6)   # 컨테이너 회색 배경
 LINE_GRAY    = RGBColor(0x4F, 0x4F, 0x4F)   # 연결선 회색
 
 # 기아 _final 템플릿 (best-practice 베이스). 없으면 REAL(롯데)로 폴백.
-KIA_FINAL = ("C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\"
-             "09 Admin\\09 etc\\other\\Claude\\기아 제안서\\"
-             "기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx")
+KIA_FINAL = None  # template-path removed; DeckEngine.template param required
 
 # cm → inch 헬퍼 (실측 좌표가 cm 단위 → inch 변환)
 def CM(v):
@@ -1362,14 +1359,16 @@ class DeckEngine:
     SLIDE_W = 10.835   # 27.52cm — KIA/HCG 공통 마스터 실측
     SLIDE_H = 7.5      # 19.05cm
 
-    def __init__(self, template=None, out=None, theme="hcg"):
+    def __init__(self, template=None, out=None, theme="hcg", design_tokens=None, color_overrides=None):
         # v6.0: best-practice 베이스 = 기아 _final. 없으면 롯데(REAL) 폴백.
         if template is None:
-            template = KIA_FINAL if os.path.exists(KIA_FINAL) else REAL
+            template = KIA_FINAL if KIA_FINAL and os.path.exists(KIA_FINAL) else REAL
         self.template = template
         self.out = out or OUT
         # v7.0: 프로젝트 브랜드 테마 적용 (hcg/paradise). 도식 함수가 THEME 참조.
         self.theme = apply_theme(theme)
+        if design_tokens or color_overrides:
+            apply_design_tokens(design_tokens or {}, color_overrides)
         print(f"Loading base template (theme={theme}):", self.template)
         self.prs = Presentation(self.template)
         # 베이스 템플릿을 '깡통'이 아닌 디자인 상속용으로 사용 →
@@ -1597,256 +1596,6 @@ class DeckEngine:
         print("Done!")
         return path
 
-
-def build():
-    print("Loading template...")
-    prs = Presentation(REAL)
-
-    print("Deleting existing slides...")
-    delete_all_slides(prs)
-
-    print("Building slides...")
-
-    # Slide 01: 표지
-    build_cover(prs)
-    print("  S01 Cover ✓")
-
-    # Slide 02: 목차
-    build_toc(prs)
-    print("  S02 TOC ✓")
-
-    # Slide 03: Project Overview
-    build_overview(prs)
-    print("  S03 Project Overview ✓")
-
-    # Slide 04: Pain Point
-    build_pain_point(prs)
-    print("  S04 Pain Point ✓")
-
-    # ── Section I: 직무체계 수립 ──────────────────────────
-    build_section_divider(prs, "I", "직무체계 수립",
-                          "직무분류체계 설계 및 AI 기반 직무기술서 작성")
-    print("  S05 Section I ✓")
-
-    # Slide 06: 직무체계 수립 방향
-    build_body_2col(prs,
-        "직무체계 수립 방향",
-        "직무분류체계 기반의 직무기술서 작성 및 활용체계 구축",
-        "현행 문제점", "개선 방향",
-        ["직무분류 기준 부재 — 직무와 직책이 혼용",
-         "직무 Scope 불명확 — 담당업무 모호",
-         "직무기술서 미비 — 구두/관행 의존",
-         "직무기반 HR 연계 미흡"],
-        ["직무군/직무/세부직무 3단계 분류체계 수립",
-         "직무별 Key Roles & Responsibilities 명확화",
-         "표준화된 직무기술서 양식 및 AI 작성 지원",
-         "채용·평가·보상·육성 연계 체계 구축"]
-    )
-    print("  S06 직무체계 방향 ✓")
-
-    # Slide 07: 직무분류체계 Framework
-    build_body_process(prs,
-        "직무분류체계 Framework",
-        "대기업 알미늄 제조업 직무 특성을 반영한 3단계 분류체계",
-        [("직무군\n(Job Family)",   "영업, 생산, 품질,\n연구, 경영지원 등"),
-         ("직무\n(Job)",            "각 직무군 내\n5~15개 직무"),
-         ("세부직무\n(Sub-Job)",    "직무별 세분화된\n역할 단위"),
-         ("직무기술서\n(JD)",       "Key Roles, 역량,\n자격 요건 기술")],
-        [("분류 기준", "업무 유사성, 역량 공통성, 조직 구조 반영"),
-         ("적용 범위", "전 사원 대상 (임원 제외), 약 4개 직무군 15개 직무 예상")]
-    )
-    print("  S07 직무분류 Framework ✓")
-
-    # Slide 08: AI 활용 직무기술서
-    build_body_single(prs,
-        "AI 활용 직무기술서 작성",
-        "ChatGPT/Claude 기반 직무기술서 초안 작성 후 현업 검증 및 Fine-tuning",
-        [("작성 방법", "AI 프롬프트 설계 → 초안 생성 → 현업 인터뷰/검증 → 확정"),
-         ("작성 항목", "직무 목적, Key Responsibilities(5~8개), 역량, 자격요건, KPI 연계"),
-         ("활용 도구", "Claude API / ChatGPT 4o 활용, HCG 표준 JD 템플릿 적용"),
-         ("품질 관리", "직무 담당자 및 팀장 검토, HR 최종 확인, 3단계 검증 프로세스")]
-    )
-    print("  S08 AI 직무기술서 ✓")
-
-    # Slide 09: 직무체계 활용 로드맵
-    build_body_process(prs,
-        "직무체계 활용 로드맵",
-        "수립된 직무체계를 HR 전반에 단계적으로 연계·활용",
-        [("Phase 1\n(수립)",        "직무분류체계\n직무기술서 완성"),
-         ("Phase 2\n(연계)",        "평가·보상 기준\n직무 연계"),
-         ("Phase 3\n(고도화)",      "채용·육성·경력\n통합 운영"),
-         ("Phase 4\n(정착)",        "HR Data 축적\n주기적 업데이트")],
-    )
-    print("  S09 직무체계 로드맵 ✓")
-
-    # Slide 10: 직무기술서 구성 체계
-    build_body_single(prs,
-        "직무기술서 구성 체계",
-        "HCG 표준 JD 양식 기반 — 5개 핵심 구성항목",
-        [("직무 개요",  "직무명, 직무군, 소속 부서, 직무 목적 요약 (2~3 문장)"),
-         ("핵심 역할",  "Key Responsibilities 5~8개, 각 역할별 수행 활동 기술"),
-         ("요구 역량",  "Technical Competency + Behavioral Competency 각 3~5개"),
-         ("자격 요건",  "학력, 경력 연수, 필수 자격증, 선호 전공 등"),
-         ("KPI 연계",   "직무와 연계된 성과지표 3~5개, 측정 방법 명시")]
-    )
-    print("  S10 직무기술서 구성 ✓")
-
-    # ── Section II: 평가제도 개선 ─────────────────────────
-    build_section_divider(prs, "II", "평가제도 개선",
-                          "직무기반 성과관리체계 수립 및 평가 운영체계 개선")
-    print("  S11 Section II ✓")
-
-    # Slide 12: 평가제도 현황 진단
-    build_body_2col(prs,
-        "평가제도 현황 진단",
-        "현행 평가제도의 구조적 문제점과 개선 필요성",
-        "현행 문제점", "핵심 이슈",
-        ["단일 평가지표 — 직무 특성 미반영",
-         "평가자 주관성 과다 — 공정성 저하",
-         "목표설정 형식화 — KPI 연계 미흡",
-         "피드백 체계 부재 — 성장 기회 저해"],
-        ["직무 특성에 맞는 차별화된 평가 기준 필요",
-         "객관적 평가지표(정량/정성) 균형 필요",
-         "목표 → 활동 → 결과의 일관성 확보 필요",
-         "주기적 코칭·피드백 문화 정착 필요"]
-    )
-    print("  S12 평가 현황 ✓")
-
-    # Slide 13: 직무기반 평가모형
-    build_body_process(prs,
-        "직무기반 평가모형 설계",
-        "직무 특성을 반영한 성과(MBO) + 역량(Competency) 이원 평가모형",
-        [("목표 설정\n(연초)",   "직무 KPI 3~5개\n목표 수준 합의"),
-         ("중간 점검\n(반기)",   "실적 Review\n코칭·피드백"),
-         ("최종 평가\n(연말)",   "MBO 60%\n역량 40%"),
-         ("결과 활용\n(차년)",   "보상 연계\n육성 계획")]
-    )
-    print("  S13 평가모형 ✓")
-
-    # Slide 14: 평가지표 체계
-    build_body_single(prs,
-        "평가지표 체계",
-        "직무군별 차별화된 KPI 및 역량지표 설계",
-        [("KPI 구조",    "정량 KPI (60%): 매출목표, 생산량, 불량률, 개발건수 등 직무별 차별화"),
-         ("역량 지표",   "Behavioral 역량 (40%): 문제해결, 협업, 전문성, 리더십 등 공통+직무"),
-         ("등급 체계",   "5등급: S/A/B/C/D → 상위 20% / 중위 60% / 하위 20% 강제배분"),
-         ("캘리브레이션", "팀장→부문장 단계적 검토, HR 최종 조정으로 조직 간 형평성 확보")]
-    )
-    print("  S14 평가지표 ✓")
-
-    # Slide 15: 평가 운영 프로세스
-    build_body_process(prs,
-        "평가 운영 프로세스",
-        "연간 성과관리 Cycle — 목표설정~보상 연계 일원화",
-        [("1월\n목표설정",    "개인 KPI\n조직 목표 연계"),
-         ("4월\n중간진단",    "1/4분기 실적\n코칭면담"),
-         ("7월\n반기평가",    "반기 실적 Review\n하반기 계획"),
-         ("12월\n연말평가",   "최종 성과/역량\n종합 평가"),
-         ("1월\n결과활용",    "보상 연계\n육성 계획")]
-    )
-    print("  S15 평가 운영 ✓")
-
-    # ── Section III: 보상제도 개선 ───────────────────────
-    build_section_divider(prs, "III", "보상제도 개선",
-                          "직무가치 기반 보상체계 설계 및 보상 운영방안 수립")
-    print("  S16 Section III ✓")
-
-    # Slide 17: 보상 원칙 및 전략
-    build_body_2col(prs,
-        "보상 원칙 및 전략",
-        "직무가치와 성과를 반영한 보상체계로의 전환",
-        "현행 보상 구조", "개선 방향",
-        ["연공서열 중심 — 직무가치 미반영",
-         "내부 공정성 낮음 — 직무간 보상 불균형",
-         "성과 연계 약함 — 성과급 효과 미흡",
-         "외부 경쟁력 미검증 — 시장 대비 불명확"],
-        ["직무 가치 반영 — Job Grading 기반 Pay Band",
-         "내부 공정성 확보 — 직무가치 기반 급여 대역",
-         "성과 연계 강화 — 평가 등급별 차별화 보상",
-         "외부 경쟁력 확보 — 시장 벤치마킹 주기적 실시"]
-    )
-    print("  S17 보상 원칙 ✓")
-
-    # Slide 18: 직무기반 보상체계
-    build_body_single(prs,
-        "직무기반 보상체계 설계",
-        "Job Grading → Pay Band → 성과연동 개인 보상 결정",
-        [("Job Grading", "직무 복잡성·책임·전문성·영향력 기준 직무 등급(5~7등급) 설계"),
-         ("Pay Band",    "등급별 최저-중위-최고 급여 대역 설정 (시장 P50 기준 중위값)"),
-         ("성과 연계",   "평가 등급 S/A/B/C/D → 개인 보상 조정 범위 ±15~20% 내 운영"),
-         ("인상 원칙",   "시장 인상률 + 성과 + 직무 성장을 반영한 Merit Increase 기준 수립")]
-    )
-    print("  S18 보상체계 ✓")
-
-    # Slide 19: 보상 시뮬레이션 방향
-    build_body_single(prs,
-        "보상 시뮬레이션 방향",
-        "현행 인건비 총액 유지 원칙 하에 직무가치 기반 급여 재조정",
-        [("Simulation 목표",  "현행 인건비 ±5% 이내에서 직무가치 반영 보상 구조 전환"),
-         ("시나리오",         "시나리오 A(현행 유지형) / B(점진 전환형) / C(즉시 전환형) 3개 비교"),
-         ("조정 기준",        "직무등급 ×Pay Band 중위값 대비 현행 급여 수준 분포 분석"),
-         ("협의 사항",        "노조/직원 의견 수렴, 이해관계자 커뮤니케이션 계획 포함")]
-    )
-    print("  S19 보상 시뮬레이션 ✓")
-
-    # ── Section IV: 추진계획 ──────────────────────────────
-    build_section_divider(prs, "IV", "추진계획 및 HCG 역량",
-                          "12주 추진 일정, 투입 인력, 제안 비용 및 HCG 수행 역량")
-    print("  S20 Section IV ✓")
-
-    # Slide 21: 추진 일정
-    build_body_process(prs,
-        "추진 일정 (12주)",
-        "Phase 1(현황진단 4주) → Phase 2(체계설계 5주) → Phase 3(완료 3주)",
-        [("W1-2\n킥오프",     "현황자료 수집\nAS-IS 분석"),
-         ("W3-4\n현황진단",   "인터뷰 실시\nPain Point 도출"),
-         ("W5-7\n직무설계",   "분류체계 수립\nJD 작성"),
-         ("W8-10\nHR제도",    "평가/보상제도\n설계"),
-         ("W11-12\n완료",     "최종 보고\nChange Mgmt")]
-    )
-    print("  S21 추진 일정 ✓")
-
-    # Slide 22: HCG 수행 역량
-    build_body_2col(prs,
-        "HCG 수행 역량",
-        "직무기반 HR제도 설계 전문 역량 보유 — 다수 대기업 구축 경험",
-        "수행 분야", "주요 실적",
-        ["직무체계 수립",
-         "평가제도 개선",
-         "보상체계 설계",
-         "HR 디지털 전환"],
-        ["대기업 제조업 10개사 직무분류체계 구축",
-         "평가모형 설계 및 캘리브레이션 운영 지원 15개사",
-         "직무기반 Pay Band 설계 8개사",
-         "AI 활용 JD 자동화 솔루션 3개사 구축"]
-    )
-    print("  S22 HCG 역량 ✓")
-
-    # Slide 23: 제안 비용
-    build_body_single(prs,
-        "제안 비용",
-        "롯데알미늄 직무기반 HR제도 설계 및 도입 컨설팅 투입 비용",
-        [("총 금액",    "225,000 천원 (VAT 별도) — 세부 범위/투입 형태 협의에 따라 변동 가능"),
-         ("인력 구성",  "PM 1명 + Senior 컨설턴트 1명 + 컨설턴트 1명 (총 3명)"),
-         ("투입 기간",  "12주 (3개월) — 킥오프~최종 보고"),
-         ("산출물",     "직무분류체계(안), 직무기술서(전직무), 평가/보상제도(안), 운영 가이드라인")]
-    )
-    print("  S23 제안 비용 ✓")
-
-    # Slide 24: End of document
-    build_end(prs)
-    print("  S24 End ✓")
-
-    # Slide 25: Appendix
-    build_appendix(prs)
-    print("  S25 Appendix ✓")
-
-    print(f"\nSaving → {OUT}")
-    prs.save(OUT)
-    print("Done!")
-    return OUT
-
-
 def build_showcase(out=None):
     """v6.0 쇼케이스 — 기아 _final 템플릿 위에 신규 엔진 기능 시연.
     목차(어젠다카드) + 섹션 디바이더 + 구조화 카드 그리드(3/4분할) + 컨테이너."""
@@ -1902,27 +1651,30 @@ def build_showcase(out=None):
     return out
 
 
-def render_spec_file(spec_path):
-    """JSON spec 파일 → PPT 생성. meta.template/out 사용 (없으면 기본값)."""
-    import json
-    with open(spec_path, encoding="utf-8") as f:
-        spec = json.load(f)
-    meta = spec.get("meta", {})
-    eng = DeckEngine(template=meta.get("template"), out=meta.get("out"),
-                     theme=meta.get("theme", "hcg"))
-    eng.render(spec)
-    return eng.save()
+# --- Unified-framework additions (additive; default behavior unchanged) ---
+
+Designer = DeckEngine  # public alias for the framework
 
 
-if __name__ == "__main__":
-    # CLI: python auto_ppt.py [spec.json]
-    #   인자에 .json → 외부 데이터 구동 (통합 엔진)
-    #   인자 없음    → 기본 build() (롯데알미늄 25장, 하위호환)
-    args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    if args and args[0].lower().endswith(".json"):
-        result = render_spec_file(args[0])         # 외부 데이터 구동
-    elif args and args[0].lower() == "legacy":
-        result = build()                            # 롯데알미늄 25장 (하위호환)
-    else:
-        result = build_showcase()                   # v6.0 신규 엔진 쇼케이스(기본)
-    print(f"\nOutput: {result}")
+def apply_design_tokens(tokens, overrides=None):
+    """Update the module color palette from parsed skill_ppt_design.json.
+
+    `tokens` is the parsed design JSON; reads tokens["theme_colors"], where each
+    value is either a hex string or a dict with an "rgb" key. `overrides` is an
+    optional {NAME: "#RRGGBB"} map (e.g. client identity.colors) applied last.
+    No-op for names not present. Mirrors apply_theme()'s global-rebind pattern.
+    """
+    global HCG_RED
+    resolved = {}
+    for name, val in (tokens.get("theme_colors") or {}).items():
+        hexv = val.get("rgb") if isinstance(val, dict) else val
+        if hexv:
+            resolved[name] = str(hexv).lstrip("#")
+    for name, hexv in (overrides or {}).items():
+        if hexv:
+            resolved[name] = str(hexv).lstrip("#")
+    if "HCG_RED" in resolved:
+        HCG_RED = RGBColor.from_string(resolved["HCG_RED"])
+    for key, hexv in resolved.items():
+        if isinstance(THEME, dict) and key in THEME:
+            THEME[key] = RGBColor.from_string(hexv)
