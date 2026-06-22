@@ -7,7 +7,7 @@
 HCG 제안서 표준을 코드화했다.
 
 > **2026-06-19 통합 프레임워크 리팩터링:** 프로젝트별 명령형 스크립트(kia/lotte/paradise)를
-> **데이터 구동 구조**로 전환. 신규 제안서는 Python 코드 없이 `config/<client>.json` 한 개만 작성하면 된다.
+> **데이터 구동 구조**로 전환. 신규 제안서는 Python 코드 없이 `projects/<client>.json` 한 개만 작성하면 된다.
 > 검증된 렌더링 엔진(`auto_ppt.py`)은 `core/designer.py`로 **그대로 보존**했다.
 
 ---
@@ -22,7 +22,7 @@ ppt-skill/
 │   ├── schema.py                 # 19종 슬라이드 타입 레지스트리 + 검증 (단일 진실 공급원)
 │   ├── planner.py                # 기획 엔진: config → 정규화 spec (pptx 비의존, 순수 dict→dict)
 │   └── designer.py               # 디자인 엔진: spec → pptx (검증된 DeckEngine, 실측 좌표/테마)
-├── config/                       # 프로젝트별 데이터 (Projects)
+├── projects/                     # 프로젝트별 데이터 (Projects)
 │   └── lotte_chemical.json       # 클라이언트 아이덴티티 + 슬라이드 콘텐츠 (샘플)
 ├── tests/                        # pytest (schema/planner/cli/integration/designer)
 │   ├── test_schema.py
@@ -33,7 +33,7 @@ ppt-skill/
 ├── docs/superpowers/             # 설계 문서 + 구현 계획
 │   ├── specs/2026-06-19-ppt-skill-refactor-design.md
 │   └── plans/2026-06-19-ppt-skill-unified-framework.md
-├── archive_history/              # 과거 이력 및 초안 (History) — 동결(frozen)
+├── history/              # 과거 이력 및 초안 (History) — 동결(frozen)
 │   ├── auto_ppt_legacy.py        # 리팩터링 전 모놀리식 auto_ppt.py 스냅샷
 │   ├── auto_ppt_kia.py           # 기아 명령형 덱 생성기
 │   ├── lotte_chemical_ppt.py     # 롯데케미칼 명령형 덱 생성기
@@ -50,8 +50,8 @@ ppt-skill/
 
 세 계층 분류:
 - **Core** (`core/`, `main.py`) — 어떤 프로젝트든 공유하는 엔진/CLI.
-- **Projects** (`config/*.json`) — 클라이언트별 데이터. 코드가 아닌 선언적 설정.
-- **History** (`archive_history/`) — 리팩터링 전 레거시 스크립트/분석 산출물. 참고·복원용으로 동결.
+- **Projects** (`projects/*.json`) — 클라이언트별 데이터. 코드가 아닌 선언적 설정.
+- **History** (`history/`) — 리팩터링 전 레거시 스크립트/분석 산출물. 참고·복원용으로 동결.
 
 ---
 
@@ -69,20 +69,20 @@ python main.py --client lotte_chemical --out deck.pptx   # 출력 경로 overrid
 
 ### 분야별(프로젝트별) 실행
 
-각 제안서는 `config/<client>.json` 하나로 정의되며, 같은 `main.py`로 분야별 실행한다.
+각 제안서는 `projects/<client>.json` 하나로 정의되며, 같은 `main.py`로 분야별 실행한다.
 
 ```bash
 # 롯데케미칼 직무기반 HR 제안서 (샘플 제공)
 python main.py --client lotte_chemical
 
-# 신규/복원 프로젝트 예시 (config/<client>.json 작성 후 동일 패턴)
-python main.py --client kia                # config/kia.json
-python main.py --client paradise           # config/paradise.json
-python main.py --client lotte_aluminium    # config/lotte_aluminium.json
+# 신규/복원 프로젝트 예시 (projects/<client>.json 작성 후 동일 패턴)
+python main.py --client kia                # projects/kia.json
+python main.py --client paradise           # projects/paradise.json
+python main.py --client lotte_aluminium    # projects/lotte_aluminium.json
 ```
 
-> 기아·파라다이스·롯데알미늄 등 과거 명령형 스크립트는 현재 `archive_history/`에 동결되어 있다.
-> 복원하려면 해당 덱 콘텐츠를 `config/<client>.json`으로 옮겨 작성한 뒤 위 명령으로 렌더링한다.
+> 기아·파라다이스·롯데알미늄 등 과거 명령형 스크립트는 현재 `history/`에 동결되어 있다.
+> 복원하려면 해당 덱 콘텐츠를 `projects/<client>.json`으로 옮겨 작성한 뒤 위 명령으로 렌더링한다.
 
 **의존성:** Python 3.10+, `python-pptx`
 
@@ -94,7 +94,7 @@ pip install python-pptx pytest
 
 ## 새 클라이언트 추가 (Python 코드 불필요)
 
-`config/<client>.json` 한 개만 작성한다.
+`projects/<client>.json` 한 개만 작성한다.
 
 ```json
 {
@@ -129,7 +129,7 @@ pip install python-pptx pytest
 ## 데이터 흐름
 
 ```
-config/<client>.json
+projects/<client>.json
    ├─ identity{theme, template, colors, fonts}
    └─ content{out, slides[]}
                  │
@@ -193,7 +193,7 @@ python -m pytest -v
 - **v1.0** — 10개 제안서 530+ 파일 분석으로 통합 스킬(기획+디자인) 등록.
 - **v2.0~v4.0** — 디자인/좌표 정밀화(롯데알미늄 `_final` XML 전수 추출), 기아·파라다이스 _final 팔레트 역추출.
 - **스킬 분리** — 통합 스킬을 **기획/디자인 2개 스킬 × JSON/MD 2포맷**으로 분리.
-- **통합 프레임워크 (2026-06)** — 프로젝트별 명령형 스크립트를 데이터 구동(`config/*.json` + `core/` + `main.py`)으로
-  리팩터링. 엔진은 `core/designer.py`로 보존, 레거시는 `archive_history/`로 동결.
+- **통합 프레임워크 (2026-06)** — 프로젝트별 명령형 스크립트를 데이터 구동(`projects/*.json` + `core/` + `main.py`)으로
+  리팩터링. 엔진은 `core/designer.py`로 보존, 레거시는 `history/`로 동결.
 
 > 최우선 규칙: `fb_`(리더 피드백) · `_final`(최종본) 기준이 초안과 충돌 시 항상 `fb_`/`_final` 우선.

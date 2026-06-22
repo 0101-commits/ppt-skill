@@ -4,7 +4,7 @@ import pytest
 import main as cli
 
 ROOT = Path(__file__).resolve().parent.parent
-SAMPLE = ROOT / "config" / "lotte_chemical.json"
+SAMPLE = ROOT / "projects" / "lotte_chemical.json"
 
 
 def test_sample_lists():

@@ -1,8 +1,8 @@
-# archive_history
+# history
 
 Pre-refactor scripts and analysis artifacts. **Frozen** — these target the old
 `auto_ppt` module API (before the 2026-06-19 unified-framework refactor) and are
-kept for reference and future migration to `config/*.json`.
+kept for reference and future migration to `projects/*.json`.
 
 | File | What it was |
 |------|-------------|
@@ -14,4 +14,4 @@ kept for reference and future migration to `config/*.json`.
 | `final_analysis.json`, `spec_paradise.json`, `paradise_compare.json` | analysis/paradise data |
 | `STRUCTURE_REPORT*.md`, `PARADISE_COMPARE.md` | analysis reports |
 
-To revive a client: author `config/<client>.json` and render via `python main.py --client <client>`.
+To revive a client: author `projects/<client>.json` and render via `python main.py --client <client>`.

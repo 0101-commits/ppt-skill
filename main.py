@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_DIR = ROOT / "config"
+PROJECTS_DIR = ROOT / "projects"
 PLANNING_JSON = ROOT / "skill_ppt_planning.json"
 DESIGN_JSON = ROOT / "skill_ppt_design.json"
 
@@ -25,14 +25,14 @@ def _load_json(path):
 
 
 def list_clients():
-    if not CONFIG_DIR.exists():
+    if not PROJECTS_DIR.exists():
         return []
-    return sorted(p.stem for p in CONFIG_DIR.glob("*.json"))
+    return sorted(p.stem for p in PROJECTS_DIR.glob("*.json"))
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="ppt-skill")
-    ap.add_argument("--client", help="config/<client>.json to render")
+    ap.add_argument("--client", help="projects/<client>.json to render")
     ap.add_argument("--list", action="store_true", help="list available clients")
     ap.add_argument("--out", help="override output .pptx path")
     ap.add_argument("--dry-run", action="store_true",
@@ -50,7 +50,7 @@ def main(argv=None):
         print("[error] --client is required (or use --list)", file=sys.stderr)
         return 2
 
-    cfg_path = CONFIG_DIR / f"{args.client}.json"
+    cfg_path = PROJECTS_DIR / f"{args.client}.json"
     if not cfg_path.exists():
         print(f"[error] config not found: {cfg_path}", file=sys.stderr)
         print(f"available clients: {', '.join(list_clients()) or '(none)'}",
