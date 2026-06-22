@@ -1,0 +1,50 @@
+{
+  "client": "lotte_chemical",
+  "identity": {
+    "display_name": "롯데케미칼",
+    "theme": "hcg",
+    "template": "C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\09 Admin\\09 etc\\other\\Claude\\롯데알미늄 제안서\\[HCG] 롯데알미늄_직무기반 HR제도 설계 및 도입_제안서_final.pptx",
+    "colors": {"HCG_RED": "#921F0B"},
+    "fonts": {"kr": "맑은 고딕", "en": "Arial"},
+    "logo": ""
+  },
+  "content": {
+    "out": "HCG_롯데케미칼_직무기반HR_제안서_Draft.pptx",
+    "slides": [
+      {"type": "cover",
+       "title": "롯데케미칼 직무기반 HR제도 설계 및 도입",
+       "subtitle": "- 제안서 -",
+       "date": "2025.06"},
+
+      {"type": "toc",
+       "items": ["프로젝트 배경", "추진 방안", "일정 및 조직", "HCG 소개"]},
+
+      {"type": "overview",
+       "subtitle": "직무 중심으로 전환하는 HR 운영 체계",
+       "background": "연공 중심 보상의 한계와 사업 포트폴리오 다변화로 직무가치 기반 HR 전환 필요성 대두",
+       "plan": "추진 기간 : 16주\n투입 인력 : PM 1명 + 컨설턴트 2명\n추진 단계 : 직무분석 · 직무평가 · 직무급 설계 · 제도 이행 (3단계 로드맵)",
+       "quote": "보상의 공정성은 직무가치에서 출발한다"},
+
+      {"type": "approach_vs",
+       "title": "왜 별도 직무체계 프로젝트인가",
+       "subtitle": "기존 직급제도 보완 vs 직무기반 재설계",
+       "left_title": "직급제도 부분 보완",
+       "left": ["기존 호봉 구조 유지", "단기 갈등 최소화", "근본 원인 미해결"],
+       "right_title": "직무기반 재설계",
+       "right": ["직무가치 기반 보상", "성과·역량 연계", "지속가능한 운영체계"],
+       "quote": "보상의 공정성은 직무가치에서 출발한다"},
+
+      {"type": "diff_matrix",
+       "title": "직군별 직무 특성과 적용 방향",
+       "subtitle": "직군 · 특성 · 시사점 · 적용",
+       "rows": [
+         {"group": "연구·기술", "trait": "전문성 심화 경로", "insight": "이중 사다리 필요", "apply": "전문직 트랙 신설"},
+         {"group": "생산·운영", "trait": "교대·숙련 중심", "insight": "숙련 가치 반영", "apply": "숙련급 구간 설계"},
+         {"group": "경영지원", "trait": "직무 범위 광범위", "insight": "직무 표준화 우선", "apply": "직무기술서 정비"}
+       ],
+       "quote": "직군 특성을 무시한 일률 적용은 실패한다"},
+
+      {"type": "end"}
+    ]
+  }
+}
