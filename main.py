@@ -97,4 +97,6 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")   # 콘솔 한글 깨짐 방지 (cp949 → utf-8)
+    sys.stderr.reconfigure(encoding="utf-8")
     sys.exit(main())
