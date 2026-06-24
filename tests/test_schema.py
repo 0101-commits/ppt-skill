@@ -44,6 +44,16 @@ def test_slide_missing_type_raises():
         schema.validate_config(cfg)
 
 
-def test_registry_has_19_types():
-    assert len(schema.SLIDE_TYPES) == 19
-    assert "approach_vs" in schema.SLIDE_TYPES
+def test_registry_has_expected_types():
+    assert len(schema.SLIDE_TYPES) == 13
+    for t in ("cover", "toc", "section", "bullets", "cards", "columns",
+              "compare", "kpi", "process", "matrix", "chart", "table", "end"):
+        assert t in schema.SLIDE_TYPES
+    # legacy 4:3 types are gone
+    assert "approach_vs" not in schema.SLIDE_TYPES
+
+
+def test_content_types_accept_skeleton_fields():
+    for t in ("bullets", "chart", "compare"):
+        opt = schema.SLIDE_TYPES[t]["optional"]
+        assert {"kicker", "chapter", "source"} <= set(opt)

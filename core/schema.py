@@ -1,39 +1,51 @@
 """Slide-type registry + config/spec validation for the ppt-skill framework.
 
-SLIDE_TYPES is the single source of truth for the renderable slide types and the
-keys each one needs. The required/optional key sets were derived from the
-DeckEngine.render() dispatch in core/designer.py. `section` lists `num` as
-OPTIONAL because the planner auto-assigns Roman numerals.
+SLIDE_TYPES is the single source of truth for renderable slide types and the
+keys each one needs. It mirrors `skill_ppt_design.json` -> `slide_types`, which
+encodes HCG-Slide-Design-System v1.0 (the absolute standard).
+
+Every CONTENT slide inherits the rigid skeleton, so each content type accepts
+the optional skeleton fields `kicker`, `chapter`, `source` on top of its own
+keys. `section` lists `num` as OPTIONAL because the planner auto-assigns Roman
+numerals.
+
+v2.0 reset: the old 19-type 4:3 set (approach_vs / diff_matrix / body_2col /
+overview_3col / pain_point_categorized / container / demo_advanced ...) is
+replaced by the 13 types below.
 """
 
+# Skeleton fields every content slide may carry (engine fills the fixed frame).
+_SKELETON = ["kicker", "chapter", "source"]
+
+
+def _content(required, optional=None):
+    """Build a content-type entry that also accepts the skeleton fields."""
+    return {"required": required, "optional": (optional or []) + _SKELETON}
+
+
 SLIDE_TYPES = {
-    "cover":                  {"required": ["title"], "optional": ["subtitle", "date"]},
-    "toc":                    {"required": ["items"], "optional": ["title", "current"]},
-    "section_agenda":         {"required": ["sections", "current"], "optional": []},
-    "blocks":                 {"required": ["title", "subtitle", "items"],
-                               "optional": ["y", "h", "numbered", "bar_label", "quote", "example"]},
-    "container":              {"required": ["title", "subtitle", "containers"], "optional": []},
-    "overview":               {"required": ["subtitle"],
-                               "optional": ["background", "scope", "sub_details", "plan", "quote"]},
-    "section":                {"required": ["title"], "optional": ["num", "sub"]},
-    "body_2col":              {"required": ["title", "subtitle", "header_l", "header_r", "left", "right"],
-                               "optional": []},
-    "body_single":            {"required": ["title", "subtitle", "rows"], "optional": []},
-    "body_process":           {"required": ["title", "subtitle", "steps"], "optional": ["desc"]},
-    "overview_3col":          {"required": ["title", "subtitle", "cols"],
-                               "optional": ["bar_label", "example"]},
-    "diff_matrix":            {"required": ["title", "subtitle", "rows"],
-                               "optional": ["quote", "example"]},
-    "pain_point_categorized": {"required": ["title", "subtitle", "left_hdr", "right_hdr", "rows"],
-                               "optional": ["summary_left", "summary_right"]},
-    "approach_vs":            {"required": ["title", "subtitle", "left_title", "left",
-                                            "right_title", "right"], "optional": ["quote"]},
-    "process_roadmap":        {"required": ["title", "subtitle", "phases"], "optional": []},
-    "compare_table":          {"required": ["title", "subtitle", "headers", "rows"],
-                               "optional": ["example"]},
-    "appendix":               {"required": ["rows"], "optional": ["title", "subtitle"]},
-    "demo_advanced":          {"required": [], "optional": ["title", "subtitle"]},
-    "end":                    {"required": [], "optional": []},
+    "cover":   {"required": ["title"],
+                "optional": ["subtitle", "date", "confidential", "legal", "hero"]},
+    "toc":     _content(["items"], ["current"]),
+    "section": {"required": ["title"], "optional": ["num", "sub"]},
+    "bullets": _content(["title", "items"]),
+    "cards":   _content(["title", "items"]),
+    "columns": _content(["title", "columns"]),
+    "compare": _content(["title", "left", "right"],
+                        ["left_header", "right_header", "takeaway"]),
+    "kpi":     _content(["title", "items"]),
+    "process": _content(["title", "steps"], ["desc"]),
+    "matrix":  _content(["title", "columns", "rows"], ["takeaway"]),
+    "chart":   _content(["title", "chart"]),
+    "table":   _content(["title", "headers", "rows"], ["emphasis_row"]),
+    "end":     {"required": [], "optional": ["message"]},
+}
+
+# Content slide types that should carry a conclusion-sentence title
+# (planning 요구사항 6 / principle P1: "인사이트가 없으면 슬라이드가 아니다").
+TITLED_TYPES = {
+    "bullets", "cards", "columns", "compare", "kpi",
+    "process", "matrix", "chart", "table",
 }
 
 
@@ -65,15 +77,16 @@ def _validate_slide(slide, idx):
 
 
 def validate_config(cfg):
-    """Validate a raw client config (identity + content). Returns True or raises."""
+    """Validate a raw client config (identity + content). Returns True or raises.
+
+    v2.0: the renderer builds a blank 16:9 canvas from scratch, so `template` is
+    no longer required. Only `identity` and `content.slides` are mandatory.
+    """
     if not isinstance(cfg, dict):
         raise ConfigError("config must be a JSON object")
     for key in ("identity", "content"):
         if key not in cfg:
             raise MissingField(f"config missing top-level '{key}'")
-    for key in ("theme", "template"):
-        if key not in cfg["identity"]:
-            raise MissingField(f"identity missing '{key}'")
     slides = cfg["content"].get("slides")
     if not isinstance(slides, list):
         raise MissingField("content.slides must be a list")

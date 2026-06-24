@@ -10,13 +10,9 @@ from core import schema
 
 ROMAN = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ"]
 
-# Content slide types that should carry a title (planning principle P1:
-# "인사이트가 없으면 슬라이드가 아니다").
-_TITLED_TYPES = {
-    "blocks", "body_2col", "body_single", "body_process", "overview_3col",
-    "diff_matrix", "pain_point_categorized", "approach_vs", "process_roadmap",
-    "compare_table",
-}
+# Content slide types that should carry a conclusion-sentence title (planning
+# 요구사항 6 / principle P1). Sourced from the schema registry.
+_TITLED_TYPES = schema.TITLED_TYPES
 
 
 class Planner:
@@ -31,8 +27,8 @@ class Planner:
         content = config["content"]
 
         meta = {
-            "theme": ident.get("theme", "hcg"),
-            "template": ident["template"],
+            "theme": ident.get("theme", "hcg"),      # retained for back-compat; engine ignores
+            "template": ident.get("template"),       # v2.0: optional/ignored (blank 16:9 canvas)
             "out": out_override or content.get("out") or f"{config.get('client', 'output')}.pptx",
             "colors": ident.get("colors", {}),
             "fonts": ident.get("fonts", {}),

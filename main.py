@@ -1,11 +1,16 @@
 #!/usr/bin/env python
-"""Unified CLI entry point for the ppt-skill framework.
+"""Unified CLI entry point for the ppt-skill framework (v2.0).
+
+Builds HCG-Slide-Design-System v1.0 decks from a declarative client config.
+Two render targets — PPTX (core/designer.py) and HTML (core/html_renderer.py).
 
 Usage:
-    python main.py --client lotte_chemical
     python main.py --list
-    python main.py --client lotte_chemical --dry-run
-    python main.py --client lotte_chemical --validate
+    python main.py --client lotte_chemical              # default: --both (.pptx + .html)
+    python main.py --client lotte_chemical --pptx       # only .pptx
+    python main.py --client lotte_chemical --html       # only .html
+    python main.py --client lotte_chemical --dry-run    # print normalized spec, no render
+    python main.py --client lotte_chemical --validate   # validate only, no render
     python main.py --client lotte_chemical --out C:\\path\\deck.pptx
 """
 import argparse
@@ -34,11 +39,15 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="ppt-skill")
     ap.add_argument("--client", help="projects/<client>.json to render")
     ap.add_argument("--list", action="store_true", help="list available clients")
-    ap.add_argument("--out", help="override output .pptx path")
+    ap.add_argument("--out", help="override output path (extension set per format)")
     ap.add_argument("--dry-run", action="store_true",
                     help="print normalized spec JSON, no render")
     ap.add_argument("--validate", action="store_true",
                     help="validate config + planner only, no render")
+    ap.add_argument("--pptx", action="store_true", help="render .pptx only")
+    ap.add_argument("--html", action="store_true", help="render .html only")
+    ap.add_argument("--both", action="store_true",
+                    help="render both .pptx and .html (default)")
     args = ap.parse_args(argv)
 
     if args.list:
@@ -81,18 +90,34 @@ def main(argv=None):
         print(json.dumps(spec, ensure_ascii=False, indent=2))
         return 0
 
-    template = spec["meta"]["template"]
-    if not Path(template).exists():
-        print(f"[error] template not found: {template}", file=sys.stderr)
-        return 2
+    # which formats? default = both
+    formats = []
+    if args.pptx:
+        formats.append("pptx")
+    if args.html:
+        formats.append("html")
+    if args.both or not formats:
+        formats = ["pptx", "html"]
 
-    from core.designer import Designer
     design_tokens = _load_json(DESIGN_JSON) if DESIGN_JSON.exists() else {}
-    designer = Designer(template, spec["meta"]["out"], theme=spec["meta"]["theme"],
-                        design_tokens=design_tokens,
-                        color_overrides=spec["meta"].get("colors"))
-    designer.render(spec).save()
-    print(f"[saved] {spec['meta']['out']}")
+    overrides = spec["meta"].get("colors")
+    base = Path(spec["meta"]["out"])
+    saved = []
+
+    if "pptx" in formats:
+        from core.designer import Designer
+        path = str(base.with_suffix(".pptx"))
+        Designer(out=path, design_tokens=design_tokens,
+                 color_overrides=overrides).render(spec).save()
+        saved.append(path)
+    if "html" in formats:
+        from core.html_renderer import HtmlRenderer
+        path = str(base.with_suffix(".html"))
+        HtmlRenderer(out=path, design_tokens=design_tokens,
+                     color_overrides=overrides).render(spec)
+        saved.append(path)
+
+    print(f"[done] {args.client}: {', '.join(saved)}")
     return 0
 
 

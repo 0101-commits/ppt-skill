@@ -21,19 +21,31 @@ def test_sample_dry_run_spec_shape(capsys):
     assert rc == 0
     spec = json.loads(capsys.readouterr().out)
     types = [s["type"] for s in spec["slides"]]
-    assert types == ["cover", "toc", "overview", "approach_vs", "diff_matrix", "end"]
-    assert spec["meta"]["theme"] == "hcg"
+    assert types == ["cover", "toc", "compare", "chart", "matrix",
+                     "process", "kpi", "cards", "end"]
 
 
-def test_full_render_if_template_present(tmp_path):
-    cfg = json.loads(SAMPLE.read_text(encoding="utf-8"))
-    template = Path(cfg["identity"]["template"])
-    if not template.exists():
-        pytest.skip(f"template not present: {template}")
+def test_full_render_pptx(tmp_path):
+    # v2.0 builds a blank 16:9 canvas from scratch — no template required.
     out = tmp_path / "deck.pptx"
-    rc = cli.main(["--client", "lotte_chemical", "--out", str(out)])
+    rc = cli.main(["--client", "lotte_chemical", "--pptx", "--out", str(out)])
     assert rc == 0
     assert out.exists()
     from pptx import Presentation
+    from pptx.util import Emu
     prs = Presentation(str(out))
-    assert len(prs.slides) >= 6
+    assert len(prs.slides) == 9
+    # 16:9 canvas (1280x720 px = 13.333 x 7.5 in)
+    assert round(prs.slide_width / 914400, 2) == 13.33
+    assert round(prs.slide_height / 914400, 2) == 7.5
+
+
+def test_full_render_html(tmp_path):
+    out = tmp_path / "deck"
+    rc = cli.main(["--client", "lotte_chemical", "--html", "--out", str(out)])
+    assert rc == 0
+    html = (tmp_path / "deck.html")
+    assert html.exists()
+    text = html.read_text(encoding="utf-8")
+    assert "1280px" in text and "Pretendard" in text
+    assert text.count('class="slide') == 9

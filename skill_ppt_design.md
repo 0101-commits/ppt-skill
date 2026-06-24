@@ -1,613 +1,412 @@
 ---
 name: hcg-ppt-design
 description: >
-  HCG 제안서 PPT 디자인 & 자동생성 가이드라인 v7.0.
-  v6.0(기아 Text-to-Visual) + 파라다이스 _final 정밀비교 → 테마 시스템(고객사 브랜드
-  팔레트 1줄 전환: hcg 레드 / paradise 골드), 텍스트 동적 제어(normAutofit + 파이썬
-  사전 리사이징으로 오버플로 무결점), 카드 자간/윤곽선 기본 적용.
-  v6.0 description ↓ (유지):
-  기아 _final + 롯데알미늄 _final PPTX 전수 역엔지니어링 — 구조/레이아웃/색상/좌표 정합 +
-  Text-to-Visual 구조화 엔진(목차 어젠다카드 / N등분 카드 그리드 / 컨테이너) +
-  XML 레벨 고급 디자인(윤곽선/그림자/투명도/그라디언트/자간) + DeckEngine 통합 엔진.
-  신규 제안서 작성 시 먼저 로드. 본문은 텍스트 나열 금지 — 반드시 구조화 블록으로 설계.
+  HCG 제안서/발표 슬라이드의 시각 언어 정본(v2.0). 16:9 1280×720 px 고정 캔버스,
+  Pretendard 단일 폰트, 단일 메인 블루(#356CB5) 팔레트, 고정 골격(rigid skeleton),
+  결론형 제목, 차트 우선, 고밀도(≥85%) 레이아웃을 정의한다.
+  구(舊) 4:3 / 맑은 고딕 / HCG_RED(#921F0B) / 템플릿 상속 시스템을 전면 폐기·대체한다.
+when_to_use: >
+  확정된 목차/장표(skill_ppt_planning 산출물)를 실제 슬라이드로 구현할 때.
+  색상·폰트·좌표·컴포넌트 토큰을 적용하고, core/designer.py(PPTX) 또는
+  core/html_renderer.py(HTML)로 자동 생성할 때.
 ---
 
-# ⚡ v6.0 핵심 원칙 (먼저 읽을 것)
+# HCG 슬라이드 디자인(Design) 스킬 v2.0
 
-> **기획 단계부터 "이 슬라이드를 N개 구조화 블록으로 디자인한다"를 먼저 결정하고
-> auto_ppt.py 신규 함수를 명시적으로 호출하라. 텍스트 줄글 나열은 폐기.**
-
-1. **목차 = 텍스트 나열 금지.** `create_toc_slide(prs, sections, current=i)` 또는
-   `DeckEngine.toc(sections, current=i)` 호출 → 인간 _final 어젠다카드(좌측 accent
-   블록 + 로마숫자 + 섹션명 + 활성 행 빨간 윤곽 하이라이트) 자동 재현. 섹션 디바이더는
-   같은 카드에서 `current`만 다음 섹션으로 이동.
-2. **본문 = 구조화 블록.** 핵심 포인트가 3~4개면 줄글 대신
-   `add_structured_content_blocks(slide, items)` 또는 `DeckEngine.content_blocks(...)`
-   호출 → 화면을 N등분, 각 카드 = 모서리 둥근 직사각형(브랜드색 헤더밴드 + 윤곽선 +
-   그림자) 자동 배치. `items=[{"title","body"|"bullets"}, ...]`.
-3. **박스 안 박스 = 컨테이너.** `add_container_box(...)` / `DeckEngine.container_slide(...)`
-   → 외곽 박스(회색/블루) 안에 내부 텍스트 블록 N개 균등 배치.
-4. **베이스 = 깡통 아님.** `DeckEngine`은 기아 _final을 베이스 템플릿으로 복제하여
-   master/layout(표지·목차·본문)·테마·폰트를 100% 상속한 위에 덧그린다.
-
-```python
-from auto_ppt import DeckEngine
-eng = DeckEngine()                          # 기아 _final 자동 상속(없으면 롯데 폴백)
-eng.cover("기아 중장기 보상체계 개선 추진", "- 제안서 -", "2025. 09")
-eng.toc(["제안 배경","수행 방안","일정 및 조직"], current=0)   # 어젠다카드
-eng.content_blocks("Why HCG", "3대 핵심 역량",
-    [{"title":"자동차 산업 이해","bullets":["현대/기아 계열사 다수","산업 보상 트렌드"]},
-     {"title":"대기업 보상 경험","bullets":["대기업 프로젝트 다수","세분화 전문성"]},
-     {"title":"직군 차별화 노하우","bullets":["직군 특화 방법론","Key Question 추진"]}])
-eng.save()
-```
+> 절대 기준: `HCG-slide-design-system.md` (HCG-Slide-Design-System v1.0). 기계 판독 페어: `skill_ppt_design.json`. 본 문서는 그 표준을 사람이 읽는 정본(正本)으로 미러링한 것이며, 토큰명·색상·role명은 JSON 계약과 정확히 일치한다.
 
 ---
 
-# HCG 제안서 PPT 디자인 가이드라인 v6.0
+## Overview
 
-> **분석 기반:** 롯데알미늄 _final PPTX XML 전수 추출 (v3 대비 추가 분석)
-> - 25장 전수 shape 카운트 / 레이아웃 매핑 / 색상 추출
-> - TOC, Pain Point, Overview 슬라이드 shape 좌표 실측
-> - 슬라이드 순서/섹션 구조 완전 확인
+본 시스템은 ㈜휴먼컨설팅그룹(HCG)이 대기업 HR 컨설팅 제안서에서 실제 사용하는 시각 언어를, **4:3 → 16:9(1280×720 px)** 로 전면 재설계한 슬라이드 디자인 시스템이다. 핵심 정체성은 세 가지로 요약된다.
 
----
+1. **단일 메인 블루(`primary` #356CB5)** 를 중심축으로, 라이트블루 틴트 면·코랄(`accent-coral` #F16249) 강조·골드/틸 보조를 더한 절제된 컨설팅 그레이드 팔레트.
+2. **11pt 주력 본문**(`body` 15px)과 8pt 출처(`source-note` 11px)로 대표되는 고밀도 타이포그래피 — 빈 공간을 최소화하고 한 슬라이드에 메시지·논거·시각자료를 모두 담는다.
+3. 모든 콘텐츠 슬라이드가 동일하게 상속하는 **고정 골격(rigid skeleton)** — 좌상단 키커, 우상단 챕터 박스, 풀폭 결론형 제목, 1px 룰, 본문, 좌하단 출처, 우하단 페이지번호가 슬라이드 불문 같은 좌표·같은 크기로 고정된다.
 
-## 0. 파일 스펙
+원본 HCG deck은 도형/프로세스 다이어그램 중심이었으나, 본 시스템은 **정량 데이터를 차트로 강제**(요구사항 3)하여 설득력과 밀도를 동시에 끌어올린다. 폰트는 맑은 고딕을 **Pretendard**(메트릭 호환 오픈소스 대체 폰트)로 일원화하여 환경 간 렌더링 편차를 제거한다.
 
-| 항목 | 값 |
-|------|----|
-| 슬라이드 크기 | **10.833" × 7.5"** |
-| 레이아웃 수 | **4개** (표지/목차/본문/End) |
-| 본문 배경 | **흰색** |
-| 총 슬라이드 | **25장** |
+### v1.5 → v2.0 변경 (전면 재설계)
 
----
+| 항목 | 구(v1.5, 폐기) | 신(v2.0) |
+|---|---|---|
+| 캔버스 | 4:3 (10.833×7.5 in) | **16:9 (1280×720 px)** |
+| 단위 | inch | **px** (좌상단 원점, `px→in = /96`, `pt→px = ×1.333`) |
+| 폰트 | 맑은 고딕 | **Pretendard 단일** |
+| 메인 색 | HCG_RED `#921F0B` | **BLUE `#356CB5`** (마룬은 워드마크 전용으로 강등) |
+| 생성 방식 | 템플릿 상속 / 테마(hcg·paradise) | **빈 16:9 캔버스에서 생성**, 고정 골격 + 토큰 주입 |
+| 엔진 | 단일 PPTX | **2종**: `core/designer.py`(PPTX) + `core/html_renderer.py`(HTML) |
 
-## 1. 실제 25장 구조 (확인 완료)
-
-| # | 레이아웃 | 제목 | 섹션 |
-|---|---------|------|------|
-| S01 | 표지(0) | 롯데알미늄 직무기반 HR제도 설계 및 도입 | — |
-| S02 | **목차(1)** | — | Ⅰ active |
-| S03 | 본문(2) | Project Overview | 추진 내용 |
-| S04 | 본문(2) | Client's Needs & Pain Point | 직무체계 / 평가보상 |
-| S05 | 본문(2) | HCG's Approach | HR 전문가 지식 경험 |
-| S06 | 본문(2) | [참고] | 高맥락 컨설팅 접근 방식 |
-| S07 | 본문(2) | 유사 프로젝트 수행 사례 | 다수 기업 HR 컨설팅 |
-| S08 | 본문(2) | 직무체계 개선 Overview | 직무체계 개선 |
-| S09 | 본문(2) | 직무체계 개선 Process | 직무체계 개선 |
-| S10 | 본문(2) | 직무체계 표준화 | 직무체계 개선 |
-| S11 | 본문(2) | [참고] | Global Job Skill 분석 결과 |
-| S12 | 본문(2) | 평가제도 개선 Overview | 평가제도 개선 |
-| S13 | 본문(2) | 직군별 차별화 평가모델 | 평가제도 개선 |
-| S14 | 본문(2) | [참고] | AI 기반 업무 Check-in |
-| S15 | 본문(2) | 평가운영체계 | 평가제도 개선 |
-| S16 | 본문(2) | 보상제도 개선 Overview | 보상제도 개선 |
-| S17 | 본문(2) | 보상 지향점 / 정책선 설정 | 보상제도 개선 |
-| S18 | 본문(2) | 보상제도 설계 | 보상제도 개선 |
-| S19 | 본문(2) | 보상 Simulation | 보상제도 개선 |
-| S20 | **목차(1)** | — | Ⅱ active |
-| S21 | 본문(2) | Overview | 휴먼컨설팅그룹 |
-| S22 | 본문(2) | 사업 영역 | HCG |
-| S23 | 본문(2) | 컨설팅 영역 | HCG |
-| S24 | 본문(2) | 주요 고객사 | HCG (870여 곳) |
-| S25 | End(3) | — | — |
-
-> **핵심:** 목차는 S02, S20 두 번 등장. 섹션은 Ⅰ(Overview) / Ⅱ(HCG 소개) 2개만.
-> 전통적 섹션 구분 슬라이드 없음 — 모든 콘텐츠 슬라이드가 본문(Layout 2) 사용.
+**Key Characteristics**
+- 16:9 1280×720 **전용 캔버스**, px 단위 절대 좌표 그리드 (요구사항 7, 8)
+- **헤더·푸터 고정 골격**: `kicker` / `chapter-indicator` / `slide-title` / `title-rule` / `source-note` / `page-number`가 항상 동일 위치·동일 폰트 (요구사항 1, 2)
+- **결론형 제목**: 명사 나열이 아닌 완결 문장으로 슬라이드 메시지를 단언 (요구사항 6)
+- **Pretendard 단일 폰트** 전 요소 적용 (요구사항 4)
+- **고밀도 레이아웃**: 작은 일관 간격(`block-gap` 12px), 본문 11pt, 콘텐츠 존을 차트/도형으로 충전 (요구사항 5, 9)
+- **차트 우선**: 수치는 표보다 차트로. 6색 시리즈 팔레트 고정 (요구사항 3)
+- **출처 상시 표기**: 모든 콘텐츠 슬라이드 좌하단 8pt `※ Source :` (요구사항 10)
+- 메인 블루 60–70% 비중, 코랄은 강조 한정의 단일 액센트 (색 위계 dominance)
 
 ---
 
-## 2. 테마 색상 (실측)
+## 요구사항 → 구현 매핑 (Compliance Matrix)
 
-| 이름 | RGB | 용도 |
-|------|-----|------|
-| HCG_RED | **#921F0B** | 제목 텍스트 (accent5 × lumMod50%) |
-| CORAL | **#F16249** | accent5, 코랄/살몬 강조 |
-| CORAL_DK | **#400A07** | accent5 × lumMod20% = 우측 항목 배경 |
-| CORAL_MED | **#B23B25** | accent5 × lumMod60% = 요약 항목 |
-| GRAY | **#919191** | bg2 = 중간 회색, 헤더 바 |
-| GRAY_DK | **#1D1D1D** | bg2 × lumMod20% = 좌측 항목 배경 |
-| GRAY_LT | **#D9D9D9** | bg1 × lumMod85% = 연회색 배경 |
-| BLUE | **#356CB5** | accent3 = 프로세스 단계 박스 |
-| WINE | **#794039** | TOC 활성 섹션 번호 배경 |
-| WHITE | **#FFFFFF** | bg1, accent1 |
-| BLACK | **#000000** | dk1 = 선, 테두리 |
+> 사용자 지정 10개 요구사항을 본 시스템이 어떻게 하드 제약으로 강제하는지의 추적표. 슬라이드 생성·QA 시 이 표를 체크리스트로 사용한다.
 
----
-
-## 3. 레이아웃별 디자인
-
-### Layout 1: 목차 (TOC)
-
-레이아웃 자체 shape: `TextBox "CONTENTS"` at (0.944", 1.759"), 1.090"×0.323", bg2 fill
-
-슬라이드 위에 수동 추가:
-
-| 요소 | x | y (Ⅰ) | y (Ⅱ) | w | h | 스타일 |
-|------|---|-------|-------|---|---|--------|
-| 섹션 번호 원형 | 2.120" | 2.002" | 2.868" | 0.906" | 0.866" | active=#794039, inactive=white |
-| 섹션 제목 텍스트 | 3.457" | 2.280" | 3.147" | 2.230" | 0.309" | 16pt, active=wine bold, inactive=black |
-| 저작권 텍스트 | 2.120" | 3.829" | — | 8.020" | 0.254" | 6pt, bg1 fill |
-| 수직 연결선 | 2.182" | 2.002" | 2.868" | — | — | CONN at section y |
-
-> 섹션 제목 y = 섹션 번호 y + 0.278" (= number circle 내부 수직 중앙)
-> S02 = Ⅰ active, S20 = Ⅱ active
-
-### Layout 2: 본문
-
-| 요소 | x | y | w | h | 스타일 |
-|------|---|---|---|---|--------|
-| 제목 ph (idx=0) | 0.575" | 0.250" | 9.729" | 0.305" | 12pt bold, 자동 HCG_RED |
-| 서브헤드 ph (idx=10) | 0.575" | 0.548" | 9.728" | 0.361" | 15pt Semilight |
-| 헤더 바 | 0.691" | 1.595" | 9.451" | 0.333" | bg2(#919191) fill |
-| 수평 구분선 | 0.691" | 1.928" | 9.451" | 0" | dk1 선 |
-| 좌컬럼 items | 0.691" | 1.944" | 4.528" | 0.496" | 간격 0.589" |
-| 우컬럼 items | 5.615" | 1.944" | 4.528" | 0.496" | 간격 0.589" |
-| 중간 연결 박스 | 4.752" | 1.994" | 1.251" | 0.394" | bg2(gray) |
-
----
-
-## 4. 슬라이드 타입별 도식화 패턴
-
-### 4-1. TOC 슬라이드 (S02, S20)
-
-```
-CONTENTS (레이아웃 제공)
-
-[■ Ⅰ]  Project Overview     ← active: #794039, bold
- 
-[□ Ⅱ]  HCG 소개             ← inactive: white
-
-저작권 텍스트 (6pt)
-```
-
-### 4-2. 2컬럼 대조 슬라이드 (Pain Point, S04)
-
-```
-[헤더 바 bg2 = 전통적 Consulting    │    HCG Approach]
-─────────────────────────────────────────────────────
-[항목1 #1D1D1D dark gray]  [연결]  [항목1 #400A07 dark red]
-[항목2 #1D1D1D dark gray]  [연결]  [항목2 #400A07 dark red]
-...
-[요약 #D9D9D9 light gray]           [요약 #B23B25 med coral]
-```
-- 좌: GRAY_DK (#1D1D1D), 우: CORAL_DK (#400A07), 텍스트 모두 흰색
-- 중간 연결박스: GRAY (#919191)
-
-### 4-3. 프로세스 단계 슬라이드 (Overview, S03/S08/S12/S16)
-
-```
-라벨        내용 텍스트 (x=1.836", w=8.759")
-(x=0.369")
-           ┌─────┐ → ┌─────┐ → ┌─────┐ → ┌─────┐
-           │Step1│   │Step2│   │Step3│   │Step4│  ← accent3 blue
-           └─────┘   └─────┘   └─────┘   └─────┘
-           [설명]      [설명]    [설명]    [설명]   ← bg2 gray
-```
-- 프로세스 박스: BLUE (#356CB5) fill, 1.976"×0.666", y=2.952"
-- 시작 x=2.133", 간격=2.006"
-- 설명 박스: GRAY fill, y=3.632", h=0.554"
-- 라벨: x=0.369", w=1.250", white fill, 우정렬
-
-### 4-4. 단일 컬럼 슬라이드 (본문 기본)
-
-```
-[헤더 바 bg2]
-─────────────
-라벨 │ 내용 (x=1.836", w=8.759")
-라벨 │ 내용
-...
-```
-
-### 4-5. 참고 슬라이드 (S06, S11, S14)
-
-- 제목: "[참고]" prefix
-- 본문: 복잡한 그리드/표/이미지 (실제는 그룹 shapes + 그림)
-- 자동 생성 시: 단순화된 텍스트 박스 구현
-
----
-
-## 5. 좌표 상수 (실측)
-
-```python
-# 레이아웃
-TITLE_X, TITLE_Y = 0.575, 0.250    # 제목 placeholder
-SUB_X, SUB_Y = 0.575, 0.548        # 서브헤드 placeholder
-
-# 본문 그리드
-HDR_X, HDR_Y, HDR_W, HDR_H = 0.691, 1.595, 9.451, 0.333
-LINE_Y = 1.928
-COL_L_X, COL_R_X = 0.691, 5.615
-ITEM_W, ITEM_H = 4.528, 0.496
-ITEM_Y0, ITEM_DY = 1.944, 0.589
-MID_X, MID_W, MID_H = 4.752, 1.251, 0.394  # 중간 연결
-
-# 단일 컬럼
-LBL_X, LBL_W = 0.369, 1.250
-CONTENT_X, CONTENT_W = 1.836, 8.759
-
-# 프로세스 단계
-PROC_X0, PROC_W_STEP = 2.133, 2.006
-PROC_W, PROC_H, PROC_Y = 1.976, 0.666, 2.952
-STEP_Y, STEP_H = 3.632, 0.554
-
-# TOC
-TOC_NUM_X = 2.120
-TOC_NUM_W, TOC_NUM_H = 0.906, 0.866
-TOC_TITLE_X, TOC_TITLE_W, TOC_TITLE_H = 3.457, 2.230, 0.309
-TOC_SEC1_Y, TOC_SEC2_Y = 2.002, 2.868
-```
-
----
-
-## 6. auto_ppt.py 구현 패턴 (v4)
-
-### 필수 색상 상수
-
-```python
-HCG_RED   = RGBColor(0x92, 0x1F, 0x0B)
-CORAL_DK  = RGBColor(0x40, 0x0A, 0x07)  # Pain Point 우측
-CORAL_MED = RGBColor(0xB2, 0x3B, 0x25)  # 요약 우측
-GRAY      = RGBColor(0x91, 0x91, 0x91)  # 헤더/중간
-GRAY_DK   = RGBColor(0x1D, 0x1D, 0x1D)  # Pain Point 좌측
-GRAY_LT   = RGBColor(0xD9, 0xD9, 0xD9)  # 요약 좌측
-BLUE      = RGBColor(0x35, 0x6C, 0xB5)  # 프로세스 단계
-WINE      = RGBColor(0x79, 0x40, 0x39)  # TOC 활성
-WHITE     = RGBColor(0xFF, 0xFF, 0xFF)
-BLACK     = RGBColor(0x00, 0x00, 0x00)
-```
-
-### 핵심 헬퍼
-
-```python
-def _add_box(slide, x, y, w, h, fill_rgb=None, border_rgb=None, radius=True):
-    t = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE if radius else MSO_AUTO_SHAPE_TYPE.RECTANGLE
-    s = slide.shapes.add_shape(t, Inches(x), Inches(y), Inches(w), Inches(h))
-    if fill_rgb: s.fill.solid(); s.fill.fore_color.rgb = fill_rgb
-    else: _set_no_fill(s)
-    if border_rgb: _set_line_color(s, border_rgb)
-    else: s.line.fill.background()
-    return s
-```
-
----
-
-## 7. 오류 레퍼런스
-
-| 오류 | 원인 | 해결 |
-|------|------|------|
-| `ValueError: range 100~400000, got 0` | positional arg 순서 틀림 → fsize=0 | `_add_run(p, text, fsize, bold, ...)` 순서 확인 |
-| `fill_err: cannot import PP_ALIGN from dml` | 잘못된 import | fill 함수에서 PP_ALIGN 제거 |
-| 한글 폰트 깨짐 | latin/ea 미지정 | `typeface="맑은 고딕"` XML 직접 설정 |
-| Git push rejected | remote ahead | `git pull --rebase origin main` 먼저 |
-
----
-
-## 8. 실행
-
-```bash
-cd C:\Users\cgpar\ppt-skill
-python auto_ppt.py
-# → HCG_Automated_Draft.pptx 생성
-```
-
----
-
-## 9. 고급 도식 패턴 v4.1 (롯데알미늄 _final XML 실측)
-
-> 신규 제안서 생성 시 평면 텍스트 대신 아래 패턴 우선. 좌표 inch. **PICTURE(아이콘)는 자동생성 제외(한계)** → 텍스트/도형 대체.
-
-### 9-1. Pain Point 카테고리화 (S04)
-| 요소 | 좌표 |
-|------|------|
-| 헤더 바 (좌 '고객사 HR 운영 Issue' / 우 '전통 Consulting 한계') | y=1.61 h=0.33, GRAY |
-| 행 (6행) | y0=1.94 dy=0.59 h=0.50 |
-| 좌 라벨태그 | x=0.69 w=1.02 h=0.50, GRAY_DK 흰 텍스트 |
-| 좌/우 내용 | x=0.69 / 5.61, w=4.53 |
-| 중앙 커넥터 배지 | x=4.75 w=1.25 h=0.39, GRAY |
-| 하단 요약 2개 | y=5.53, w=4.53 h=1.37 |
-
-### 9-2. VS 대비 (S05 HCG's Approach)
-- 블록: 좌 x=0.69 w=4.52 / 우 x=5.65 w=4.45, y=2.20 h=4.21
-- `VS` 배지: x=5.22 y=1.61 0.39², HCG_RED/WINE fill 흰 bold
-- 하단 quote: x=1.10 y=6.66 w=8.64
-
-### 9-3. 3-컬럼 STEP Overview (S08/12/16)
-- 컬럼 x=[0.69, 3.90, 7.11] w=3.03
-- 헤더박스 y=2.10 h=0.79 / 컨테이너 y=2.88 h=4.17 / 상단설명 y=2.94 h=0.96
-- **AI 콜아웃** y=3.83 h=1.88 (예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona')
-- 하단 상세 y=5.76 h=1.18 / 아이콘 0.51²(제외)
-
-### 9-4. 직군 차별화 매트릭스 (S13)
-| 열 | 좌표 |
-|----|------|
-| 직군 라벨 | x=0.69 w=1.25 h=0.97, HCG_RED |
-| 업무 특성 | x=2.00 w=2.07 |
-| 중앙 insight quote (큰따옴표) | x=4.21 w=2.68 h=0.97 |
-| 화살표 배지 | x=6.99 w=0.47 h=0.57 |
-| 반영방안 | x=7.57 w=2.59 |
-| 행 y | 2.46 / 3.55 / 4.63 / 5.74 (사이 구분선) |
-| 하단 quote | x=0.69 y=6.79 w=9.45 |
-
-### 9-5. 예시적 배지 & Insight Quote
-- `예시적` 배지: 우상단 x=9.56 y=1.61 w=0.58 h=0.27, GRAY_LT — 가설/예시 데이터 단정 회피
-- Insight Quote: 하단/중앙 큰따옴표(“ ”) italic 강조색 한 줄 takeaway
-
-### 9-6. auto_ppt.py 신규 헬퍼 (구현 지시어)
-```python
-add_header_bar(slide, text, x=0.69, y=1.61, w=9.451, h=0.333)   # GRAY 바 + 흰 bold
-add_label_tag(slide, text, x, y, w=1.02, h=0.5, fill=GRAY_DK)   # 미니 카테고리 라벨
-add_connector_badge(slide, text, x=4.752, y, w=1.25, h=0.39)    # 중앙 키워드 배지
-add_vs_badge(slide, x=5.22, y=1.61, w=0.39, text='VS')          # VS 대비 배지
-add_example_badge(slide, x=9.56, y=1.61, w=0.58, h=0.27)        # '예시적' 배지
-add_insight_quote(slide, text, x=0.69, y=6.79, w=9.451)         # “ ” italic takeaway
-build_overview_3col(prs, title, subtitle, cols)                 # 3컬럼 STEP Overview
-build_diff_matrix(prs, title, subtitle, rows, bottom_quote)     # 직군 차별화 매트릭스
-```
-
-### 9-7. 한계
-- 아이콘/이미지(PICTURE) 자동생성 불가 → 도형/텍스트 대체 또는 템플릿 슬라이드 복제
-- 다단계 GROUP/FREEFORM 화살표 → 단순 도형 조합 근사
-- 직무분류 예시 표 → add_table 또는 텍스트 그리드
-
----
-
-## 10. 밀도·도식화 타깃 v4.2 (기아 _final 비교)
-
-> 근거: **AI Draft 5.5도식/장·213자/장** vs **인간 _final 23도식/장·502자/장**. AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM **0개** = 시각적 평면.
-
-### 10-1. 타깃
-| 항목 | 기준 |
-|------|------|
-| 도식/장 | 본문 장표 텍스트박스 나열 금지, **구조 도식 ≥1**(박스+연결선/화살표 or 표) |
-| 글자/장 | 본문 **350~500자**(거버닝+근거), 단 텍스트 벽 금지 → 도식 구조화 |
-| 흐름 | 텍스트 대신 **connector line/arrow** |
-| 비교 | **TABLE** 활용 (인간본 8개 사용) |
-| 아이콘 | PICTURE 자동생성 불가 → **add_icon_placeholder**(도형) 대체 |
-| 스케일 | 진단/BM형 대형 제안서 **40~60장**, 섹션 divider 풀비주얼 |
-
-### 10-2. auto_ppt.py 신규 헬퍼 v2 (구현 지시어)
-```python
-add_connector_line(slide, x1, y1, x2, y2, color=MED_GRAY, w_pt=1.0)  # 박스 간 연결선
-add_arrow_flow(slide, centers)                                       # 박스 중심 사이 → 화살표 자동
-add_table(slide, x, y, w, h, data, header=True)                      # 비교 TABLE (헤더 HCG_RED)
-add_icon_placeholder(slide, x, y, d=0.5, fill=BLUE)                  # 아이콘 대체 원형 도형
-build_process_roadmap(prs, title, subtitle, phases)                  # Process Overview 로드맵(phase+step+연결선)
-build_compare_table(prs, title, subtitle, headers, rows, example=False)  # 표 기반 비교 장표
-```
-
-### 10-3. 적용 원칙
-- 본문 = 미니리포트: 거버닝 메시지 + 도식화된 근거. 단계는 화살표 흐름, 관계는 연결선, 비교는 표.
-- 평면 텍스트 4줄 장표 발견 시 → 도식(박스+연결선/표)으로 전환.
-
----
-
-## 11. XML 레벨 고급 디자인 (v5.0)
-
-> **근거:** 인간 _final.pptx OxmlElement 전수 파싱. AI Draft와의 갭이 평면화의 핵심 원인.
-
-### 11-0. 실측 갭 (인간 _final vs AI Draft, 25장)
-| XML 속성 | 인간 _final | AI Draft | 보강 헬퍼 |
+| # | 요구사항 | 구현 방식 (token / rule) | 검증 포인트 |
 |---|---|---|---|
-| 텍스트 윤곽선 `<a:rPr><a:ln>` | **1807** | 0 | `set_text_outline` |
-| 그림자 `<a:outerShdw>` | 60 | 0 | `add_shadow` |
-| 투명도 `<a:alpha>` | 2478 | 0 | `set_transparency` |
-| 그라디언트 `<a:gradFill>` | 43 | 0 | `set_gradient` |
-| 자간 `spc` | -30~-100 | 없음 | `set_char_spacing` |
-| 행간 | 100~120% 가변 | 112% 고정 | `_set_line_spacing(p,pct)` |
-| 도형 geom | 14종 | 3종 | geometry_palette |
-| 도형/장 · Group · Picture | 18.7 · 130 · 51 | 10.7 · 0 · 0 | 밀도/도식 강화 |
-
-### 11-1. XML 속성 제어 규칙 + 헬퍼
-```python
-# 텍스트 윤곽선 — <a:rPr> 첫 자식 <a:ln w><a:solidFill><a:srgbClr></a:ln>
-set_text_outline(run, color="FFFFFF", width_pt=0.75)
-add_item(..., outline={"color":"FFFFFF","width_pt":1.0})   # 대비 약한 강조 텍스트만
-
-# 그림자 — <a:spPr><a:effectLst><a:outerShdw>(ln 뒤)
-add_shadow(shape, blur_pt=4, dist_pt=2.5, direction=2700000, alpha_pct=55)
-add_item(..., shadow=True)                                  # 핵심 박스/배지만
-
-# 투명도 — solidFill srgbClr에 <a:alpha val=(100-pct)*1000>
-set_transparency(shape, pct)                                # 겹침·오버레이 표현
-
-# 그라디언트 — <a:gradFill>(prstGeom 뒤·ln 앞)
-set_gradient(shape, color1, color2, angle_deg=90)
-add_item(..., grad=(HCG_RED, CORAL_DK, 45))                 # 표지/섹션/핵심 박스
-
-# 자간 — <a:rPr spc='-50'>(1/100 pt, 음수=좁힘)
-set_char_spacing(run, -50)                                  # 본문 -30, 제목 -50~-100
-add_item(..., spc=-50)
-
-# 세로정렬 — <a:bodyPr anchor='ctr'>
-set_text_anchor(shape, "ctr")
-add_item(..., anchor="ctr")
-```
-> 원칙: 고급 효과는 **핵심 요소 한정**. 본문 박스 남발 = 장식 과잉(톤앤매너 위배).
-
-### 11-2. 불릿 → 도형 변환 규칙
-불릿(•) 나열 **금지** → 항목 간 관계 파악 후 도식 전환:
-| 관계 | 변환 |
-|------|------|
-| 병렬 3~5항목 | 박스 그리드(라벨태그+내용) |
-| 단계/순서 | `add_arrow_flow` / `build_process_roadmap` |
-| 대조(현행 vs 개선) | `build_body_2col` / `build_approach_vs` |
-| 분류/매트릭스 | `build_diff_matrix` / `add_table` |
-| 인과/관계 | 박스 + `add_connector_line` |
-- 판단: 한 박스 불릿 3개↑ = 도식 후보.
-
-### 11-3. MBB 모듈러 그리드
-- **안전여백:** 좌우 0.69″, 상단 제목영역 ~1.6″, 하단 ~0.5″. 콘텐츠 폭 9.451″.
-- **수평 분할:** 2컬럼 좌 0.691/우 5.615(거터 0.396) · 3컬럼 [0.69,3.90,7.11] w=3.03.
-- **수직 리듬:** 행 피치 dy=0.589″, 박스 h=0.496″ 반복.
-- **황금비:** 박스 내부여백 좌0.07/우0.04/상하0.02″, 제목:서브:콘텐츠 ≈ 1:0.7:5, 강조 박스 1.618 비율 지향.
-- **정렬:** 라벨=우정렬, 본문=좌정렬, 헤더/번호/배지=중앙+`anchor=ctr`. 신규 좌표는 기존 그리드 라인에 스냅.
-
-### 11-4. 통합 마스터 엔진 — `DeckEngine`
-**원칙:** `auto_ppt.py` 하나만 호출 + 외부 JSON spec → PPT. kia/lotte는 엔진 import 콜러로 유지(중복 cover/toc/overview는 엔진 메서드로 통합).
-```python
-from auto_ppt import DeckEngine
-eng = DeckEngine(template=None, out="out.pptx")   # None→롯데알미늄 _final 상속
-eng.render(spec); eng.save()
-```
-```bash
-python auto_ppt.py spec.json     # 데이터 구동(meta.template/out 사용)
-python auto_ppt.py               # 기본 build() (롯데알미늄 25장, 하위호환)
-```
-**spec 스키마:** `{"meta":{template?,out?}, "slides":[{type,label?,...}]}` — type별 필드:
-
-| type | 필드 |
-|------|------|
-| cover | title, subtitle?, date? |
-| toc | items:[[번호,섹션,페이지],..], title? |
-| overview | subtitle, background?, scope?:[[라벨,x]], sub_details?:[[x,설명]], plan?, quote? |
-| section | num, title, sub? |
-| body_2col | title, subtitle, header_l, header_r, left:[], right:[] |
-| body_single | title, subtitle, rows:[[라벨,내용]] |
-| body_process | title, subtitle, steps:[[제목,설명]], desc? |
-| overview_3col | title, subtitle, cols:[{header,desc,ai,detail}×3], bar_label?, example? |
-| diff_matrix | title, subtitle, rows:[{group,trait,insight,apply}], quote?, example? |
-| pain_point_categorized | title, subtitle, left_hdr, right_hdr, rows:[[좌라벨,좌내용,중배지,우내용]], summary_left?, summary_right? |
-| approach_vs | title, subtitle, left_title, left:[], right_title, right:[], quote? |
-| process_roadmap | title, subtitle, phases:[{name,steps:[]}] |
-| compare_table | title, subtitle, headers:[], rows:[[]], example? |
-| appendix | title?, subtitle?, rows:[[라벨,내용]] |
-| demo_advanced | title?, subtitle? (윤곽선/그림자/그라디언트/투명도/자간 시연) |
-| end | — |
+| 1 | 제목·부제·챕터명·페이지수·본문 위치 고정 | `layout.kicker/chapter-indicator/slide-title/content-area/source-note/page-number` 절대 px 좌표 | 전 슬라이드 동일 좌표 오버레이 시 어긋남 0 |
+| 2 | 제목·부제·챕터·페이지 폰트 크기 고정 | `typography.*` role별 단일 px/weight, 슬라이드별 재정의 금지 | role 외 임의 size 사용 0 |
+| 3 | 차트·그래프 최대화 | `charts.*` 팔레트·타입 8종+, "정량 데이터=차트 1순위" 규칙 | 수치 슬라이드 중 차트 포함률 ≥ 70% |
+| 4 | Pretendard만 사용 | `font_policy: Pretendard ONLY`, 전 `typography.fontFamily=Pretendard` | 폰트 임베드/링크 Pretendard 단일 |
+| 5 | 밀도 유지·빈 공간 최소화 | `content-area` 충전 규칙, `block-gap 12`, 본문 15px(11pt) | 콘텐츠 존 점유율 ≥ 85% |
+| 6 | 제목=슬라이드 결론 문장 | `slide-title.rule` 완결문 강제, 명사 나열 금지 | 제목이 주어+서술어 문장인지 |
+| 7 | 16:9 전용 | `canvas: 16:9` / `1280×720` 고정 | 캔버스 비율 1.7778 |
+| 8 | 레이아웃 불괴(견고) | px 절대 좌표 + `safe-margin` + `maxLines` 제약 | 텍스트 오버플로/요소 겹침 0 |
+| 9 | 본문 빈 공간 과다 금지 | 콘텐츠 존 그리드 분할(2/3/4-up) 충전, 여백 ≤ `block-gap` | 단일 블록 고립·과대 여백 0 |
+| 10 | 출처 표기 | `source-note` 좌하단 8pt, `prefix "※ Source : "` 상시 | 콘텐츠 슬라이드 출처 누락 0 |
 
 ---
 
-## 12. v6.0 — 기아 _final 역엔지니어링 & Text-to-Visual 엔진
+## Canvas & Font Policy
 
-> **근거:** `기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx` 58장 전수
-> shape-tree 파싱(좌표 cm 실측, 그룹 재귀, fill/line/font 추출). 분석 산출물:
-> `analyze_final.py` / `final_analysis.json` / `STRUCTURE_REPORT*.md`.
+### Canvas (요구사항 7, 8)
 
-### 12-1. 파일 스펙 (기아 _final 실측)
-| 항목 | 값 |
-|------|----|
-| 슬라이드 크기 | **27.52 × 19.05 cm = 10.835″ × 7.5″** |
-| 레이아웃 | **표지 / 목차 / 본문 / End of document** |
-| 총 슬라이드 | 58장 (목차 레이아웃 5회 = 섹션 디바이더 겸용) |
-| 주 폰트 | **맑은 고딕** (Malgun Gothic), 미세주석 Malgun Gothic Semilight |
+| 속성 | 값 |
+|---|---|
+| 비율 | **16:9 전용** (1.7778) — 4:3·기타 비율 금지 |
+| 픽셀 | **1280 × 720 px** |
+| 인치 | 13.333 × 7.5 in @ 96dpi |
+| 단위 | **px**, 좌상단 원점 |
+| 환산 | `pt → px = pt × 1.333` (96dpi) · `px → in = px / 96` |
+| PPTX 변환 | `PX() = Inches(px / 96)` |
+| 배경 | `surface` #FFFFFF 고정 (다크모드 미정의) |
 
-### 12-2. 브랜드 팔레트 (기아 _final 빈도순 실측)
-| 이름 | RGB | 용도 |
-|------|-----|------|
-| KIA_RED | **#C72128** | 시그니처 레드 — 활성 섹션 accent, 윤곽 하이라이트, 헤더밴드 |
-| KIA_RED_LT | **#E5838A** | 연한 레드 — 비활성 섹션 마커 |
-| ACCENT_OR | **#F16249** | 강조 폰트 코랄(56회) |
-| DEEP_RED | **#C00000** | 진한 강조 레드(18회) |
-| CONTAINER_GR | **#E6E6E6** | 컨테이너 박스 회색 배경 |
-| SKY / STEEL / NAVY | #5D8ECF / #3265A8 / #002459 | 차트·컨테이너 블루 계열 |
-| PALE_BLUE | #D0E7F8 | 옅은 블루 배경 |
-| BLACK / WHITE | #000000(폰트 1087회) / #FFFFFF | 본문 텍스트 / 배경 |
+> HCG 원본 deck의 pt 실측값을 px로 환산해 고정한다(11pt 주력 본문 → 15px). 모든 좌표·크기는 px 절대값이며 슬라이드 불문 동일하다.
 
-### 12-3. 목차 어젠다카드 (slide 1·17·52 실측, cm)
-```
-외곽 카드      x=5.40  y=4.93  w=20.37  h=12.02     (white, 0.5pt border, 그림자)
-섹션 행(N개)   x=5.79  w=19.98  h=3.54  contiguous  (pitch 3.54, 세로 중앙정렬)
-  ├ 좌 accent  x=5.79  w=2.74   h=3.54  활성=C72128 / 비활성=E5838A
-  ├ 로마숫자   x=6.77  w=0.79   18pt bold 흰색 (Ⅰ Ⅱ Ⅲ …)
-  └ 섹션명     x=10.54 w=12.93  18pt, 활성=C72128 bold / 비활성=black
-활성 하이라이트 x=6.16 w=19.61 h=3.31  빨간(C72128) 윤곽 0.75~1.5pt, current 행 위
-```
-- 섹션 디바이더 = 동일 카드에서 `current`만 다음 섹션으로 이동(하이라이트 하강).
-- 구현: `create_toc_slide(prs, sections, current, layout_idx, title=None)`.
+### Font Policy (요구사항 4)
 
-### 12-4. 구조화 카드 그리드 (Text-to-Visual 계산식)
-```
-가용폭 W = 24.71″(=본문 마진 x=1.46cm/0.575″ 기준), n개 카드, gap=0.26″
-card_w  = (W - gap*(n-1)) / n
-카드     = ROUNDED_RECTANGLE, white fill, accent 1pt 윤곽, 그림자
-헤더밴드  = 카드 상단 header_h=0.62″, accent(KIA_RED) 채움 + 흰 bold 타이틀(번호 옵션)
-본문영역  = 헤더 아래, padding 0.13″, bullets 또는 단락, 행간 118%
-n≥4 → title 11/body 9.5pt 자동축소, n≥5 → 10/9pt
-```
-- 구현: `add_structured_content_blocks(slide, items, x?, y=2.05, w?, h=4.30, gap=0.26, accent?, numbered=True)`.
-- `items=[{"title":..,"body":..}]` 또는 `{"title":..,"bullets":[..]}` 또는 문자열.
+**Pretendard 단일** (orioncactus/Pretendard, SIL OFL 1.1). 맑은 고딕의 자폭·자형을 계승한 메트릭 호환 오픈소스 폰트로, 한·영·숫자 전 글리프를 커버한다. 본문/제목/숫자/영문 라틴 **전부 Pretendard 단일 — 혼용 절대 금지.**
 
-### 12-5. 컨테이너(박스 안 박스, slide 3·31 실측)
-- 외곽 SOLID 박스(E6E6E6/SKY) 안에 내부 TextBox N개 균등 분할(가로).
-- 구현: `add_container_box(slide, x, y, w, h, inner_items, fill?, title?)`.
-  `inner_items=[{"head":..,"body":..}, ...]`. 좌표 cm는 `CM(v)` 헬퍼로 변환.
-
-### 12-6. DeckEngine v6.0 신규 메서드 & spec 타입
-```python
-eng.toc(sections, title=None, current=None)        # 어젠다카드 (튜플 입력 호환)
-eng.section_divider(sections, current)             # 섹션 디바이더(하이라이트 이동)
-eng.content_blocks(title, subtitle, items, ...)    # N등분 카드 그리드 본문
-eng.container_slide(title, subtitle, containers)   # 박스 안 박스
-```
-| type | 필드 |
-|------|------|
-| toc | items:["섹션명",..] (또는 [[번호,섹션,페이지]] 호환), title?, current? |
-| section_agenda | sections:["섹션명",..], current:int |
-| blocks | title, subtitle, items:[{title,body|bullets}], y?, h?, numbered?, bar_label?, quote?, example? |
-| container | title, subtitle, containers:[{x,y,w,h,fill?,title?,items:[{head,body}]}] |
-
-> 실행: `python auto_ppt.py` → v6.0 쇼케이스(기아 템플릿, 어젠다카드+카드그리드+컨테이너)
-> `python auto_ppt.py legacy` → 롯데 25장(하위호환) · `python auto_ppt.py spec.json` → 데이터 구동
+- **사용 weight**: `400 / 500 / 600 / 700 / 800` (본문 400 · 강조 700 2단 대비 기본)
+- **금지 weight**: `300`(Light) · `900`(Black) — 환경 간 위(僞)폴백 차단
+- **PPTX**: run XML `a:latin` + `a:ea` `typeface='Pretendard'`. 렌더링을 위해 시스템 설치 또는 폰트 임베드 필요.
+- **HTML**: Pretendard woff2/Variable `@font-face` 또는 CDN. 폴백 없이 Pretendard 단일.
 
 ---
 
-## 13. v7.0 — 파라다이스 _final 정밀비교 & 무결점 고도화
+## Colors
 
-> **근거:** `HCG_파라다이스_보상제도 컨설팅_제안서_rev_final.pptx`(52장) vs AI Draft(28장)
-> OxmlElement 정밀 비교. 산출물: `paradise_compare.py` / `PARADISE_COMPARE.md`.
+> Source: 8개 deck `theme1.xml` 색상표는 **완전 동일**(단일 하우스 테마 확인). 사용 빈도는 전 슬라이드 합산. 색상값·토큰명은 JSON 계약과 정확히 일치한다.
 
-### 13-0. 실측 갭 (1차 AI Draft vs 인간 rev_final) → 보강 결과
-| 항목 | AI 1차 | 인간 | 보강 후 AI | 헬퍼 |
+### Brand Blue (메인 계열) — 화면의 60–70%
+
+| 토큰 | HEX | 용도 |
+|---|---|---|
+| `primary` | **#356CB5** | HCG 시그니처. 강조 텍스트·핵심 도형·차트 1순위 (최빈 858회) |
+| `primary-deep` | #1F4E8C | (파생) 다크 밴드/강조 칼럼 헤더/호버. 흰 텍스트와 페어 |
+| `primary-steel` | #336699 | 2순위 헤더/도형 (428회) |
+| `primary-navy` | #0D1467 | 표지 모자이크 최암부·강대비 텍스트 (50회) |
+| `primary-soft` | #A1D1F1 | 칼럼/카드 헤더 면·차트 2순위 (252회) |
+
+### Blue Tints (면·표 채움 전용)
+
+`tint-blue-1` #D4E1F2(표 헤더), `tint-blue-2` #B0CEF2(강조 셀), `tint-blue-3` #A5C4E1(박스 배경), `tint-blue-4` #EAF2FB(넓은 면). 텍스트가 아닌 **면적**에만 사용.
+
+### Accent / Semantic — 단일 액센트 원칙
+
+| 토큰 | HEX | 용도 |
+|---|---|---|
+| `accent-coral` | #F16249 | Positive 강조·화살표·하이라이트 칩. 메인 블루에 대비되는 **유일한 마케팅 액센트** (514회) |
+| `accent-gold` | #FFCC66 | 차트 4순위·보조 강조 한정 |
+| `accent-teal` | #50B8B6 | 차트 3순위·보조 강조 한정 |
+| `emphasis-red` | #C00000 | 부정/리스크/감소 **수치 전용** (479회). 일반 강조 남발 금지 |
+| `positive-green` | #00B050 | 증가/달성 **수치 전용** |
+
+### Neutral / Ink
+
+`ink` #000000(본문 기본, 44,940회), `ink-slate` #263238(차분한 대안), `text-muted` #919191(캡션·출처·비활성, 테마 lt2), `text-faint` #B7B7B7(플레이스홀더), `divider` #DDDDDD / `divider-soft` #EAEAEA(룰·표 경계), `surface` #FFFFFF(캔버스/카드), `surface-gray` #F5F6F8(패널 배경).
+
+### Brand Mark
+
+`hcg-maroon` **#921F0B** — 페이지번호 옆 "HCG" 워드마크 **전용** (435회). **본문/도형에 사용 금지.**
+
+### Color Dominance Rule (색 위계)
+
+- **메인 블루 `primary`가 화면의 60~70%.** 코랄 `accent-coral`은 **강조 한정 단일 액센트**.
+- `tint-blue-*`는 텍스트가 아닌 **면적(표/박스 채움)에만**.
+- **시맨틱 전용**: `emphasis-red`=부정/감소 수치, `positive-green`=증가/달성 수치. 일반 강조 남용 금지.
+- `hcg-maroon`은 'HCG' 워드마크 전용. 본문/도형 금지.
+- **색 띠/액센트 스트라이프 금지** — 제목 밑줄 컬러바·카드 한 변 컬러 보더·슬라이드폭 헤더/푸터 바는 사용하지 않는다. 구분이 필요하면 **면 틴트·1px 룰·아이콘**으로.
+
+---
+
+## Typography
+
+> Source: HCG deck 실측 폰트 사이즈 분포(11pt 압도적 주력 / 8pt 출처 / 14·13pt 헤더) + pt→px(96dpi, ×1.333) 환산. **각 role의 px/weight는 슬라이드 불문 고정값. 슬라이드별 재정의 금지** (요구사항 2).
+
+| role | px (pt-equiv) | weight | lineHeight | 용도 |
 |---|---|---|---|---|
-| 윤곽선 a:ln | 0 | 2806 | 37 | 카드 헤더 `set_text_outline` |
-| 자간 spc | 0 | 2856 | 163 | 카드 `spc=-20~-30` |
-| Autofit(오버플로 제어) | 없음 | noAuto544/spAuto452 | normAutofit 80 | `set_autofit_shrink` |
-| **브랜드 FILL** | ❌레드 C72128+921F0B 혼용 | 골드 A49166/AC9A71/크림 | ✅골드 A49166 지배 | **테마 시스템** |
-| 텍스트 오버플로 | 위험 | — | **0건** | `fit_font_size` |
+| `cover-title` | 38 (28pt) | 800 | 1.22 | 표지 제목 |
+| `cover-subtitle` | 20 (15pt) | 500 | 1.40 | 표지 부제 |
+| `cover-date` | 15 | 400 | 1.40 | 표지 일자 |
+| `slide-title` | 22 (16pt) | 700 | 1.28 | 결론형 제목(콘텐츠 슬라이드 제목), 최대 2줄 |
+| `kicker` | 18 (13pt) | 700 | 1.20 | 좌상단 토픽 라벨 |
+| `chapter-indicator` | 13 (10pt) | 600 | 1.10 | 우상단 챕터 박스 |
+| `section-header` | 18 (14pt) | 700 | 1.25 | 칼럼/밴드 헤더 |
+| `block-header` | 16 (12pt) | 700 | 1.25 | 카드 헤더 |
+| **`body`** | **15 (11pt)** | 400 | 1.45 | **주력 본문** |
+| `body-strong` | 15 | 700 | 1.45 | 본문 강조 |
+| `body-sm` | 13 (10pt) | 400 | 1.40 | 표·고밀도 본문 |
+| `body-sm-strong` | 13 | 700 | 1.40 | 표·고밀도 본문 강조 |
+| `caption` | 12 (9pt) | 400 | 1.35 | 캡션 |
+| `source-note` | 11 (8pt) | 400 | 1.30 | 하단 출처 |
+| `page-number` | 13 (10pt) | 600 | 1.10 | 우하단 페이지번호 |
+| `chart-axis` | 12 | 500 | 1.20 | 차트 축/범례 |
+| `chart-value` | 13 | 700 | 1.10 | 차트 데이터 라벨 |
+| `kpi-number` | 44 | 800 | 1.05 | 대형 KPI 수치 |
+| `kpi-unit` | 16 | 600 | 1.10 | KPI 단위/라벨 |
 
-> ★ 1% 갭의 핵심 = (1) **고객사 브랜드 불일치**(카지노=럭셔리 골드인데 기아 레드 사용) (2) **오버플로 무방비**(autofit 미설정).
-
-### 13-1. 테마 시스템 (브랜드 팔레트 1줄 전환)
-```python
-DeckEngine(theme="paradise")          # 또는 spec meta: {"theme":"paradise"}
-apply_theme("paradise")               # 전역 THEME + HCG_RED 재바인딩
-```
-- 신규 도식 함수(create_toc_slide/add_structured_content_blocks/add_container_box/
-  content_blocks/add_insight_quote)와 **기존 빌더 전부**가 `THEME["accent"]` 자동 사용 →
-  레드 2종 혼용 같은 브랜드 불일치 원천 차단.
-- 내장 테마:
-
-| theme | accent | accent_lt | container | 용도 |
-|---|---|---|---|---|
-| **hcg** | #C72128 | #E5838A | #E6E6E6 | 기아/제조/일반 (레드) |
-| **paradise** | #A49166 | #AC9A71 | #F1E5CA | 카지노/럭셔리 (골드·크림) |
-
-- 파라다이스 _final 실측 팔레트: 골드 **A49166/AC9A71**, 크림 **F1E5CA**, 슬레이트 **6D8191**,
-  블루 D4E1F2/AAC4E6, 폰트 강조 **C00000**.
-- **신규 고객사 = 신규 테마 1개 추가**(`THEMES` dict). 제안서 생성 전 고객사 브랜드 컬러 확인 필수.
-
-### 13-2. 텍스트 동적 제어 (오버플로 무결점)
-```python
-set_autofit_shrink(text_frame)                 # <a:normAutofit> — PPT 자동 축소 안전망
-fit_font_size(para_texts, w_in, h_in, start_pt, min_pt=7.5)  # 파이썬 사전 리사이징
-```
-- 이중 안전망: ① 파이썬이 추정 줄 수로 박스 높이 초과 시 0.5pt씩 사전 축소(min 7.5pt)
-  ② `normAutofit`으로 PowerPoint 열람 시 재보정. → **긴 텍스트도 카드 밖으로 안 넘침.**
-- `add_structured_content_blocks` / `add_container_box` 본문에 기본 적용.
-- 휘도 자동 판정(`_dark_bg`): 컨테이너 채움이 어두우면 텍스트 흰색 자동 전환.
-
-### 13-3. 자간·윤곽선 기본화
-- 카드 헤더: `spc=-30` + 흰 윤곽선 0.5pt (밀도·가독성). 본문: `spc=-20`, 행간 116%.
-- 인간 _final의 자간(-30~)·윤곽선(2806건) 패턴에 정합.
-
-### 13-4. 남은(의도적) 갭
-- 도형/장 12.8 vs 44, 투명도/그라디언트 < 인간: **30장 발표용 초안**의 의도적 절제.
-  대형 최종본 수준 밀도가 필요하면 도식 분할·`set_transparency`/`set_gradient` 추가 적용.
+**Weight 운용.** 본문 400 / 강조 700의 2단 대비를 기본으로 한다. 300·900은 사용하지 않는다. 줄간격은 제목 1.28, 본문 1.45, 출처 1.30으로 고정(밀도 유지).
 
 ---
 
-*v7.0 — 2026-06-18 | v6.0 + 파라다이스 _final 정밀비교 → 테마 시스템(hcg 레드/paradise 골드, apply_theme로 HCG_RED 재바인딩) + 텍스트 동적 제어(set_autofit_shrink + fit_font_size, 오버플로 0건) + 카드 자간/윤곽선 기본화*
-*v6.0 — v5.0 + 기아 _final 58장 역엔지니어링 + Text-to-Visual 엔진(create_toc_slide / add_structured_content_blocks / add_container_box) + 베이스템플릿 상속*
-*JSON 페어: skill_ppt_design.json | 기획 페어: skill_ppt_planning*
+## Layout Grid (16:9 고정 골격)
+
+> Source: HCG deck 8종 slideLayout/slideMaster + 텍스트프레임 좌표 파싱(4:3) → 16:9 1280×720 비례 재배치. 좌표는 모두 px(좌상단 원점), 슬라이드 불문 동일 (요구사항 1, 7, 8).
+
+### 캔버스 기본
+
+- `canvas`: w 1280, h 720
+- `safe-margin`: left 56, right 56, top 28, bottom 28 → content box x:[56, 1224], y:[28, 692]
+- `content-width`: 1168 (= 1280 − 56×2)
+
+### 고정 골격 7요소 (rigid skeleton)
+
+콘텐츠 슬라이드는 아래 7개 고정 요소를 **반드시** 상속한다. 엔진이 자동 적용한다.
+
+| 영역 | 요소(token) | x / 위치 | y | w | 폰트 role | 비고 |
+|---|---|---|---|---|---|---|
+| 헤더 | `kicker` | 56 (left) | 28 | 760 | kicker(18/700) | 핵심어 `primary` + 일반어 `ink` 2색 |
+| 헤더 | `chapter-indicator` | 우측 끝 1224 정렬 | 28 | ~150 | chapter-indicator(13/600) | 1px 박스, 예 "I. 제안 개요" |
+| 헤더 | `slide-title` | 56 | 64 | 1168 | slide-title(22/700) | 완결문, 최대 2줄 |
+| 헤더 | `title-rule` | 56 → 1224 | 136 | 1168 | — | 1px `divider` |
+| 본문 | `content-area` | 56 | 152 | 1168 (h=512) | (본문 role 혼합) | 차트/도형 충전 |
+| 푸터 | `source-note` | 56 | 678 | 980 | source-note(11/400) | `※ Source : ...` |
+| 푸터 | `page-number` | 우측 끝 1224 정렬 | 678 | — | page-number(13/600) | 숫자 muted + "HCG" maroon |
+
+### Content-area 분할 그리드 (고밀도용)
+
+콘텐츠 존(1168×512)은 다음 그리드 중 하나로 분할하고, 분할 셀을 카드/차트/도형으로 충전한다. 칼럼 간격은 `gutter 24`, 블록 간격은 `block-gap 12`.
+
+| 패턴 | 분할 | 용도 |
+|---|---|---|
+| `2-up` | 좌/우 572px × 2 | 비교(As-Is/To-Be, 전통 vs AX), 도식+설명 |
+| `3-up` | 373px × 3 | 3단계 프로세스, 3대 축, 3개 옵션 |
+| `4-up` | 272px × 4 | 4영역 매트릭스, 4단계 로드맵, KPI 4종 |
+| `2x2` | 4분면 | 포트폴리오/우선순위 매트릭스 |
+| `L-rail` | 좌 320 + 우 824 | 좌측 요약 레일 + 우측 본문/차트 |
+
+### 표지(cover) 골격
+
+상단 아이콘 모자이크 밴드 `cover-hero-band`(x0 y0 1280×300) → 중앙 정렬 `cover-title`(x160 y392, 38/800) → `cover-subtitle`(y470, 20/500) → `cover-date`(y540, 15/400) → `cover-logo` HCG 워드마크(x560 y612, 160×48) → 하단 저작권 고지 `cover-legal`(y676, source-note role). 좌상단 "Strictly Confidential" 이탤릭 라벨(caption) 권장.
+
+---
+
+## Spacing / Rounded
+
+> 고밀도 유지: 간격은 작고 일관되게 (요구사항 5, 9).
+
+**`spacing`** (px): `xxs` 4 · `xs` 8 · `sm` 12 · `md` 16 · `lg` 20 · `xl` 24 · `gutter` 24(칼럼 사이 표준) · `block-gap` 12(카드/블록 사이 표준, 고밀도).
+
+**`rounded`** (px): `none` 0 · `sm` 3 · `md` 6 · `lg` 10 · `card` 8(카드/패널 표준) · `chip` 13(칩/뱃지 pill) · `circle` 9999.
+
+---
+
+## Components
+
+> 토큰 참조로 정의 — 슬라이드 생성 시 직접 인용. 색상·typography·position은 모두 위 토큰을 가리킨다.
+
+### 헤더 (고정)
+
+- **`kicker`** — 좌상단 토픽 라벨. 핵심어는 `primary`, 뒤따르는 일반어는 `ink`로 2색 분리(예: "**HR DX** 지향점"). typography `kicker`, position `layout.kicker`.
+- **`chapter-indicator`** — 우상단 챕터/목차 위치 표시. 텍스트 `primary-steel`, 배경 `surface`, `1px solid divider` 박스, `rounded md`, 패딩 `4px 10px`. 예 "I. 제안 개요".
+- **`slide-title`** — 결론형 제목. `ink` 본문에 핵심어 1~2개만 `primary`(emphasisColor) 강조. 최대 2줄(maxLines 2), 초과 시 폰트 축소가 아니라 **문장 압축**. 명사 나열 금지 (요구사항 6, 8).
+- **`title-rule`** — 제목/본문 분리 1px 헤어라인 `divider`. 색 띠·두꺼운 스트라이프로 대체 금지.
+
+### 콘텐츠
+
+- **`content-card`** — 배경 `surface` + `1px solid divider` + `rounded card` + 패딩 `spacing.md`. 기본 정보 블록.
+- **`panel-tint`** — 배경 `tint-blue-4` + `1px solid tint-blue-3` 보더 + `rounded card` + 패딩 `spacing.md`. 강조 패널/요약 박스.
+- **`column-header`** — 일반 비교 칼럼 헤더. 면 `primary-soft`, 텍스트 `ink`, typography `section-header`, `rounded sm`, 패딩 `8px 12px`, 중앙 정렬.
+- **`column-header-dark`** — 강조 칼럼(To-Be/AX) 헤더. 면 `primary-deep`, 텍스트 `surface`(흰색), 나머지 동일.
+- **`block-header`** — 카드/소블록 헤더. 면 `divider-soft`, 텍스트 `ink`, typography `block-header`, `rounded sm`, 패딩 `6px 10px`, 중앙 정렬.
+- **`callout-chip`** — 화살표 위/단계 전환 강조 칩(pill). 면 `accent-coral` + 텍스트 `surface` + typography `body-sm-strong` + `rounded chip` + 패딩 `3px 12px`. 예 "직원경험 혁신".
+- **`bullet-item`** — HCG 표준 사각 불릿 `■`(markerColor `primary`) + typography `body`(텍스트 `ink`) + gap `xs`. 들여쓰기 2단까지, 3단부터는 카드 분할로 전환(밀도·가독 유지).
+- **`data-table`** — 헤더 배경 `tint-blue-1`/텍스트 `ink`(`body-sm-strong`), 셀 `body-sm`(텍스트 `ink`), 행 구분 `1px solid divider`, 짝수행 `surface-gray`(zebra, 선택), 강조 행 `tint-blue-2`(emphasisRowBg). 수치형 표는 가능하면 차트로 대체 (요구사항 3).
+- **`kpi-stat`** — 대형 수치 콜아웃. number `kpi-number`(색 `primary`) + unit `kpi-unit`(색 `text-muted`) + label `caption`. 4-up 배치 권장.
+- **`process-flow`** — 단계 흐름. 노드 면 `tint-blue-3`(텍스트 `ink`, `rounded card`), 라벨 `body-sm-strong`, 화살표 `text-muted`.
+
+### 푸터 (고정)
+
+- **`source-note`** — 좌하단 출처. typography `source-note`(색 `text-muted`), 접두 `※ Source : `. 내부 분석은 "HCG Analysis", 외부는 출처명·연도 명기 (요구사항 10).
+- **`page-number`** — 우하단. 숫자 `text-muted` + "HCG" 워드마크 `hcg-maroon`(markColor). typography `page-number`.
+
+---
+
+## Charts & Data Viz (요구사항 3)
+
+**원칙: 정량 데이터는 표가 아닌 차트가 1순위.** 비교·추이·구성비·달성률은 즉시 차트화한다. 수치 포함 슬라이드의 **차트 포함률 ≥ 70%**.
+
+- **라이브러리**: HTML — Chart.js 또는 SVG(폰트 Pretendard). PPTX — python-pptx native chart(`CategoryChartData`, 폰트 Pretendard).
+- **시리즈 색 순서(고정)**: ① `primary` → ② `accent-coral` → ③ `accent-teal` → ④ `accent-gold` → ⑤ `primary-soft` → ⑥ `primary-steel`.
+- **시맨틱**: 증가 `positive-green` / 감소 `emphasis-red` / 강조 `highlight` `accent-coral` / 기준선 `baseline` `text-muted`.
+- **축·라벨**: 축선·격자 `divider-soft`, 축 텍스트 `chart-axis`, 데이터 라벨 `chart-value`(색 `ink`). 격자선은 최소화하고 데이터 라벨을 직접 표기(밀도·가독).
+
+| 차트 타입 | HR 컨설팅 적용 예 |
+|---|---|
+| `bar` / `column` | 직급별 인원, 연도별 인건비 |
+| `stacked-bar` | 보상 항목 mix(기본급/성과급/수당) 변화 |
+| `line` / `area` | 시장 임금 경쟁력(P50 대비) 추이 |
+| `donut` / `pie` | 평가등급 분포(범주 5개 이내) |
+| `bullet` | KPI 목표 대비 달성률 |
+| `waterfall` | 인건비 변동 요인 분해 |
+| `radar` | 직무/역량 프로파일 비교 |
+| `heatmap` | 직급×역량 평가 매트릭스 |
+
+---
+
+## Slide Types
+
+> 13개 타입(JSON `slide_types`). **모든 콘텐츠 타입은 고정 골격을 상속**하며, 공통 선택 필드 `kicker?` / `chapter?` / `source?`를 받아 골격에 채운다. `title`은 결론 문장(필수). 엔진이 타입을 components/layout 토큰에 매핑한다.
+
+| 타입 | required | optional | 1줄 목적 |
+|---|---|---|---|
+| `cover` | title | subtitle, date, confidential, legal, hero | 표지: hero-band + 중앙 정렬 title/subtitle/date + HCG 워드마크 + 하단 저작권 |
+| `toc` | items | current, kicker, chapter, source | 목차/섹션 디바이더. `current`=강조 인덱스, 로마숫자 칩 |
+| `section` | title | num, sub | 섹션 간지(풀비주얼). `num` 자동 로마숫자 |
+| `bullets` | title, items | kicker, chapter, source | `■` 불릿 본문. items=[str] 또는 [{text, sub:[..]}], 2단까지 |
+| `cards` | title, items | kicker, chapter, source | content-card 그리드(2/3/4-up). items=[{header, body\|bullets}] |
+| `columns` | title, columns | kicker, chapter, source | 칼럼 그리드 + column-header(/-dark). columns=[{header, dark?, body\|bullets}] |
+| `compare` | title, left, right | left_header, right_header, kicker, chapter, source, takeaway | 2-up As-Is/To-Be. To-Be 헤더는 column-header-dark |
+| `kpi` | title, items | kicker, chapter, source | kpi-stat 행(4-up). items=[{number, unit?, label}] |
+| `process` | title, steps | kicker, chapter, source, desc | process-flow 노드 + 화살표. steps=[{label, desc?}] |
+| `matrix` | title, columns, rows | kicker, chapter, source, takeaway | 차별화 매트릭스. columns=[헤더], rows=[{group, cells:[..]}] |
+| `chart` | title, chart | kicker, chapter, source | 차트 슬라이드. chart={type, labels:[..], series:[{name, data:[..]}], unit?} |
+| `table` | title, headers, rows | kicker, chapter, source, emphasis_row | data-table. `emphasis_row`=강조 행 인덱스 |
+| `end` | — | message | 마무리 슬라이드 |
+
+---
+
+## Density Rules (요구사항 5, 9)
+
+1. **콘텐츠 존 점유율 ≥ 85%.** `content-area`(1168×512)는 분할 그리드로 충전한다. 단일 작은 블록이 넓은 여백에 고립되면 안 된다.
+2. **간격은 작고 일관되게.** 칼럼 `gutter 24`, 블록 `block-gap 12`. 임의의 큰 여백(>40px) 금지.
+3. **본문은 11pt(15px) 기본**으로 정보 밀도를 확보하되, 한 셀당 텍스트는 4–6줄 이내로 끊고 초과분은 카드 분할.
+4. **빈 칼럼/빈 사분면 금지.** 3-up 중 2개만 차면 2-up으로 재분할한다.
+5. **여백 대신 시각자료.** 남는 공간은 차트·도식·KPI 콜아웃으로 채운다(요구사항 3과 결합).
+6. 단, **밀도 ≠ 혼잡.** 요소 간 최소 12px 간격과 정렬은 유지하여 레이아웃 견고성(요구사항 8)을 해치지 않는다.
+
+---
+
+## Title Convention (요구사항 6)
+
+콘텐츠 슬라이드 제목은 **그 슬라이드의 결론(So-What)을 담은 완결 문장**이다. 명사구 나열("보상체계 현황")이 아니라 메시지("연공 중심 보상구조가 성과 변별력을 저해하므로 직무·성과 기반 재설계가 필요함")로 쓴다. 이는 McKinsey식 'action title / governing thought' 및 Minto Pyramid의 수평·수직 논리를 따른 것으로, 제목만 이어 읽어도 deck 전체 스토리라인이 성립해야 한다.
+
+- **형식**: [주어/대상] + [핵심 판단/서술어]. 2줄 이내. 핵심어 1–2개만 `primary` 강조.
+- **금지**: 명사구 나열, 단순 라벨, 의문문, 모호한 형용사("효과적인 방안").
+
+---
+
+## Source / Citation Convention (요구사항 10)
+
+모든 콘텐츠 슬라이드는 좌하단에 출처를 표기한다. `source-note` role(8pt/11px, `text-muted`), 접두 `※ Source : `.
+
+- **내부 산출물**: `※ Source : HCG Analysis`
+- **외부 자료**: 출처명 + 매체 + 연도. 예 `※ Source : 전자공시시스템 사업보고서·기업 홈페이지, 2024`
+- **데이터 차트**: 데이터 출처와 기준 시점 병기. 예 `n=327, 2024.12 기준`
+- **표지**: 중앙 하단에 ㈜휴먼컨설팅그룹 저작권 고지문(편집저작물·컴퓨터프로그램저작물 보호) 유지.
+
+---
+
+## Do's and Don'ts
+
+### Do
+- 모든 콘텐츠 슬라이드에 **고정 골격 7요소**(kicker·chapter·title·rule·content·source·page)를 상속한다.
+- 메인 블루 `primary`를 화면의 60–70%로, 코랄은 **강조 한정 단일 액센트**로 쓴다.
+- 정량 데이터는 **차트 우선**, 시리즈 색은 정해진 순서대로.
+- 제목은 **결론 문장**, 핵심어만 `primary` 강조.
+- 간격은 `gutter 24` / `block-gap 12`로 **일관**되게.
+- 폰트는 전 요소 **Pretendard 단일**.
+
+### Don't
+- **색 띠/액센트 스트라이프 금지** — 제목 밑줄, 카드 한 변 컬러 보더, 슬라이드 폭 헤더/푸터 바는 AI틱하다. 구분이 필요하면 면 틴트·1px 룰·아이콘으로.
+- **제목 명사 나열 금지** — 결론 없는 라벨 제목 불가 (요구사항 6).
+- **role 외 임의 폰트 사이즈 금지** — 슬라이드별 제목/페이지 크기 변경 불가 (요구사항 2).
+- **4:3·기타 비율 금지** — 16:9 1280×720 외 캔버스 불가 (요구사항 7).
+- **넓은 빈 여백 금지** — 고립된 작은 블록·빈 사분면 불가 (요구사항 5, 9).
+- **`emphasis-red`/`positive-green` 남용 금지** — 증감 수치 시맨틱 전용.
+- **`hcg-maroon`를 본문/도형에 사용 금지** — 워드마크 전용.
+- **텍스트 오버플로/요소 겹침 금지** — 초과 시 문장 압축·셀 분할로 해결, 폰트 무단 축소 금지 (요구사항 8).
+
+---
+
+## QA Checklist (생성 후 필수 점검)
+
+1. **골격 일치**: 임의 2개 슬라이드를 겹쳤을 때 kicker/chapter/title/source/page 좌표가 정확히 일치하는가? (요구사항 1)
+2. **폰트 사이즈 고정**: 제목 22px·챕터 13px·페이지 13px·출처 11px가 전 슬라이드 동일한가? role 외 사이즈가 있는가? (요구사항 2)
+3. **차트 비중**: 수치 포함 슬라이드의 70% 이상이 차트를 쓰는가? (요구사항 3)
+4. **폰트 단일**: Pretendard 외 폰트가 임베드/참조되었는가? (요구사항 4)
+5. **밀도**: 콘텐츠 존 점유율 ≥ 85%? 고립 블록·과대 여백이 있는가? (요구사항 5, 9)
+6. **제목 결론성**: 모든 제목이 완결 문장(주어+서술어)인가? 명사 나열은 없는가? (요구사항 6)
+7. **비율**: 캔버스가 1280×720(16:9)인가? (요구사항 7)
+8. **견고성**: 텍스트 오버플로·요소 겹침·정렬 이탈이 0인가? (요구사항 8)
+9. **출처**: 모든 콘텐츠 슬라이드 좌하단에 `※ Source :` 가 있는가? (요구사항 10)
+10. **색 위계**: 메인 블루 dominance 유지, 색 띠/밑줄/스트라이프 미사용?
+
+---
+
+## Engine (구현 엔진 2종)
+
+본 디자인 시스템은 동일한 spec/토큰을 소비하는 **두 개의 렌더링 엔진**으로 구현된다. 양 엔진 모두 본 JSON 계약의 `colors`/`typography`/`layout`/`components`/`charts` 토큰을 소비하며, `apply_design_tokens(json)`으로 팔레트를 주입한다.
+
+### `core/designer.py` — PPTX 엔진 (python-pptx)
+- `DeckEngine` / `Designer`. **빈 16:9 캔버스**를 생성한다(`slide_width`/`slide_height = PX`). **템플릿 상속 폐기.**
+- 좌표 변환: `PX() = Inches(px / 96)` (px → EMU).
+- 폰트: run XML `a:latin` + `a:ea` `typeface='Pretendard'`.
+- 흐름: `render(spec).save()`.
+
+### `core/html_renderer.py` — HTML 엔진 (HTML/CSS + Chart.js)
+- `HtmlRenderer`. `1280×720` `.slide` div, Pretendard `@font-face`, 차트는 Chart.js.
+- 흐름: `render(spec)` → `.html` 산출.
+
+### CLI
+```
+python main.py --client <name> [--out path] [--html | --pptx | --both]
+```
+기본값은 `--both`(PPTX + HTML 동시 생성).
+
+---
+
+## Known Gaps
+
+- **`hcg-maroon` #921F0B**: deck XML 최빈 다크레드로 지정. 정식 BI 매뉴얼의 Pantone/HEX 원값으로 교체 권장.
+- **표지 아이콘 모자이크 밴드(`cover-hero-band`)**: 프로젝트별 커스텀 일러스트 영역. 본 시스템은 그리드(1280×300)·색면 규칙만 정의한다. 아이콘 세트는 단색 라인(stroke `primary`) 통일 권장.
+- **애니메이션/전환**: 정적 deck 기준이라 미정의. HTML 슬라이드 적용 시 150–250ms ease-out 권장.
+- **다크 모드**: 컨설팅 제안서 특성상 미정의(흰 캔버스 고정).
+- **PPTX + Pretendard**: PPTX 렌더링은 Pretendard **시스템 설치 또는 폰트 임베드** 전제. 미설치 시 PowerPoint 폴백 폰트로 표시된다.
+- **PPTX 고급 차트**: `waterfall` / `radar` / `heatmap` / `bullet`은 python-pptx 네이티브 미지원 → **HTML(Chart.js) 우선** 또는 도형 근사로 처리.
+
+---
+
+## Handoff (from skill_ppt_planning)
+
+- **From**: `skill_ppt_planning.json` — 스토리/메시지/목차를 결정하는 기획 페어.
+- **입력**: 확정 목차 + 장표별 결론 제목 + 슬라이드 타입 태그(`slide_types`) + (선택) `kicker`/`chapter`/`source`.
+- **출력**: 타입을 `components`/`layout` 토큰에 매핑해 PPTX/HTML 슬라이드 생성.
+- 즉, **기획(skill_ppt_planning)이 "무엇을 말할지"를 정하고, 본 스킬(hcg-ppt-design)이 "어떻게 보일지"를 고정 골격·토큰으로 구현한다.**
+
+---
+
+v2.0 — HCG-Slide-Design-System v1.0 절대 기준 전면 재설계 | JSON 페어: skill_ppt_design.json | 기획 페어: skill_ppt_planning

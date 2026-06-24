@@ -1,416 +1,255 @@
 {
   "skill": "hcg-ppt-design",
-  "version": "1.5",
-  "changelog_v1_5": "v1.5(=문서 v7.0) — 파라다이스 _final(rev_final 52장) vs AI Draft 정밀비교(paradise_compare.py). 발견 1% 갭: ①고객사 브랜드 불일치(카지노=럭셔리 골드인데 기아 레드 C72128+롯데 921F0B 혼용) ②텍스트 오버플로 무방비(autofit 미설정) ③윤곽선/자간 0. 보강: theme_system_v7(apply_theme로 THEME+HCG_RED 전역 재바인딩 → 신규 도식함수+기존 빌더 전부 테마색 자동; hcg 레드/paradise 골드 A49166), text_overflow_control_v7(set_autofit_shrink=normAutofit + fit_font_size=파이썬 사전 리사이징 → 오버플로 0건), 카드 헤더 자간 spc=-30+흰 윤곽선, 본문 spc=-20. DeckEngine(theme=) + spec meta.theme. 결과: 골드 A49166 지배·윤곽선37·자간163·normAutofit80.",
-  "changelog_v1_4": "v1.4(=문서 v6.0) — 기아_중장기 보상체계 개선 추진_제안서_250912_v1.1_final.pptx 58장 전수 역엔지니어링. ★최우선 원칙: 기획 단계부터 '이 슬라이드를 N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 목차=텍스트나열 폐기→create_toc_slide(어젠다카드: 좌측 accent블록+로마숫자+섹션명+활성행 빨간 윤곽 하이라이트, current 이동으로 섹션 디바이더 겸용). 본문=add_structured_content_blocks(리스트→N등분 카드 그리드, 헤더밴드+윤곽선+그림자, margin/padding 계산식 내장). 박스안박스=add_container_box. DeckEngine 베이스=기아 _final(없으면 롯데 폴백), toc/section_divider/content_blocks/container_slide 메서드 + spec 타입(toc섹션명리스트·section_agenda·blocks·container) 추가. 기아 브랜드 팔레트 C72128.",
-  "changelog_v1_3": "v1.3 — 인간 _final XML 딥다이브(OxmlElement) 기반 고급 디자인 보강. 실측 갭: 텍스트윤곽선 1807·그림자 60·투명도 2478·그라디언트 43·자간(-30~-100) vs AI Draft 전부 0. xml_advanced_design(윤곽선/그림자/투명도/그라디언트/자간/세로정렬 헬퍼 6종 + add_item 고급 옵션), bullet_to_shape_rules, mbb_grid_system, master_engine_DeckEngine(데이터 구동 spec 스키마·CLI) 추가. auto_ppt.py 단일 마스터 엔진으로 통합(kia/lotte는 콜러 유지).",
-  "changelog_v1_2": "v1.2 — 기아 AI Draft vs 인간 _final 도형 통계 비교(AI 5.5도식/장 vs 인간 23도식/장; AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개). density_diagram_targets, new_helpers_v2(connector_line·arrow_flow·table·icon_placeholder·process_roadmap·compare_table), scale_guidance 추가.",
-  "changelog": "v1.1 — 롯데알미늄 _final XML 도형 좌표 전수 실측. 고급 도식 패턴(Pain Point 카테고리화·VS 대비·3컬럼 STEP Overview·직군 차별화 매트릭스·예시적 배지·insight quote) + auto_ppt.py 신규 헬퍼 지시어 추가. 아이콘(PICTURE)은 자동생성 제외(한계).",
+  "version": "2.0",
+  "supersedes": "v1.5 (4:3 / 맑은 고딕 / HCG_RED house style). v2.0 is a full reset to HCG-Slide-Design-System v1.0 — the absolute standard.",
+  "standard_source": "HCG-slide-design-system.md (HCG-Slide-Design-System v1.0). 이 JSON은 그 md의 frontmatter 토큰을 기계 판독용으로 인코딩한 정본. md와 항상 동기.",
+  "changelog_v2_0": "v2.0 — HCG-slide-design-system.md를 절대 기준으로 전면 재설계. 4:3(10.833x7.5in)→16:9(1280x720px), 맑은 고딕→Pretendard 전용, primary HCG_RED #921F0B→BLUE #356CB5(마룬은 워드마크 전용), 좌표 inch→px, 템플릿 상속 폐기→빈 16:9 캔버스에서 생성. 고정 골격(kicker/chapter-indicator/slide-title/title-rule/content-area/source-note/page-number) + 결론형 제목 + 차트 우선 + 출처 상시 + 고밀도(>=85%) 강제. 엔진 2종: core/designer.py(python-pptx, px->EMU) + core/html_renderer.py(HTML/CSS, Chart.js).",
   "type": "design",
   "language": "ko",
-  "title": "HCG 제안서 디자인(Design) 스킬",
-  "description": "HCG 제안서 PPT의 톤앤매너, 색상/폰트 규정, 레이아웃 표준, 좌표 상수, 시각적 계층 구조, 슬라이드 타입별 도식화 패턴을 담당하는 디자인 스킬. 스토리/목차/메시지는 skill_ppt_planning.json이 결정하고, 본 스킬은 그것을 실제 슬라이드로 구현한다.",
-  "when_to_use": "기획이 확정된 목차/장표 타입을 실제 PPTX로 구현할 때, 색상·폰트·좌표를 적용할 때, auto_ppt.py로 자동 생성할 때.",
-  "source_analysis": {
-    "기반": "롯데알미늄 _final.pptx XML 전수 추출 — 25장 구조/레이아웃/색상/좌표 실측 (skill_ppt_design.md v4.0 정합).",
-    "버전_관리": "skill_ppt_design.md(사람 판독·v4.0 상세) + skill_ppt_design.json(프롬프트용) 페어로 별도 관리. 기획은 skill_ppt_planning.json/.md.",
-    "교차_검증": "한림제약_fin, 코웨이_final, 크래프톤 Draft_v2.0, 매일그룹 신인사 final 슬라이드 구조와 일치 확인.",
-    "최우선_반영": "_final 최종본의 실측 색상/좌표가 모든 초안보다 우선한다."
+  "title": "HCG 슬라이드 디자인(Design) 스킬 v2.0",
+  "description": "HCG 제안서/발표 슬라이드의 시각 언어 — 16:9 1280x720 고정 캔버스, Pretendard 단일 폰트, 단일 메인 블루 팔레트, 고정 골격(rigid skeleton), 결론형 제목, 차트 우선, 고밀도 레이아웃을 정의한다. 스토리/메시지/목차는 skill_ppt_planning이 결정하고, 본 스킬은 그것을 실제 슬라이드(PPTX/HTML)로 구현한다.",
+  "when_to_use": "확정된 목차/장표를 실제 슬라이드로 구현할 때, 색상·폰트·좌표·컴포넌트를 적용할 때, core/designer.py(PPTX) 또는 core/html_renderer.py(HTML)로 자동 생성할 때.",
+
+  "canvas": {
+    "ratio": "16:9",
+    "px": [1280, 720],
+    "in": [13.333, 7.5],
+    "dpi": 96,
+    "px_to_in": "px / 96",
+    "pt_to_px": "pt * 1.333",
+    "unit": "px (좌상단 원점). PPTX 변환은 PX()=Inches(px/96).",
+    "background": "#FFFFFF 고정 (다크모드 미정의)"
   },
-  "file_spec": {
-    "슬라이드_크기_inch": [10.833, 7.5],
-    "레이아웃_수": 4,
-    "레이아웃": {"0": "표지", "1": "목차(TOC)", "2": "본문", "3": "End"},
-    "본문_배경": "흰색(#FFFFFF)",
-    "구현_원칙": "신규 제작 시에도 실제 _final PPTX를 템플릿으로 열어 테마/폰트/레이아웃을 100% 상속한 뒤 슬라이드만 교체한다."
+  "font_policy": {
+    "family": "Pretendard",
+    "rule": "본문/제목/숫자/영문 라틴 전부 Pretendard 단일. 혼용 절대 금지 (요구사항 4).",
+    "weights": [400, 500, 600, 700, 800],
+    "forbidden_weights": [300, 900],
+    "pptx": "run XML a:latin + a:ea typeface='Pretendard'. 렌더링 위해 시스템 설치 또는 임베드 필요.",
+    "html": "Pretendard woff2/Variable @font-face 또는 cdn. 폴백 없이 Pretendard 단일.",
+    "license": "orioncactus/Pretendard, SIL OFL 1.1"
   },
-  "tone_and_manner": {
-    "전체_톤": "절제된 전문성. 컨설팅 그레이드. 화이트 배경 + 와인/코랄 포인트 + 그레이 무채색 베이스의 차분한 대비.",
-    "원칙": [
-      "여백을 살린다. 한 장표 한 메시지에 맞는 정보 밀도.",
-      "강조색은 제한적으로 — 제목(HCG_RED)과 핵심 박스에만. 남발 금지.",
-      "장식 금지: 불필요한 그림자/그라데이션/3D/클립아트 배제.",
-      "정렬 일관성: 좌측 라벨 우정렬, 본문 좌정렬, 헤더/번호 중앙정렬.",
-      "한글은 맑은 고딕 계열로 통일(폰트 깨짐 방지 위해 latin/ea 모두 지정)."
-    ]
+
+  "colors": {
+    "primary": "#356CB5",
+    "primary-deep": "#1F4E8C",
+    "primary-steel": "#336699",
+    "primary-navy": "#0D1467",
+    "primary-soft": "#A1D1F1",
+    "tint-blue-1": "#D4E1F2",
+    "tint-blue-2": "#B0CEF2",
+    "tint-blue-3": "#A5C4E1",
+    "tint-blue-4": "#EAF2FB",
+    "accent-coral": "#F16249",
+    "accent-gold": "#FFCC66",
+    "accent-teal": "#50B8B6",
+    "emphasis-red": "#C00000",
+    "positive-green": "#00B050",
+    "ink": "#000000",
+    "ink-slate": "#263238",
+    "text-muted": "#919191",
+    "text-faint": "#B7B7B7",
+    "divider": "#DDDDDD",
+    "divider-soft": "#EAEAEA",
+    "surface": "#FFFFFF",
+    "surface-gray": "#F5F6F8",
+    "hcg-maroon": "#921F0B"
   },
-  "theme_colors": {
-    "HCG_RED": {"rgb": "#921F0B", "용도": "제목 텍스트 (accent5 x lumMod50%)"},
-    "CORAL": {"rgb": "#F16249", "용도": "accent5 코랄/살몬 강조"},
-    "CORAL_DK": {"rgb": "#400A07", "용도": "Pain Point 우측 항목 배경 (accent5 x lumMod20%)"},
-    "CORAL_MED": {"rgb": "#B23B25", "용도": "요약 항목 우측 (accent5 x lumMod60%)"},
-    "GRAY": {"rgb": "#919191", "용도": "bg2 중간 회색, 헤더 바, 중간 연결 박스"},
-    "GRAY_DK": {"rgb": "#1D1D1D", "용도": "Pain Point 좌측 항목 배경 (bg2 x lumMod20%)"},
-    "GRAY_LT": {"rgb": "#D9D9D9", "용도": "요약 항목 좌측, 연회색 배경 (bg1 x lumMod85%)"},
-    "BLUE": {"rgb": "#356CB5", "용도": "accent3 프로세스 단계 박스"},
-    "WINE": {"rgb": "#794039", "용도": "TOC 활성 섹션 번호 배경"},
-    "WHITE": {"rgb": "#FFFFFF", "용도": "bg1, accent1, 박스 위 텍스트"},
-    "BLACK": {"rgb": "#000000", "용도": "dk1 선/테두리"}
+  "color_usage": {
+    "dominance": "메인 블루 primary가 화면의 60~70%. 코랄은 강조 한정 단일 액센트.",
+    "tints": "tint-blue-* 는 텍스트가 아닌 면적(표/박스 채움)에만.",
+    "semantic": "emphasis-red=부정/감소 수치 전용, positive-green=증가/달성 수치 전용. 일반 강조 남용 금지.",
+    "maroon": "hcg-maroon은 페이지번호 옆 'HCG' 워드마크 전용. 본문/도형 사용 금지.",
+    "forbidden": "색 띠/액센트 스트라이프(제목 밑줄 컬러바·카드 한 변 컬러보더·슬라이드폭 헤더/푸터 바) 금지 — 구분은 면 틴트·1px 룰·아이콘으로."
   },
-  "fonts": {
-    "한글": "맑은 고딕",
-    "지정_방법": "run XML의 a:latin, a:ea 모두 typeface='맑은 고딕' 설정 (한쪽만 지정 시 한글 깨짐).",
-    "사이즈_규정": {
-      "제목_placeholder": "12pt Bold (자동 HCG_RED)",
-      "서브헤드_placeholder": "15pt 맑은 고딕 Semilight",
-      "본문_item": "10~11pt",
-      "라벨": "12~13pt italic, GRAY, 우정렬",
-      "저작권": "6pt",
-      "TOC_섹션제목": "16pt (active=wine bold)"
-    },
-    "행간": "112% (lnSpc spcPct 112000)"
+
+  "typography": {
+    "cover-title":       {"px": 38, "weight": 800, "lineHeight": 1.22},
+    "cover-subtitle":    {"px": 20, "weight": 500, "lineHeight": 1.40},
+    "cover-date":        {"px": 15, "weight": 400, "lineHeight": 1.40},
+    "slide-title":       {"px": 22, "weight": 700, "lineHeight": 1.28},
+    "kicker":            {"px": 18, "weight": 700, "lineHeight": 1.20},
+    "chapter-indicator": {"px": 13, "weight": 600, "lineHeight": 1.10},
+    "section-header":    {"px": 18, "weight": 700, "lineHeight": 1.25},
+    "block-header":      {"px": 16, "weight": 700, "lineHeight": 1.25},
+    "body":              {"px": 15, "weight": 400, "lineHeight": 1.45},
+    "body-strong":       {"px": 15, "weight": 700, "lineHeight": 1.45},
+    "body-sm":           {"px": 13, "weight": 400, "lineHeight": 1.40},
+    "body-sm-strong":    {"px": 13, "weight": 700, "lineHeight": 1.40},
+    "caption":           {"px": 12, "weight": 400, "lineHeight": 1.35},
+    "source-note":       {"px": 11, "weight": 400, "lineHeight": 1.30},
+    "page-number":       {"px": 13, "weight": 600, "lineHeight": 1.10},
+    "chart-axis":        {"px": 12, "weight": 500, "lineHeight": 1.20},
+    "chart-value":       {"px": 13, "weight": 700, "lineHeight": 1.10},
+    "kpi-number":        {"px": 44, "weight": 800, "lineHeight": 1.05},
+    "kpi-unit":          {"px": 16, "weight": 600, "lineHeight": 1.10}
   },
-  "visual_hierarchy": [
-    "1순위 제목(idx=0): 최상단 HCG_RED 12pt Bold — 장표의 카테고리/메시지.",
-    "2순위 서브헤드(idx=10): 제목 아래 15pt Semilight — 한 줄 핵심 요약.",
-    "3순위 헤더 바: GRAY(#919191) 막대 + 하단 dk1 수평 구분선 — 콘텐츠 영역 시작.",
-    "4순위 콘텐츠 박스: noFill 0.5pt 테두리 또는 색상 채움(대비/강조 시).",
-    "5순위 라벨/캡션: GRAY italic 소형 — 행 의미 안내.",
-    "최하단: 저작권 6pt 고정."
+  "typography_rule": "각 role의 px/weight는 슬라이드 불문 고정값. 슬라이드별 재정의 금지 (요구사항 2). 본문 400 / 강조 700 2단 대비.",
+
+  "layout": {
+    "canvas":            {"w": 1280, "h": 720},
+    "safe-margin":       {"left": 56, "right": 56, "top": 28, "bottom": 28},
+    "content-width":     1168,
+    "kicker":            {"x": 56, "y": 28, "w": 760, "h": 28, "align": "left", "role": "kicker"},
+    "chapter-indicator": {"rightEdge": 1224, "y": 28, "w": 150, "h": 26, "align": "center", "role": "chapter-indicator", "box": true},
+    "slide-title":       {"x": 56, "y": 64, "w": 1168, "h": 64, "align": "left", "role": "slide-title", "maxLines": 2},
+    "title-rule":        {"x": 56, "y": 136, "w": 1168, "thickness": 1, "color": "divider"},
+    "content-area":      {"x": 56, "y": 152, "w": 1168, "h": 512},
+    "source-note":       {"x": 56, "y": 678, "w": 980, "h": 14, "align": "left", "role": "source-note"},
+    "page-number":       {"rightEdge": 1224, "y": 678, "h": 14, "align": "right", "role": "page-number"},
+    "cover-hero-band":   {"x": 0, "y": 0, "w": 1280, "h": 300},
+    "cover-title":       {"x": 160, "y": 392, "w": 960, "h": 56, "align": "center", "role": "cover-title"},
+    "cover-subtitle":    {"x": 160, "y": 470, "w": 960, "h": 30, "align": "center", "role": "cover-subtitle"},
+    "cover-date":        {"x": 160, "y": 540, "w": 960, "h": 24, "align": "center", "role": "cover-date"},
+    "cover-logo":        {"x": 560, "y": 612, "w": 160, "h": 48, "align": "center"},
+    "cover-legal":       {"x": 160, "y": 676, "w": 960, "h": 28, "align": "center", "role": "source-note"}
+  },
+  "content_grids": {
+    "_note": "content-area(1168x512)는 아래 그리드 중 하나로 분할하고 셀을 카드/차트/도형으로 충전. 칼럼 간격 gutter 24, 블록 간격 block-gap 12.",
+    "2-up":  {"cols": 2, "col_w": 572, "용도": "비교(As-Is/To-Be), 도식+설명"},
+    "3-up":  {"cols": 3, "col_w": 373, "용도": "3단계 프로세스, 3대 축, 3개 옵션"},
+    "4-up":  {"cols": 4, "col_w": 272, "용도": "4영역 매트릭스, 4단계 로드맵, KPI 4종"},
+    "2x2":   {"용도": "포트폴리오/우선순위 매트릭스"},
+    "L-rail":{"left_w": 320, "right_w": 824, "용도": "좌측 요약 레일 + 우측 본문/차트"}
+  },
+  "spacing": {"xxs": 4, "xs": 8, "sm": 12, "md": 16, "lg": 20, "xl": 24, "gutter": 24, "block-gap": 12},
+  "rounded": {"none": 0, "sm": 3, "md": 6, "lg": 10, "card": 8, "chip": 13, "circle": 9999},
+
+  "components": {
+    "slide-frame": {"backgroundColor": "surface", "note": "모든 콘텐츠 슬라이드는 동일 골격(kicker/chapter/title/title-rule/content/source/page) 상속."},
+    "kicker": {"typography": "kicker", "textColor": "primary", "accentTail": "ink", "position": "layout.kicker", "note": "핵심어 primary + 뒤 일반어 ink 2색 분리."},
+    "chapter-indicator": {"typography": "chapter-indicator", "textColor": "primary-steel", "backgroundColor": "surface", "border": "1px solid divider", "rounded": "md", "padding": "4px 10px", "position": "layout.chapter-indicator", "example": "I. 제안 개요"},
+    "slide-title": {"typography": "slide-title", "textColor": "ink", "emphasisColor": "primary", "position": "layout.slide-title", "rule": "한 슬라이드의 결론을 완결 문장으로. 명사 나열 금지 (요구사항 6). 핵심어 1~2개만 primary."},
+    "title-rule": {"color": "divider", "thickness": 1, "note": "제목/본문 분리 1px 헤어라인. 색 띠 금지."},
+    "content-card": {"backgroundColor": "surface", "border": "1px solid divider", "rounded": "card", "padding": "md"},
+    "panel-tint": {"backgroundColor": "tint-blue-4", "border": "1px solid tint-blue-3", "rounded": "card", "padding": "md"},
+    "column-header": {"backgroundColor": "primary-soft", "textColor": "ink", "typography": "section-header", "rounded": "sm", "padding": "8px 12px", "align": "center"},
+    "column-header-dark": {"backgroundColor": "primary-deep", "textColor": "surface", "typography": "section-header", "rounded": "sm", "padding": "8px 12px", "align": "center", "note": "강조 칼럼(To-Be/AX)."},
+    "block-header": {"backgroundColor": "divider-soft", "textColor": "ink", "typography": "block-header", "rounded": "sm", "padding": "6px 10px", "align": "center"},
+    "callout-chip": {"backgroundColor": "accent-coral", "textColor": "surface", "typography": "body-sm-strong", "rounded": "chip", "padding": "3px 12px", "note": "화살표 위/단계 전환 강조 칩(pill)."},
+    "bullet-item": {"marker": "■", "markerColor": "primary", "typography": "body", "textColor": "ink", "gap": "xs", "note": "2단까지. 3단부터 카드 분할."},
+    "data-table": {"headerBg": "tint-blue-1", "headerText": "ink", "headerType": "body-sm-strong", "cellType": "body-sm", "cellText": "ink", "rowDivider": "1px solid divider", "zebra": "surface-gray", "emphasisRowBg": "tint-blue-2", "note": "수치형 표는 가능하면 차트로 대체 (요구사항 3)."},
+    "kpi-stat": {"number": "kpi-number", "numberColor": "primary", "unit": "kpi-unit", "unitColor": "text-muted", "label": "caption", "note": "4-up 배치 권장."},
+    "process-flow": {"nodeBg": "tint-blue-3", "nodeText": "ink", "nodeType": "body-sm-strong", "arrowColor": "text-muted", "rounded": "card"},
+    "source-note": {"typography": "source-note", "textColor": "text-muted", "position": "layout.source-note", "prefix": "※ Source : ", "note": "내부=HCG Analysis, 외부=출처명·연도 (요구사항 10)."},
+    "page-number": {"typography": "page-number", "textColor": "text-muted", "markColor": "hcg-maroon", "position": "layout.page-number", "note": "숫자 muted + 'HCG' 워드마크 maroon."}
+  },
+
+  "charts": {
+    "principle": "정량 데이터는 표가 아닌 차트가 1순위. 비교·추이·구성비·달성률은 즉시 차트화 (요구사항 3). 수치 슬라이드 차트 포함률 >=70%.",
+    "library": {"html": "Chart.js 또는 SVG. 폰트 Pretendard.", "pptx": "python-pptx native chart (CategoryChartData). 폰트 Pretendard."},
+    "series-palette": ["primary", "accent-coral", "accent-teal", "accent-gold", "primary-soft", "primary-steel"],
+    "semantic": {"increase": "positive-green", "decrease": "emphasis-red", "highlight": "accent-coral", "baseline": "text-muted"},
+    "axis": {"color": "text-muted", "gridColor": "divider-soft", "typography": "chart-axis"},
+    "dataLabel": {"typography": "chart-value", "color": "ink"},
+    "types": {
+      "bar": "항목 비교, 연도별 추이 (직급별 인원, 연도별 인건비)",
+      "column": "항목 비교",
+      "stacked-bar": "구성비 변화 (보상 항목 mix)",
+      "line": "시계열 추세 (임금 경쟁력 추이)",
+      "area": "시계열 추세",
+      "donut": "단일 구성비 (범주 5개 이내, 평가등급 분포)",
+      "pie": "단일 구성비",
+      "bullet": "목표 대비 실적 (KPI 달성률)",
+      "waterfall": "증감 분해 (인건비 변동 요인)",
+      "radar": "역량/직무 프로파일 비교",
+      "heatmap": "직급x항목 매트릭스 (직무평가 점수)"
+    }
+  },
+
+  "skeleton": {
+    "_원칙": "모든 콘텐츠 슬라이드는 7개 고정 요소를 동일 좌표·동일 폰트로 상속 (요구사항 1,2). 엔진이 자동 적용.",
+    "요소": ["kicker", "chapter-indicator", "slide-title", "title-rule", "content-area", "source-note", "page-number"],
+    "engine_fields": "콘텐츠 슬라이드 spec은 kicker?/chapter?/source? 를 받아 골격에 채운다. title은 결론 문장(필수)."
+  },
+
+  "slide_types": {
+    "_공통": "콘텐츠 타입은 kicker?, chapter?, source? 를 받아 골격 자동 적용. title=결론 문장(필수).",
+    "cover":   {"required": ["title"], "optional": ["subtitle", "date", "confidential", "legal", "hero"], "설명": "표지: hero-band + 중앙 정렬 title/subtitle/date + HCG 워드마크 + 하단 저작권."},
+    "toc":     {"required": ["items"], "optional": ["current", "kicker", "chapter", "source"], "설명": "목차/섹션 디바이더. items=['섹션명',..]. current=강조 인덱스. 로마숫자 칩."},
+    "section": {"required": ["title"], "optional": ["num", "sub"], "설명": "섹션 간지(풀비주얼). num 자동 로마숫자."},
+    "bullets": {"required": ["title", "items"], "optional": ["kicker", "chapter", "source"], "설명": "■ 불릿 본문. items=[str] 또는 [{text, sub:[..]}]. 2단까지."},
+    "cards":   {"required": ["title", "items"], "optional": ["kicker", "chapter", "source"], "설명": "content-card 그리드(2/3/4-up). items=[{header, body|bullets}]."},
+    "columns": {"required": ["title", "columns"], "optional": ["kicker", "chapter", "source"], "설명": "칼럼 그리드 + column-header(/-dark). columns=[{header, dark?, body|bullets}]."},
+    "compare": {"required": ["title", "left", "right"], "optional": ["left_header", "right_header", "kicker", "chapter", "source", "takeaway"], "설명": "2-up As-Is/To-Be. left/right=[행]. To-Be 헤더 column-header-dark."},
+    "kpi":     {"required": ["title", "items"], "optional": ["kicker", "chapter", "source"], "설명": "kpi-stat 행(4-up). items=[{number, unit?, label}]."},
+    "process": {"required": ["title", "steps"], "optional": ["kicker", "chapter", "source", "desc"], "설명": "process-flow 노드 + 화살표. steps=[{label, desc?}]."},
+    "matrix":  {"required": ["title", "columns", "rows"], "optional": ["kicker", "chapter", "source", "takeaway"], "설명": "차별화 매트릭스. columns=[헤더], rows=[{group, cells:[..]}]."},
+    "chart":   {"required": ["title", "chart"], "optional": ["kicker", "chapter", "source"], "설명": "차트 슬라이드. chart={type, labels:[..], series:[{name, data:[..]}], unit?}."},
+    "table":   {"required": ["title", "headers", "rows"], "optional": ["kicker", "chapter", "source", "emphasis_row"], "설명": "data-table. emphasis_row=강조 행 인덱스."},
+    "end":     {"required": [], "optional": ["message"], "설명": "마무리 슬라이드."}
+  },
+
+  "engine": {
+    "pptx": "core/designer.py — DeckEngine/Designer. 빈 16:9 캔버스 생성(slide_width/height=PX). PX()=Inches(px/96). Pretendard run XML. render(spec).save(). 템플릿 상속 폐기.",
+    "html": "core/html_renderer.py — HtmlRenderer. 1280x720 .slide div, Pretendard @font-face, Chart.js 차트. render(spec) → .html.",
+    "tokens": "양 엔진 모두 본 JSON의 colors/typography/layout/components/charts 토큰 소비. apply_design_tokens(json)로 팔레트 주입.",
+    "cli": "python main.py --client <name> [--out path] [--html|--pptx|--both]. 기본 --both."
+  },
+
+  "density_rules": {
+    "콘텐츠_점유율": ">=85%. content-area를 분할 그리드로 충전. 고립 작은 블록·과대 여백 금지 (요구사항 5,9).",
+    "간격": "gutter 24, block-gap 12. 임의 큰 여백(>40px) 금지.",
+    "본문": "15px(11pt) 기본. 한 셀 4~6줄 이내, 초과 시 카드 분할.",
+    "빈칸": "빈 칼럼/빈 사분면 금지. 3-up 중 2개만 차면 2-up 재분할.",
+    "여백_대신": "남는 공간은 차트·도식·KPI 콜아웃으로.",
+    "밀도_!=_혼잡": "최소 12px 간격·정렬 유지 (요구사항 8)."
+  },
+  "title_convention": {
+    "원칙": "콘텐츠 제목 = 그 슬라이드의 결론(So-What) 완결 문장 (요구사항 6). McKinsey action title / Minto governing thought.",
+    "형식": "[주어/대상] + [핵심 판단/서술어]. 2줄 이내. 핵심어 1~2개만 primary.",
+    "금지": "명사구 나열('보상체계 현황'), 단순 라벨, 의문문, 모호한 형용사('효과적인 방안').",
+    "예": "연공 중심 보상구조가 성과 변별력을 저해하므로 직무·성과 기반 재설계가 필요함"
+  },
+  "source_convention": {
+    "위치": "모든 콘텐츠 슬라이드 좌하단. source-note role(11px, text-muted), prefix '※ Source : ' (요구사항 10).",
+    "내부": "※ Source : HCG Analysis",
+    "외부": "※ Source : 전자공시시스템 사업보고서·기업 홈페이지, 2024",
+    "차트": "데이터 출처 + 기준 시점 병기 (n=327, 2024.12 기준)",
+    "표지": "중앙 하단 ㈜휴먼컨설팅그룹 저작권 고지문."
+  },
+
+  "do": [
+    "모든 콘텐츠 슬라이드에 고정 골격 7요소 상속.",
+    "메인 블루 primary 60~70%, 코랄은 강조 한정 단일 액센트.",
+    "정량 데이터 차트 우선, 시리즈 색 정해진 순서.",
+    "제목은 결론 문장, 핵심어만 primary.",
+    "간격 gutter 24 / block-gap 12 일관.",
+    "폰트 전 요소 Pretendard 단일."
   ],
-  "layout_specs": {
-    "TOC_layout1": {
-      "고정요소": "TextBox 'CONTENTS' at (0.944, 1.759) 1.090x0.323 bg2 fill",
-      "섹션_번호_원형": {"x": 2.120, "w": 0.906, "h": 0.866, "y_sec1": 2.002, "y_sec2": 2.868, "active": "#794039", "inactive": "white"},
-      "섹션_제목": {"x": 3.457, "w": 2.230, "h": 0.309, "size": 16, "active": "wine bold", "inactive": "black", "y": "번호 y + 0.278"},
-      "저작권": {"x": 2.120, "y": 3.829, "w": 8.020, "h": 0.254, "size": 6},
-      "수직_연결선": "CONN at 2.182, 섹션 y에 맞춤"
-    },
-    "본문_layout2": {
-      "제목_ph_idx0": {"x": 0.575, "y": 0.250, "w": 9.729, "h": 0.305, "style": "12pt bold 자동 HCG_RED"},
-      "서브헤드_ph_idx10": {"x": 0.575, "y": 0.548, "w": 9.728, "h": 0.361, "style": "15pt Semilight"},
-      "헤더_바": {"x": 0.691, "y": 1.595, "w": 9.451, "h": 0.333, "fill": "GRAY #919191"},
-      "수평_구분선": {"x": 0.691, "y": 1.928, "w": 9.451, "h": 0, "color": "dk1"},
-      "좌컬럼": {"x": 0.691, "w": 4.528, "item_h": 0.496, "y0": 1.944, "dy": 0.589},
-      "우컬럼": {"x": 5.615, "w": 4.528, "item_h": 0.496, "y0": 1.944, "dy": 0.589},
-      "중간_연결_박스": {"x": 4.752, "w": 1.251, "h": 0.394, "fill": "GRAY"},
-      "단일컬럼_라벨": {"x": 0.369, "w": 1.250},
-      "단일컬럼_내용": {"x": 1.836, "w": 8.759}
-    }
-  },
-  "coordinate_constants_inch": {
-    "TITLE_X": 0.575, "TITLE_Y": 0.250, "TITLE_W": 9.729, "TITLE_H": 0.305,
-    "SUB_X": 0.575, "SUB_Y": 0.548, "SUB_W": 9.728, "SUB_H": 0.361,
-    "HDR_X": 0.691, "HDR_Y": 1.595, "HDR_W": 9.451, "HDR_H": 0.333,
-    "LINE_Y": 1.928,
-    "COL_L_X": 0.691, "COL_R_X": 5.615, "ITEM_W": 4.528, "ITEM_H": 0.496,
-    "ITEM_Y0": 1.944, "ITEM_DY": 0.589,
-    "MID_X": 4.752, "MID_W": 1.251, "MID_H": 0.394,
-    "LBL_X": 0.369, "LBL_W": 1.250, "CONTENT_X": 1.836, "CONTENT_W": 8.759,
-    "PROC_X0": 2.133, "PROC_W_STEP": 2.006, "PROC_W": 1.976, "PROC_H": 0.666, "PROC_Y": 2.952,
-    "STEP_Y": 3.632, "STEP_H": 0.554,
-    "TOC_NUM_X": 2.120, "TOC_NUM_W": 0.906, "TOC_NUM_H": 0.866,
-    "TOC_TITLE_X": 3.457, "TOC_TITLE_W": 2.230, "TOC_TITLE_H": 0.309,
-    "TOC_SEC1_Y": 2.002, "TOC_SEC2_Y": 2.868
-  },
-  "slide_type_patterns": {
-    "toc": {
-      "설명": "목차/섹션 간지. CONTENTS + 로마자 섹션 리스트.",
-      "active": "현재 섹션 번호=WINE(#794039) 배경, 제목=wine bold. 나머지 inactive=white/black."
-    },
-    "painpoint_2col": {
-      "설명": "As-Is(문제) vs To-Be(해법) 2컬럼 대조.",
-      "좌측_배경": "GRAY_DK #1D1D1D (텍스트 흰색)",
-      "우측_배경": "CORAL_DK #400A07 (텍스트 흰색)",
-      "중간_연결": "GRAY #919191 또는 화살표(→) HCG_RED 박스",
-      "요약행": "좌 GRAY_LT / 우 CORAL_MED"
-    },
-    "process": {
-      "설명": "프로세스 N단계 → 화살표 흐름.",
-      "단계_박스": "BLUE #356CB5 fill, 1.976x0.666, y=2.952, 시작 x=2.133, 간격=2.006",
-      "설명_박스": "GRAY fill, y=3.632, h=0.554",
-      "라벨": "x=0.369, w=1.250, white fill, 우정렬"
-    },
-    "single_col": {
-      "설명": "라벨 + 내용 단일 컬럼.",
-      "라벨": "x=0.369 GRAY italic 우정렬",
-      "내용": "x=1.836, w=8.759, noFill rounded rect"
-    },
-    "reference": {
-      "설명": "[참고]/[Back-up] 장표. 제목에 prefix. 복잡 그리드/표/이미지는 자동 생성 시 단순 텍스트 박스로 대체."
-    },
-    "cover_end": {
-      "설명": "표지(layout0)/End(layout3)는 레이아웃 제공 디자인 사용. 표지=제목 ph + '- 제안서 -' + 날짜 textbox."
-    }
-  },
-  "implementation": {
-    "engine": "auto_ppt.py (python-pptx)",
-    "color_constants": {
-      "HCG_RED": "RGBColor(0x92,0x1F,0x0B)",
-      "CORAL_DK": "RGBColor(0x40,0x0A,0x07)",
-      "CORAL_MED": "RGBColor(0xB2,0x3B,0x25)",
-      "GRAY": "RGBColor(0x91,0x91,0x91)",
-      "GRAY_DK": "RGBColor(0x1D,0x1D,0x1D)",
-      "GRAY_LT": "RGBColor(0xD9,0xD9,0xD9)",
-      "BLUE": "RGBColor(0x35,0x6C,0xB5)",
-      "WINE": "RGBColor(0x79,0x40,0x39)",
-      "WHITE": "RGBColor(0xFF,0xFF,0xFF)",
-      "BLACK": "RGBColor(0x00,0x00,0x00)"
-    },
-    "core_helpers": [
-      "_add_box(slide,x,y,w,h,fill_rgb,border_rgb,radius): ROUNDED_RECTANGLE 기본, fill/border 선택, noFill 가능.",
-      "_set_font_xml(run,'맑은 고딕'): a:latin + a:ea 동시 지정.",
-      "_add_run(para,text,fsize,bold,italic,color): 위치인자 순서 고정.",
-      "_set_line_spacing(para,112): 행간 112%.",
-      "set_title(slide,title,subtitle): ph idx0=제목, idx10=서브헤드.",
-      "delete_all_slides(prs): 템플릿 슬라이드 비우고 재생성."
-    ],
-    "run_cmd": "cd C:\\Users\\cgpar\\ppt-skill && python auto_ppt.py  → HCG_Automated_Draft.pptx"
-  },
-  "error_reference": [
-    {"오류": "ValueError: range 100~400000, got 0", "원인": "positional arg 순서 오류로 fsize=0", "해결": "_add_run(p,text,fsize,bold,...) 인자 순서 확인"},
-    {"오류": "cannot import PP_ALIGN from dml", "원인": "잘못된 import", "해결": "fill 함수에서 PP_ALIGN 제거"},
-    {"오류": "한글 폰트 깨짐", "원인": "latin/ea 미지정", "해결": "typeface='맑은 고딕' XML 직접 설정(양쪽)"},
-    {"오류": "Git push rejected (remote ahead)", "원인": "원격이 앞섬", "해결": "git pull --rebase origin main 먼저"}
+  "dont": [
+    "색 띠/액센트 스트라이프(제목 밑줄·카드 컬러보더·슬라이드폭 바) 금지.",
+    "제목 명사 나열 금지 (요구사항 6).",
+    "role 외 임의 폰트 사이즈 금지 (요구사항 2).",
+    "4:3·기타 비율 금지 — 16:9 1280x720 전용 (요구사항 7).",
+    "넓은 빈 여백·고립 블록·빈 사분면 금지 (요구사항 5,9).",
+    "emphasis-red/positive-green 남용 금지 — 증감 수치 전용.",
+    "hcg-maroon 본문/도형 사용 금지 — 워드마크 전용.",
+    "텍스트 오버플로/요소 겹침 금지 — 문장 압축·셀 분할로 해결, 폰트 무단 축소 금지 (요구사항 8)."
   ],
-  "advanced_slide_patterns": {
-    "_근거": "롯데알미늄 _final XML 도형 좌표 실측(inch). auto_ppt.py에 헬퍼로 구현. PICTURE(아이콘)은 자동생성 제외.",
-    "pain_point_categorized": {
-      "용도": "Client's Needs & Pain Point (S04)",
-      "헤더_바": "좌 '고객사의 HR 운영 Issue' / 우 '전통적 Consulting의 한계' — y=1.61 h=0.33, bg2 GRAY",
-      "행": "6행, y0=1.94 dy=0.59 h=0.50",
-      "좌_라벨태그": "x=0.69 w=1.02 h=0.50, GRAY_DK fill 흰 텍스트 (내용 박스 위 오버레이)",
-      "좌_내용": "x=0.69 w=4.53", "우_내용": "x=5.61 w=4.53",
-      "중앙_커넥터_배지": "x=4.75 w=1.25 h=0.39, GRAY fill (해소 키워드)",
-      "하단_요약": "y=5.53, 좌/우 각 x=0.69·5.61 w=4.53 h=1.37 (묶음 메시지, 강조 fill)"
-    },
-    "vs_comparison": {
-      "용도": "HCG's Approach (S05)",
-      "블록": "좌(Legacy) x=0.69 w=4.52 / 우(HCG) x=5.65 w=4.45, y=2.20 h=4.21",
-      "헤더": "좌 'Pain Point' / 우 'HCG's Approach' y=1.60 h=0.34",
-      "VS_배지": "x=5.22 y=1.61 w=0.39 h=0.39, HCG_RED/WINE fill 'VS' 흰 bold",
-      "하단_quote": "x=1.10 y=6.66 w=8.64 h=0.32 텍스트박스 takeaway"
-    },
-    "overview_3col_step": {
-      "용도": "모듈 Overview (직무체계 S08 / 평가 S12 / 보상 S16)",
-      "컬럼_x": [0.69, 3.90, 7.11], "컬럼_w": 3.03,
-      "헤더박스": "y=2.10 h=0.79 (예: 'Step 1. 직무 분석')",
-      "컨테이너": "y=2.88 h=4.17 (연회색 배경 박스)",
-      "상단_설명": "y=2.94 h=0.96 텍스트",
-      "AI_콜아웃": "y=3.83 h=1.88 (예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona')",
-      "하단_상세": "y=5.76 h=1.18",
-      "아이콘": "PICTURE 0.51² — 자동생성 제외(텍스트로 대체)"
-    },
-    "differentiated_matrix": {
-      "용도": "직군별 차별화 평가모델 (S13)",
-      "직군_라벨": "x=0.69 w=1.25 h=0.97, HCG_RED fill (R&D및신사업/영업/생산/경영지원)",
-      "업무특성": "x=2.00 w=2.07",
-      "중앙_insight_quote": "x=4.21 w=2.68 h=0.97, 큰따옴표 핵심 메시지 (예: '마일스톤 중심의 장기 성과 인정, 기술 경쟁력 확보 관점의 인력 관리')",
-      "화살표_배지": "x=6.99 w=0.47 h=0.57",
-      "반영방안": "x=7.57 w=2.59",
-      "행_y": [2.46, 3.55, 4.63, 5.74], "행_구분선": "각 행 사이 수평선(GROUP/LINE)",
-      "하단_quote": "x=0.69 y=6.79 w=9.45 (예: '각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고')"
-    },
-    "example_badge": {
-      "위치": "우상단 x=9.56 y=1.61 w=0.58 h=0.27",
-      "텍스트": "'예시적' (GRAY_LT fill, 작은 배지)",
-      "용도": "가설/예시 데이터 장표 표시 — 단정 회피"
-    },
-    "insight_quote_textbox": {
-      "원칙": "핵심 장표는 하단/중앙에 큰따옴표(“ ”)로 감싼 한 줄 takeaway. italic, 강조색(HCG_RED 또는 DARK_GRAY).",
-      "예": "“각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고”"
-    }
-  },
-  "new_helpers_for_auto_ppt": {
-    "_지침": "auto_ppt.py에 아래 헬퍼를 추가해 고급 패턴 구현. 좌표는 advanced_slide_patterns 값 사용. 기존 add_item/add_textbox 재사용.",
-    "add_header_bar(slide, text, x=0.69, y=1.61, w=9.451, h=0.333)": "GRAY(#919191) fill 막대 + 흰색 bold 11pt 텍스트. 콘텐츠 영역 헤더.",
-    "add_label_tag(slide, text, x, y, w=1.02, h=0.5, fill=GRAY_DK)": "미니 카테고리 라벨 박스(흰 텍스트, no_border).",
-    "add_connector_badge(slide, text, x=4.752, y, w=1.25, h=0.39, fill=GRAY)": "중앙 커넥터/키워드 배지.",
-    "add_vs_badge(slide, x=5.22, y=1.61, w=0.39, fill=HCG_RED, text='VS')": "VS 대비 배지(흰 bold).",
-    "add_example_badge(slide, x=9.56, y=1.61, w=0.58, h=0.27)": "'예시적' 우상단 배지(GRAY_LT).",
-    "add_insight_quote(slide, text, x=0.69, y=6.79, w=9.451)": "큰따옴표 italic 강조 takeaway 텍스트박스(자동으로 “ ” 부착).",
-    "build_overview_3col(prs, title, subtitle, cols)": "cols=[{header, desc, ai_callout, detail}×3] → 3컬럼 STEP Overview.",
-    "build_diff_matrix(prs, title, subtitle, rows, bottom_quote)": "rows=[{group, trait, insight_quote, apply}] → 직군 차별화 매트릭스 + 행 구분선 + 하단 quote."
-  },
-  "limitations": {
-    "아이콘/이미지": "PICTURE(아이콘·이미지)는 python-pptx 자동생성 불가 → 텍스트/도형으로 대체하거나 템플릿 슬라이드 복제로 처리.",
-    "복잡_GROUP": "_final의 다단계 GROUP/FREEFORM 화살표는 단순 도형 조합으로 근사.",
-    "TABLE": "직무분류 예시 표는 add_table 또는 텍스트 박스 그리드로 구현."
-  },
-  "density_diagram_targets": {
-    "_근거": "AI Draft 5.5도식/장·213자/장 vs 인간 _final 23도식/장·502자/장. AI는 GROUP·PICTURE·LINE·TABLE·FREEFORM 0개 = 시각적 평면.",
-    "도식_비율": "본문 장표는 텍스트 박스 나열 금지. 장당 구조 도식(박스 + 연결선/화살표 또는 표) ≥1. 인간본 수준(장당 다수 도식)을 지향.",
-    "텍스트_밀도": "본문 장표 목표 350~500자(거버닝 + 근거). 단 텍스트 벽 금지 — 도식으로 구조화.",
-    "연결_시각화": "흐름은 텍스트 대신 connector line/arrow로 표현. 항목 비교는 TABLE로. 단계는 화살표 흐름으로.",
-    "아이콘_대체": "PICTURE(아이콘) 자동생성 불가 → add_icon_placeholder(도형)로 시각 요소 보강."
-  },
-  "new_helpers_v2": {
-    "_지침": "auto_ppt.py에 추가해 평면 텍스트 → 도식화. 기존 add_item/add_textbox 재사용.",
-    "add_connector_line(slide, x1, y1, x2, y2, color=MED_GRAY, w_pt=1.0)": "박스 간 연결선(직선). 흐름·관계 시각화.",
-    "add_arrow_flow(slide, centers)": "박스 중심점 리스트 사이에 → 화살표(텍스트박스 또는 도형) 자동 배치.",
-    "add_table(slide, x, y, w, h, data, header=True)": "비교용 TABLE 삽입(인간본 8개 사용). header행 HCG_RED fill·흰 bold.",
-    "add_icon_placeholder(slide, x, y, d=0.5, fill=BLUE)": "아이콘 대체 원형/둥근 도형(PICTURE 대신).",
-    "build_process_roadmap(prs, title, subtitle, phases)": "Process Overview 로드맵 — phase 박스 + 하위 step + 연결선(인간본 S19 패턴).",
-    "build_compare_table(prs, title, subtitle, headers, rows, example=False)": "표 기반 비교 장표(BM 결과·pay 구조 등). headers→TABLE 헤더, rows→행."
-  },
-  "scale_guidance": "진단/BM형 대형 제안서는 40~60장. 섹션 divider는 풀비주얼 1장. 본문은 미니리포트 밀도(350~500자 + 도식). Why HCG·근거는 다(多)장 전개 + [참고] 분리.",
-  "xml_advanced_design": {
-    "_근거": "인간 _final.pptx OxmlElement 전수 파싱. 실측 갭(인간 vs AI Draft): 텍스트윤곽선<a:rPr><a:ln> 1807 vs 0, 그림자<a:outerShdw> 60 vs 0, 투명도<a:alpha> 2478 vs 0, 그라디언트<a:gradFill> 43 vs 0, 자간 spc(-30~-100) vs 없음, 도형 geom 14종 vs 3종. 평면 박스+텍스트를 XML 레벨 표현으로 보강.",
-    "text_outline": {
-      "규칙": "흰 박스 위 흰 텍스트, 색 위 동색 텍스트 등 대비 약한 경우 윤곽선으로 가독성 확보. 인간본 최다 패턴.",
-      "xml": "<a:rPr> 첫 자식으로 <a:ln w=EMU><a:solidFill><a:srgbClr val=HEX/></a:solidFill></a:ln> (ln은 rPr 최상위 순서).",
-      "helper": "set_text_outline(run, color='FFFFFF', width_pt=0.75) 또는 add_item(..., outline={'color':'FFFFFF','width_pt':1.0})",
-      "권장": "강조 제목/배지에 한정. 본문 남발 금지."
-    },
-    "shadow": {
-      "규칙": "원형 배지·핵심 박스에 옅은 드롭섀도로 입체감. 장식 남발 금지(핵심 요소만).",
-      "xml": "<a:spPr><a:effectLst><a:outerShdw blurRad dist dir rotWithShape=0><a:srgbClr val=000000><a:alpha val/></a:srgbClr></a:outerShdw></a:effectLst> (effectLst는 ln 뒤).",
-      "helper": "add_shadow(shape, blur_pt=4, dist_pt=2.5, direction=2700000, alpha_pct=55) 또는 add_item(..., shadow=True)"
-    },
-    "transparency": {
-      "규칙": "겹침(overlap)·강조 오버레이 표현 시 채움 투명도. 배경 위 반투명 색면.",
-      "xml": "solidFill의 <a:srgbClr>/<a:schemeClr>에 <a:alpha val=(100-pct)*1000/> 추가.",
-      "helper": "set_transparency(shape, pct)  # pct=투명도%(0불투명~100투명)"
-    },
-    "gradient": {
-      "규칙": "표지/섹션/핵심 박스 강조에 선형 그라디언트(2색). 본문 박스엔 자제.",
-      "xml": "<a:gradFill><a:gsLst><a:gs pos=0><a:srgbClr val=C1/></a:gs><a:gs pos=100000><a:srgbClr val=C2/></a:gs></a:gsLst><a:lin ang=deg*60000 scaled=1/></a:gradFill> (prstGeom 뒤·ln 앞).",
-      "helper": "set_gradient(shape, color1, color2, angle_deg=90) 또는 add_item(..., grad=(HCG_RED, CORAL_DK, 45))"
-    },
-    "char_spacing": {
-      "규칙": "한글 제목 자간 좁힘으로 밀도·완성도. 본문 -30, 제목 -50~-100(인간본 실측).",
-      "xml": "<a:rPr spc='-50'/> (단위 1/100 pt, 음수=좁힘).",
-      "helper": "set_char_spacing(run, -50) 또는 add_item(..., spc=-50)"
-    },
-    "line_spacing_variable": {
-      "규칙": "행간 고정 112% 탈피. 본문 120%, 밀집 라벨 100%로 가변(인간본 100~120% 혼용).",
-      "helper": "_set_line_spacing(para, pct)  # 100~120 가변"
-    },
-    "text_anchor": {
-      "규칙": "박스 내 텍스트 세로 중앙정렬로 정돈감.",
-      "xml": "<a:bodyPr anchor='ctr'/> (t/ctr/b)",
-      "helper": "set_text_anchor(shape, 'ctr') 또는 add_item(..., anchor='ctr')"
-    },
-    "geometry_palette": "단조로운 rect/roundRect/ellipse 외 rightArrow·homePlate(쉐브론)·flowChartDecision·donut·arc 등 의미 있는 도형 활용. python-pptx MSO_AUTO_SHAPE_TYPE / MSO_SHAPE 사용."
-  },
-  "bullet_to_shape_rules": {
-    "_원칙": "불릿(•) 텍스트 나열 금지 → 구조 도식으로 변환. AI Draft 평면화의 핵심 원인이 불릿 나열.",
-    "병렬_3~5항목": "→ 가로/세로 박스 배열(add_item 그리드). 라벨 태그 + 내용 박스.",
-    "단계/순서": "→ 화살표 흐름(add_arrow_flow) 또는 process_roadmap(phase 박스 + step).",
-    "대조(현행vs개선)": "→ 2컬럼 대비(build_body_2col) 또는 VS 블록(build_approach_vs).",
-    "분류/매트릭스": "→ build_diff_matrix 또는 add_table(행/열 그리드).",
-    "인과/관계": "→ 박스 + connector line(add_connector_line)로 연결.",
-    "변환_판단": "한 박스에 불릿 3개 이상이면 도식 후보. 항목 간 관계(순서·대조·분류·인과)를 파악해 위 패턴 선택."
-  },
-  "mbb_grid_system": {
-    "_원칙": "MBB(맥킨지/베인/BCG)식 모듈러 그리드. 모든 요소를 고정 그리드 라인에 정렬해 시각적 질서 확보.",
-    "안전여백(safe_margin)": "좌우 0.69\", 상단 제목영역 ~1.6\", 하단 takeaway/저작권 ~0.5\". 콘텐츠 영역 = x 0.69~10.14(w 9.451).",
-    "수평_분할": "2컬럼: 좌 x=0.691 / 우 x=5.615 (각 w=4.528, 거터 0.396). 3컬럼: x=[0.69,3.90,7.11] w=3.03 (거터 0.18).",
-    "수직_리듬": "행 피치 dy=0.589\"(본문), 박스 h=0.496\". 동일 피치 반복으로 정렬 리듬.",
-    "황금비_여백": "박스 내부 여백 좌 0.07\"/우 0.04\"/상하 0.02\". 제목:서브헤드:콘텐츠 시각 비중 대략 1:0.7:5. 핵심 강조 박스는 1.618 비율 폭 지향.",
-    "정렬_규칙": "좌측 라벨=우정렬, 본문=좌정렬, 헤더/번호/배지=중앙정렬+세로중앙(anchor=ctr). 같은 행 요소는 baseline/y 일치.",
-    "적용": "coordinate_constants_inch가 이 그리드의 구현. 신규 좌표는 기존 그리드 라인(0.691, 5.615, dy=0.589 등)에 스냅."
-  },
-  "master_engine_DeckEngine": {
-    "_원칙": "auto_ppt.py = 단일 마스터 엔진. '어떤 프로젝트든 auto_ppt.py 하나만 호출 + 외부 데이터(JSON spec) → 최고 디자인 PPT'. kia/lotte는 엔진 import 콜러로 유지(중복 cover/toc/overview는 엔진 메서드로 통합).",
-    "class": "DeckEngine(template=None, out=None) — 템플릿 로드 + delete_all_slides 자동. 메서드: cover(), toc(), project_overview(), demo_advanced(), render(spec), save().",
-    "cli": "python auto_ppt.py <spec.json>  → meta.template/out 사용. 인자 없으면 기본 build()(롯데알미늄 25장, 하위호환).",
-    "spec_schema": {
-      "meta": "{template?: 경로(없으면 기아 KIA_FINAL→롯데 폴백), out?: 출력경로, theme?: 'hcg'|'paradise'(v7.0 브랜드 팔레트)}",
-      "slides": "[{type, label?, ...타입별 필드}] 순서대로 렌더"
-    },
-    "slide_types": {
-      "cover": "{title, subtitle?='- 제안서 -', date?}",
-      "toc": "{items:['섹션명',..] (권장) | [[번호,섹션명,페이지],..] 호환, title?, current?:int} — v6.0 어젠다카드",
-      "section_agenda": "{sections:['섹션명',..], current:int} — 동일 어젠다카드 하이라이트 이동",
-      "blocks": "{title, subtitle, items:[{title,body|bullets}], y?, h?, numbered?, bar_label?, quote?, example?} — N등분 카드 그리드",
-      "container": "{title, subtitle, containers:[{x,y,w,h,fill?,title?,items:[{head,body}]}]} — 박스 안 박스",
-      "overview": "{subtitle, background?, scope?:[[라벨,x],..], sub_details?:[[x,설명],..], plan?, quote?}",
-      "section": "{num, title, sub?}",
-      "body_2col": "{title, subtitle, header_l, header_r, left:[..], right:[..]}",
-      "body_single": "{title, subtitle, rows:[[라벨,내용],..]}",
-      "body_process": "{title, subtitle, steps:[[제목,설명],..], desc?:[[라벨,내용],..]}",
-      "overview_3col": "{title, subtitle, cols:[{header,desc,ai,detail}×3], bar_label?, example?}",
-      "diff_matrix": "{title, subtitle, rows:[{group,trait,insight,apply}], quote?, example?}",
-      "pain_point_categorized": "{title, subtitle, left_hdr, right_hdr, rows:[[좌라벨,좌내용,중배지,우내용],..], summary_left?, summary_right?}",
-      "approach_vs": "{title, subtitle, left_title, left:[..], right_title, right:[..], quote?}",
-      "process_roadmap": "{title, subtitle, phases:[{name,steps:[..]}]}",
-      "compare_table": "{title, subtitle, headers:[..], rows:[[..]], example?}",
-      "appendix": "{title?, subtitle?, rows:[[라벨,내용],..]}",
-      "demo_advanced": "{title?, subtitle?} — 윤곽선/그림자/그라디언트/투명도/자간 시연",
-      "end": "{}"
-    }
-  },
-  "theme_system_v7": {
-    "_원칙": "★제안서 생성 전 고객사 브랜드 정체성에 맞는 테마 선택. 레드 2종 혼용 같은 불일치 차단.",
-    "_근거": "파라다이스 _final 실측 = 럭셔리 골드(A49166/AC9A71)·크림(F1E5CA)·슬레이트(6D8191). 1차 AI는 기아 레드 사용 → 브랜드 불일치가 최대 갭.",
-    "사용": "DeckEngine(theme='paradise') 또는 spec meta {'theme':'paradise'}. apply_theme(name)이 전역 THEME + HCG_RED 재바인딩 → 신규 도식함수 + 기존 빌더(build_body_2col/process_roadmap/diff_matrix/add_table 등) 전부 자동 테마색.",
-    "themes": {
-      "hcg": {"accent": "#C72128", "accent_lt": "#E5838A", "container": "#E6E6E6", "emphasis": "#C00000", "용도": "기아/제조/일반 (레드)"},
-      "paradise": {"accent": "#A49166", "accent_lt": "#AC9A71", "container": "#F1E5CA", "emphasis": "#C00000", "용도": "카지노/럭셔리 (골드·크림)"}
-    },
-    "paradise_palette_full": {"골드": "#A49166", "보조골드": "#AC9A71", "크림": "#F1E5CA", "슬레이트": "#6D8191", "블루": ["#D4E1F2", "#AAC4E6", "#ECF6FC"], "폰트강조": "#C00000"},
-    "확장": "신규 고객사 = THEMES dict에 항목 1개 추가. accent/accent_lt/container/emphasis 지정."
-  },
-  "text_overflow_control_v7": {
-    "_원칙": "텍스트가 카드/박스를 넘지 않도록 이중 안전망. 인간 _final은 noAutofit544/spAutoFit452 사용, AI 1차는 0.",
-    "set_autofit_shrink(text_frame, font_scale=None)": "<a:normAutofit> 삽입 → PowerPoint 열람 시 폰트 자동 축소(오버플로 방지 안전망).",
-    "fit_font_size(para_texts, w_in, h_in, start_pt, min_pt=7.5)": "파이썬 측 사전 리사이징 — 추정 줄수(한글 1자≈font_pt)가 박스 높이 초과 시 0.5pt씩 축소. 반환=결정 pt.",
-    "_dark_bg(color)": "상대휘도(<140) 판정 → 어두운 컨테이너는 텍스트 흰색 자동 전환.",
-    "적용": "add_structured_content_blocks/add_container_box 본문에 fit_font_size + set_autofit_shrink 기본 적용. 결과 오버플로 0건.",
-    "자간_윤곽선": "카드 헤더 spc=-30 + 흰 윤곽선 0.5pt, 본문 spc=-20, 행간 116% — 인간본 밀도 정합."
-  },
-  "paradise_gap_learnings": {
-    "_근거": "paradise_compare.py 실측. 1차 AI vs 인간 rev_final → 보강 후.",
-    "윤곽선_aln": {"ai_1차": 0, "인간": 2806, "보강후": 37},
-    "자간_spc": {"ai_1차": 0, "인간": 2856, "보강후": 163},
-    "autofit": {"ai_1차": "none/spAuto만", "인간": "noAuto544/spAuto452", "보강후": "normAutofit80"},
-    "브랜드_fill": {"ai_1차": "C72128+921F0B 레드 혼용(불일치)", "인간": "A49166 골드", "보강후": "A49166 골드 지배"},
-    "오버플로": {"보강후": "0건"},
-    "의도적_잔여갭": "도형/장 12.8 vs 44, 투명도/그라디언트 < 인간 = 30장 발표용 초안의 절제. 대형 최종본 밀도 필요시 도식분할+set_transparency/set_gradient 추가."
-  },
-  "text_to_visual_engine_v6": {
-    "_원칙": "★기획 단계부터 'N개 구조화 블록으로 디자인'을 먼저 결정하고 auto_ppt.py 신규 함수를 명시 호출. 텍스트 줄글 나열 폐기.",
-    "_근거": "기아 _final 58장 전수 shape-tree 파싱(좌표 cm 실측, 그룹 재귀). 산출물: analyze_final.py / final_analysis.json / STRUCTURE_REPORT*.md.",
-    "file_spec_kia": {
-      "슬라이드_크기": "27.52 x 19.05 cm = 10.835\" x 7.5\"",
-      "레이아웃": ["표지", "목차", "본문", "End of document"],
-      "총장수": 58,
-      "주폰트": "맑은 고딕 (미세주석 Malgun Gothic Semilight)"
-    },
-    "brand_palette_kia": {
-      "KIA_RED": {"rgb": "#C72128", "용도": "시그니처 레드 — 활성 섹션 accent/윤곽 하이라이트/헤더밴드"},
-      "KIA_RED_LT": {"rgb": "#E5838A", "용도": "연한 레드 — 비활성 섹션 마커"},
-      "ACCENT_OR": {"rgb": "#F16249", "용도": "강조 폰트 코랄(56회)"},
-      "DEEP_RED": {"rgb": "#C00000", "용도": "진한 강조 레드(18회)"},
-      "CONTAINER_GR": {"rgb": "#E6E6E6", "용도": "컨테이너 박스 회색 배경"},
-      "SKY": {"rgb": "#5D8ECF", "용도": "컨테이너 스카이블루"},
-      "STEEL": {"rgb": "#3265A8", "용도": "차트 스틸블루"},
-      "NAVY": {"rgb": "#002459", "용도": "차트 딥네이비"},
-      "PALE_BLUE": {"rgb": "#D0E7F8", "용도": "옅은 블루 배경"}
-    },
-    "toc_agenda_card": {
-      "_설명": "목차/섹션 디바이더 겸용 어젠다카드(slide 1·17·52 실측, cm).",
-      "외곽카드": {"x": 5.40, "y": 4.93, "w": 20.37, "h": 12.02, "스타일": "white, 0.5pt border, 그림자"},
-      "섹션행": {"x": 5.79, "w": 19.98, "h": 3.54, "pitch": 3.54, "비고": "contiguous, 세로 중앙정렬"},
-      "좌_accent": {"x": 5.79, "w": 2.74, "h": 3.54, "활성": "#C72128", "비활성": "#E5838A"},
-      "로마숫자": {"x": 6.77, "w": 0.79, "스타일": "18pt bold 흰색 (Ⅰ Ⅱ Ⅲ …)"},
-      "섹션명": {"x": 10.54, "w": 12.93, "스타일": "18pt, 활성=#C72128 bold / 비활성=black"},
-      "활성_하이라이트": {"x": 6.16, "w": 19.61, "h": 3.31, "스타일": "빨간(#C72128) 윤곽 0.75~1.5pt, current 행 위"},
-      "함수": "create_toc_slide(prs, sections, current, layout_idx=1, title=None) / DeckEngine.toc(sections, current=i) / DeckEngine.section_divider(sections, current)"
-    },
-    "structured_content_blocks": {
-      "_설명": "리스트형 텍스트 → N등분 카드 그리드 (Text-to-Visual 핵심).",
-      "계산식": "card_w=(W-gap*(n-1))/n, W=24.71\"(본문가용폭, 마진 x=0.575\"), gap=0.26\"",
-      "카드": "ROUNDED_RECTANGLE, white fill, accent 1pt 윤곽, 그림자",
-      "헤더밴드": "상단 header_h=0.62\", accent(#C72128) 채움 + 흰 bold 타이틀(번호 옵션)",
-      "본문": "헤더 아래 padding 0.13\", bullets 또는 단락, 행간 118%",
-      "자동축소": "n>=4 → title11/body9.5pt, n>=5 → 10/9pt",
-      "함수": "add_structured_content_blocks(slide, items, x?, y=2.05, w?, h=4.30, gap=0.26, accent?, numbered=True) / DeckEngine.content_blocks(title, subtitle, items, ...)",
-      "items": "[{'title','body'} | {'title','bullets':[..]} | 문자열]"
-    },
-    "container_box": {
-      "_설명": "박스 안 박스 (slide 3·31 실측). 외곽 SOLID 박스 안 내부 TextBox N개 가로 균등 분할.",
-      "함수": "add_container_box(slide, x, y, w, h, inner_items, fill?, title?) / DeckEngine.container_slide(title, subtitle, containers)",
-      "inner_items": "[{'head','body'} | 문자열]",
-      "비고": "좌표 cm는 CM(v) 헬퍼로 inch 변환"
-    },
-    "architecture": "DeckEngine() 기본 베이스 = 기아 _final(KIA_FINAL, 없으면 롯데 REAL 폴백). 깡통 아님 — master/layout(표지·목차·본문)·테마·폰트 100% 상속 후 덧그림. 레이아웃은 이름('목차','본문')으로 안전 접근.",
-    "run": "python auto_ppt.py → v6.0 쇼케이스(기아 템플릿, 어젠다카드+카드그리드+컨테이너) / legacy → 롯데25장 / spec.json → 데이터구동"
+  "qa_checklist": [
+    "골격 일치: 임의 2슬라이드 겹침 시 kicker/chapter/title/source/page 좌표 일치? (1)",
+    "폰트 고정: 제목 22px·챕터 13px·페이지 13px·출처 11px 전 슬라이드 동일, role 외 사이즈 0? (2)",
+    "차트 비중: 수치 슬라이드의 70%+ 차트 사용? (3)",
+    "폰트 단일: Pretendard 외 임베드/참조 0? (4)",
+    "밀도: 콘텐츠 점유율 >=85%, 고립 블록·과대 여백 0? (5,9)",
+    "제목 결론성: 모든 제목 완결 문장, 명사 나열 0? (6)",
+    "비율: 캔버스 1280x720? (7)",
+    "견고성: 오버플로·겹침·정렬 이탈 0? (8)",
+    "출처: 모든 콘텐츠 슬라이드 ※ Source : 존재? (10)",
+    "색 위계: 메인 블루 dominance, 색 띠/밑줄/스트라이프 미사용?"
+  ],
+  "known_gaps": {
+    "maroon": "hcg-maroon #921F0B는 deck XML 최빈 다크레드. 정식 BI 매뉴얼 원값으로 교체 권장.",
+    "cover_hero": "표지 아이콘 모자이크 밴드는 프로젝트별 커스텀 영역. 본 시스템은 그리드(1280x300)·색면 규칙만 정의. 아이콘 단색 라인(stroke primary) 권장.",
+    "animation": "정적 deck 기준 미정의. HTML 적용 시 150~250ms ease-out 권장.",
+    "darkmode": "컨설팅 제안서 특성상 미정의(흰 캔버스 고정).",
+    "pptx_pretendard": "PPTX 렌더링은 Pretendard 시스템 설치 또는 폰트 임베드 전제. 미설치 시 PowerPoint 폴백 폰트로 표시됨.",
+    "pptx_advanced_charts": "waterfall/radar/heatmap/bullet은 python-pptx 네이티브 미지원 → HTML(Chart.js) 우선 또는 도형 근사."
   },
   "handoff": {
     "from": "skill_ppt_planning.json",
-    "입력": "확정 목차 + 장표별 메시지 + 슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end).",
-    "출력": "타입 태그를 slide_type_patterns + coordinate_constants에 매핑해 PPTX 슬라이드 생성."
+    "입력": "확정 목차 + 장표별 결론 제목 + 슬라이드 타입 태그(slide_types) + (선택) kicker/chapter/source.",
+    "출력": "타입을 components/layout 토큰에 매핑해 PPTX/HTML 슬라이드 생성."
   }
 }

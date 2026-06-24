@@ -2,49 +2,90 @@
   "client": "lotte_chemical",
   "identity": {
     "display_name": "롯데케미칼",
-    "theme": "hcg",
-    "template": "C:\\Users\\cgpar\\OneDrive - 휴먼컨설팅그룹\\09 Admin\\09 etc\\other\\Claude\\롯데알미늄 제안서\\[HCG] 롯데알미늄_직무기반 HR제도 설계 및 도입_제안서_final.pptx",
-    "colors": {"HCG_RED": "#921F0B"},
-    "fonts": {"kr": "맑은 고딕", "en": "Arial"},
     "logo": ""
   },
   "content": {
     "out": "HCG_롯데케미칼_직무기반HR_제안서_Draft.pptx",
     "slides": [
       {"type": "cover",
-       "title": "롯데케미칼 직무기반 HR제도 설계 및 도입",
+       "title": "롯데케미칼 **직무기반 HR제도** 설계 및 도입",
        "subtitle": "- 제안서 -",
-       "date": "2025.06"},
+       "date": "2025. 06"},
 
       {"type": "toc",
-       "items": ["프로젝트 배경", "추진 방안", "일정 및 조직", "HCG 소개"]},
+       "items": ["프로젝트 배경", "추진 방안", "일정 및 조직", "HCG 소개"],
+       "current": 0},
 
-      {"type": "overview",
-       "subtitle": "직무 중심으로 전환하는 HR 운영 체계",
-       "background": "연공 중심 보상의 한계와 사업 포트폴리오 다변화로 직무가치 기반 HR 전환 필요성 대두",
-       "plan": "추진 기간 : 16주\n투입 인력 : PM 1명 + 컨설턴트 2명\n추진 단계 : 직무분석 · 직무평가 · 직무급 설계 · 제도 이행 (3단계 로드맵)",
-       "quote": "보상의 공정성은 직무가치에서 출발한다"},
+      {"type": "compare",
+       "kicker": "**직무 HR** 전환 배경",
+       "chapter": "I. 제안 개요",
+       "title": "직급제도 부분 보완으로는 한계가 명확하므로 **직무기반 재설계**가 필요함",
+       "left_header": "직급제도 부분 보완 (As-Is)",
+       "right_header": "직무기반 재설계 (To-Be)",
+       "left": ["기존 호봉 구조 유지", "단기 갈등은 최소화", "성과·역량 변별 곤란", "근본 원인 미해결"],
+       "right": ["직무가치 기반 보상", "성과·역량과 연계", "직무별 기여 변별", "지속가능한 운영체계"],
+       "takeaway": "보상의 공정성은 직무가치에서 출발한다",
+       "source": "HCG Analysis"},
 
-      {"type": "approach_vs",
-       "title": "왜 별도 직무체계 프로젝트인가",
-       "subtitle": "기존 직급제도 보완 vs 직무기반 재설계",
-       "left_title": "직급제도 부분 보완",
-       "left": ["기존 호봉 구조 유지", "단기 갈등 최소화", "근본 원인 미해결"],
-       "right_title": "직무기반 재설계",
-       "right": ["직무가치 기반 보상", "성과·역량 연계", "지속가능한 운영체계"],
-       "quote": "보상의 공정성은 직무가치에서 출발한다"},
+      {"type": "chart",
+       "kicker": "보상 현황 **진단**",
+       "chapter": "I. 제안 개요",
+       "title": "연공 중심 보상은 인건비를 가파르게 키우면서도 성과 변별력을 **저해**함",
+       "chart": {"type": "column",
+                 "labels": ["2021", "2022", "2023", "2024"],
+                 "series": [{"name": "총 인건비(억원)", "data": [120, 138, 154, 172]},
+                            {"name": "성과급 비중(%)", "data": [9, 9, 8, 8]}]},
+       "source": "전자공시시스템 사업보고서, 2024 / HCG Analysis"},
 
-      {"type": "diff_matrix",
-       "title": "직군별 직무 특성과 적용 방향",
-       "subtitle": "직군 · 특성 · 시사점 · 적용",
+      {"type": "matrix",
+       "kicker": "직군 **차별화** 방향",
+       "chapter": "I. 제안 개요",
+       "title": "직군 특성을 반영한 **차별화 설계**가 일률 적용보다 효과적임",
+       "columns": ["직군", "업무 특성", "핵심 시사점", "적용 방향"],
        "rows": [
-         {"group": "연구·기술", "trait": "전문성 심화 경로", "insight": "이중 사다리 필요", "apply": "전문직 트랙 신설"},
-         {"group": "생산·운영", "trait": "교대·숙련 중심", "insight": "숙련 가치 반영", "apply": "숙련급 구간 설계"},
-         {"group": "경영지원", "trait": "직무 범위 광범위", "insight": "직무 표준화 우선", "apply": "직무기술서 정비"}
+         {"group": "연구·기술", "cells": ["전문성 심화 경로", "이중 사다리 필요", "전문직 트랙 신설"]},
+         {"group": "생산·운영", "cells": ["교대·숙련 중심", "숙련 가치 반영", "숙련급 구간 설계"]},
+         {"group": "경영지원", "cells": ["직무 범위 광범위", "직무 표준화 우선", "직무기술서 정비"]}
        ],
-       "quote": "직군 특성을 무시한 일률 적용은 실패한다"},
+       "takeaway": "직군 특성을 무시한 일률 적용은 실패한다",
+       "source": "HCG Analysis"},
 
-      {"type": "end"}
+      {"type": "process",
+       "kicker": "추진 **로드맵**",
+       "chapter": "II. 추진 방안",
+       "title": "직무분석부터 제도이행까지 **단계적 로드맵**으로 안정적 전환을 보장함",
+       "steps": [
+         {"label": "1. 직무분석", "desc": "직무 조사·직무기술서(AI 활용)"},
+         {"label": "2. 직무평가", "desc": "직무가치 평가·등급화"},
+         {"label": "3. 직무급 설계", "desc": "Pay Band·정책선 설정"},
+         {"label": "4. 제도 이행", "desc": "전환 시뮬레이션·변화관리"}
+       ],
+       "source": "HCG Analysis"},
+
+      {"type": "kpi",
+       "kicker": "기대 **효과**",
+       "chapter": "II. 추진 방안",
+       "title": "직무기반 전환으로 보상 공정성과 인건비 효율을 **동시에** 확보함",
+       "items": [
+         {"number": "+18", "unit": "%p", "label": "보상 공정성 인식"},
+         {"number": "16", "unit": "주", "label": "총 추진 기간"},
+         {"number": "3", "unit": "단계", "label": "이행 로드맵"},
+         {"number": "2", "unit": "명", "label": "전담 컨설턴트 + PM"}
+       ],
+       "source": "HCG Analysis"},
+
+      {"type": "cards",
+       "kicker": "**Why HCG**",
+       "chapter": "IV. HCG 소개",
+       "title": "산업 경험·A-to-Z 역량·자체 도구를 갖춘 **HCG가 최적의 파트너**임",
+       "items": [
+         {"header": "유관 프로젝트 경험", "bullets": ["화학·제조 직무HR 다수 수행", "대기업 보상체계 레퍼런스"]},
+         {"header": "제도수립~코칭 A-to-Z", "bullets": ["설계부터 정착 코칭까지", "변화관리 동반 추진"]},
+         {"header": "자체 AI 도구 보유", "bullets": ["직무기술서 AI 초안", "JobSkillEngine 활용"]}
+       ],
+       "source": "HCG Analysis"},
+
+      {"type": "end", "message": "Thank You"}
     ]
   }
 }

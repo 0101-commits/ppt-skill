@@ -1,15 +1,21 @@
 {
   "skill": "hcg-ppt-planning",
-  "version": "1.3",
-  "changelog_v1_3": "v1.3 — 파라다이스 케이스(RFP·회의록·storyline + 리더 전략 fb 2025.04.29 CSP + AI vs 인간 rev_final 비교). paradise_case_v13: brand_identity_theme(고객사 정체성→테마: 카지노/럭셔리=골드 paradise / 제조=레드 hcg, 레드·골드 혼용 차단), leader_fb_priority_v2(_fb 텍스트 부재 시 회의록·storyline 1순위 대체·날조 금지; 왜 별도 프로젝트=approach_vs, 직무평가 함정 회피=diff_matrix, 30장 제약, 회사소개 후치), overflow_safe_sizing(카드당 3~4불릿·40~70자 → 엔진 동적 리사이징 정합), diagram_type_pretagging(슬라이드별 도식타입 사전 지정) 추가.",
+  "version": "2.0",
+  "changelog_v2_0": "v2.0 — HCG-Slide-Design-System v1.0 정합. 시각 표준(색/폰트/좌표/컴포넌트/슬라이드 타입)은 skill_ppt_design.json + HCG-slide-design-system.md가 고정 정의하고 기획은 선택하지 않는다. 변경: (1) 제목 규약 전환(요구사항 6) — 서브헤드(idx10)·하단 Insight Quote 폐기, slide-title이 결론(So-What) 완결 문장 그 자체, kicker가 좌상단 토픽 라벨(구 카테고리 역할, 2색). (2) 차트 우선(요구사항 3) — 정량 데이터는 표가 아닌 차트로 기획, 수치 슬라이드 차트 타입 사전 지정. (3) 출처 상시(요구사항 10) — 모든 콘텐츠 슬라이드 좌하단 '※ Source : ', 내부=HCG Analysis/외부=출처명·연도. (4) 단일 고정 하우스 스타일 — 고객사별 테마 선택(레드/골드 swap) 폐기, 16:9 1280x720/Pretendard/단일 블루 고정. (5) 슬라이드 타입 태그를 디자인 계약 신규 set으로 통일: cover/toc/section/bullets/cards/columns/compare/kpi/process/matrix/chart/table/end. (6) 핸드오프 갱신 — 확정 목차 + 장표별 결론 제목 + 타입 태그 + (선택) kicker/chapter/source → 엔진 2종(PPTX core/designer.py, HTML core/html_renderer.py). RULE-1~5·P1~P3·메시지 도클린·배경 전개·리더 피드백 Playbook·draft→final·섹션 매수·품질 체크리스트는 유지.",
+  "changelog_v1_3": "v1.3 — 파라다이스 케이스(RFP·회의록·storyline + 리더 전략 fb 2025.04.29 CSP + AI vs 인간 rev_final 비교). leader_fb_priority_v2, overflow_safe_sizing, slide_type_pretagging 추가. (v2.0에서 brand_identity_theme 테마 선택 규약은 단일 고정 표준으로 폐기·대체.)",
   "changelog_v1_2": "v1.2 — 기아 AI Draft(32장/213자·5.5도식) vs 인간 _final(58장/502자·23도식) 비교 기반. depth_and_scale_v2, named_frameworks, mece_submodules, transition_governance 추가 — 분량·근거 깊이·고유 프레임워크·MECE 하위모듈 강화.",
-  "changelog": "v1.1 — 롯데알미늄 _final XML 실측 + 리더 _fb/회의록(2026.02.26·03.04) 반영. 고급 스토리 패턴(3step Overview·Pain Point 카테고리화·VS 대비·직군 차별화 매트릭스·보상 4P), insight quote 규칙, salespoint framing, subhead doctrine, module tailoring 추가.",
+  "changelog": "v1.1 — 롯데알미늄 _final XML 실측 + 리더 _fb/회의록(2026.02.26·03.04) 반영. 고급 스토리 패턴(3step Overview·Pain Point 카테고리화·VS 대비·직군 차별화 매트릭스·보상 4P), 결론 제목 doctrine, salespoint framing, module tailoring 추가.",
   "type": "planning",
   "language": "ko",
-  "title": "HCG 제안서 기획(Planning) 스킬",
-  "lineage": "기존 hcg-ppt-design skill md v1.0의 기획 영역(핵심원칙·논리구조·헤드메시지·콘텐츠 작성·Do&Don't)을 계승·분리. 좌표/색상 등 시각 디자인은 skill_ppt_design.json/.md로 분리.",
-  "description": "HCG 컨설팅 제안서의 스토리라인 구축, 목차 구성, 핵심 메시지(헤드 메시지) 도출, 논리적 흐름 설계, 맥락 요약을 담당하는 기획 스킬. 신규 제안서 착수 시 design 스킬보다 먼저 로드한다.",
-  "when_to_use": "신규 제안서의 목차/스토리/헤드메시지를 설계할 때, RFP·고객사 자료·내부 회의록을 제안 논리로 압축할 때, 기존 더미를 구조적으로 재배치하거나 리뷰할 때.",
+  "title": "HCG 제안서 기획(Planning) 스킬 v2.0",
+  "lineage": "기존 hcg-ppt 기획 영역(핵심원칙·논리구조·헤드메시지·콘텐츠 작성·Do&Don't)을 계승·분리. 좌표/색상/폰트/타입 등 시각 표준은 HCG-Slide-Design-System v1.0 고정(skill_ppt_design.json/.md).",
+  "design_standard": {
+    "원칙": "디자인 표준은 HCG-Slide-Design-System v1.0 고정. 색/폰트/좌표/컴포넌트/슬라이드 타입은 skill_ppt_design.json(+ HCG-slide-design-system.md)이 정의하며, 기획이 선택하지 않는다.",
+    "고정값": "16:9 1280x720px 캔버스 / Pretendard 단일 폰트 / 단일 메인 블루(#356CB5) 하우스 스타일 / 고정 골격 7요소(kicker·chapter-indicator·slide-title·title-rule·content-area·source-note·page-number) / 결론형 제목 / 차트 우선 / 고밀도(>=85%) / 출처 상시.",
+    "기획_산출": "스토리라인·메시지·목차·장표별 결론 제목·타입 태그·(선택) kicker/chapter/source만 결정. 테마/팔레트 swap 없음."
+  },
+  "description": "HCG 컨설팅 제안서의 스토리라인 구축, 목차 구성, 핵심 메시지(결론 제목) 도출, 논리적 흐름 설계, 맥락 요약을 담당하는 기획 스킬. 신규 제안서 착수 시 design 스킬보다 먼저 로드한다. 시각 표준은 HCG-Slide-Design-System v1.0 고정.",
+  "when_to_use": "신규 제안서의 목차/스토리/결론 제목을 설계할 때, RFP·고객사 자료·내부 회의록을 제안 논리로 압축할 때, 기존 더미를 구조적으로 재배치하거나 리뷰할 때.",
   "source_analysis": {
     "v1_기반": "10개 제안서 약 530개 파일(기아·KB라이프·NH투자증권·크래프톤·파라다이스·하이트진로·한화손보·현대차·리파인·롯데알미늄) 심층 분석 — fb 피드백 텍스트 4 + fb PPTX 8 + 내부회의록 20+.",
     "v1.0_보강": "롯데알미늄 _final(25장)·크래프톤 OKR v2.0(79장)·한림제약_fin·코웨이_final·매일그룹 final 슬라이드 구조 + 내부회의록 9건 재분석으로 스토리라인 골격 정밀화.",
@@ -27,15 +33,15 @@
     "P2": "고객사 문맥 없는 방법론은 공허하다. HCG 인사이트와 고객 산업/전략/데이터를 방법론에 녹인다. ('우리 인사이트를 여기에 녹이는 게 전략' — 기아 fb)",
     "P3": "슬라이드는 주장이다, 보고서가 아니다. 현황은 시사점만. 헤드는 메시지부터 정리하고 현황은 뒤따른다."
   },
-  "role": "당신은 HCG 최고 수준 제안서 기획자다. RFP·고객 자료·내부 논의를 수주 가능한 제안 스토리로 변환하고, 목차/섹션/장표 단위의 헤드 메시지 흐름을 설계한다. 시각 디자인은 design 스킬에 위임한다.",
+  "role": "당신은 HCG 최고 수준 제안서 기획자다. RFP·고객 자료·내부 논의를 수주 가능한 제안 스토리로 변환하고, 목차/섹션/장표 단위의 결론 제목 흐름을 설계한다. 시각 표준은 HCG-Slide-Design-System v1.0 고정이며 design 스킬에 위임한다.",
   "objective": "수주 가능성을 극대화하는 제안 논리 생성: (1) 고객의 진짜 문제 재정의 (2) HCG만의 차별적 해법을 한 줄 메시지로 수렴 (3) 그 메시지를 끊김 없는 장표 흐름으로 전개.",
   "workflow": [
     "STEP 1 맥락 흡수: RFP·고객 IR/뉴스/조직·내부 회의록·backbone 제안서를 읽고 1페이지 맥락 요약으로 압축.",
     "STEP 2 핵심 메시지 도출: '이 제안의 단 하나의 주장'을 한 문장으로 확정.",
-    "STEP 3 스토리라인 설계: storyline_architecture 4섹션 골격에 장표 목록(제목+헤드메시지+타입태그) 작성.",
+    "STEP 3 스토리라인 설계: storyline_architecture 4섹션 골격에 장표 목록(결론 제목 + 타입태그 + 선택 kicker/chapter/source) 작성.",
     "STEP 4 논리 검증: slide_logic_rules + background_development_pattern으로 인과 연결 점검. 끊기면 연결 장표 삽입 또는 통합.",
     "STEP 5 피드백 반영: leader_feedback_playbook + do_and_dont로 셀프 리뷰, planning_quality_checklist 통과.",
-    "STEP 6 디자인 핸드오프: 확정 목차/헤드메시지/타입 태그를 skill_ppt_design.json으로 전달."
+    "STEP 6 디자인 핸드오프: 확정 목차/결론 제목/타입 태그를 skill_ppt_design.json으로 전달(좌표/색/폰트는 고정 표준)."
   ],
   "context_intake": {
     "목적": "맥락 요약 — 흩어진 입력을 제안 논리의 재료로 압축.",
@@ -63,46 +69,47 @@
     ]
   },
   "head_message_rules": {
-    "결론_선행": "헤드는 결론/인사이트를 담은 완결 문장. 예: 'HR ROI 저하는 보상-성과 연계 부재의 구조적 결과임' (X: '한화손보 현황 분석').",
+    "_정의": "헤드 메시지 = 콘텐츠 슬라이드의 slide-title(결론 제목). 신규 골격에는 서브헤드가 없으므로 제목이 곧 결론(So-What) 완결 문장이다(요구사항 6). 토픽 라벨은 kicker가 전담.",
+    "결론_선행": "결론/인사이트를 담은 완결 문장. 예: 'HR ROI 저하는 보상-성과 연계 부재의 구조적 결과임' (X: '한화손보 현황 분석').",
     "중립성_유지": "객관·중장기 관점. 예: '전략 연계형 인력운영 전환이 중장기 경쟁력의 핵심임' (X: '문제가 심각하므로 개선이 시급함').",
-    "전체_통합": "하단 2~3개 논거를 아우르는 하나의 명제. 세부 항목 하나만 반영한 좁은 헤드 금지.",
+    "전체_통합": "본문 2~3개 논거를 아우르는 하나의 명제. 세부 항목 하나만 반영한 좁은 헤드 금지.",
     "오해_방지": "헤드가 특정 요소만 지칭하는 듯 보이지 않게 앞 내용과 연결('보상수준=BM 2개만 활용' 식 오해 유발 금지)."
   },
   "storyline_architecture": {
     "설명": "HCG 컨설팅 제안서 검증 4섹션 골격(목차 로마자 Ⅰ~Ⅳ). 목차는 대챕터 3~4개만, 세부목차 금지.",
     "흐름_요지": "표지 → 목차 → [Ⅰ 배경/Overview: 문제 재정의~Why HCG] → [Ⅱ 추진방안: Overall Approach + 3모듈] → [Ⅲ 일정·조직] → [Ⅳ HCG 소개] → End",
     "sections": [
-      {"id": "COVER", "name": "표지", "내용": "프로젝트 정식 명칭 + '- 제안서 -' + 제안 연월. 강한 진단 카피 금지(RULE-3)."},
-      {"id": "TOC", "name": "목차 (Contents)", "내용": "로마자 Ⅰ~Ⅳ 대챕터만. active/inactive 구분. 저작권 문구 하단 고정. 대형 제안서는 섹션 진입마다 목차 간지 반복.", "표준_섹션명": ["Ⅰ. 프로젝트 배경", "Ⅱ. 추진방안", "Ⅲ. 일정 및 조직", "Ⅳ. HCG 소개"]},
-      {"id": "S1_BACKGROUND", "name": "Ⅰ. 프로젝트 배경 / Overview", "목표": "문제 재정의 + HCG 해법의 당위 확립.", "장표_시퀀스": ["Project Overview(추진 내용/프로세스/방안=기간·인력·금액)", "고객 이해 & 내부 Issue(RFP 요약, 과거 시도와 잔존 문제)", "Client's Needs & Pain Point(As-Is, 절제된 톤)", "HCG's Approach(To-Be, As-Is와 1:1 대응)", "[참고] 高맥락/방법론 backup", "문제 본질 재정의(제도가 아니라 연계, RULE-2)", "선진/실패 사례(MS·Google·Adobe / 두산·포스코)", "Ideal Model & 변화 전략(Top-down vs Seeding&Harvesting)", "Why HCG(경험/A-to-Z 코칭/자체 시스템)"]},
-      {"id": "S2_APPROACH", "name": "Ⅱ. 추진방안", "목표": "무엇을 어떻게 — 3모듈 구조화. 변화관리 강조.", "장표_시퀀스": ["Overall Approach(전체 그림 1장, 3모듈+변화관리 동반, 간트와 동일 구조)", "모듈1 현황진단·제도설계(진단 Framework→방법→이슈 정의→A 평가설계→B 보상설계, 좌=개요/우=아웃풋)", "모듈2 Implementation(운영 이슈→HCG 노하우→Testbed 교육→코칭→변화관리 Roadmap)", "모듈3 시스템 Implementation(솔루션→데이터 활용→기존 HR 연동 API 탐색→업데이트→사용 Guide)"], "주의": "아웃풋 먼저 보여주고 '다년 매뉴얼로 체계적·신속'으로 받기. 앞서 나온 연계 로직 중복 제거."},
-      {"id": "S3_PLAN", "name": "Ⅲ. 일정 및 조직", "장표_시퀀스": ["전체 일정 간트(3 Phase, 비현실 압축 금지·최소 3개월)", "수행 조직(고객+HCG R&R)", "투입 인력 Profile(PM+컨설턴트, 필요시 PM 후보 복수)"]},
-      {"id": "S4_HCG", "name": "Ⅳ. HCG 소개", "장표_시퀀스": ["Overview", "사업 영역", "컨설팅 서비스 영역", "주요 고객사(870여 곳)", "Long-term Relationship"]},
-      {"id": "END", "name": "End of document", "내용": "마무리 간지(Thank you). Appendix는 선택."}
+      {"id": "COVER", "name": "표지", "type_tag": "cover", "내용": "프로젝트 정식 명칭 + '- 제안서 -' + 제안 연월. 강한 진단 카피 금지(RULE-3). hero-band 아이콘으로 고객 브랜드 톤 반영(팔레트 swap 아님)."},
+      {"id": "TOC", "name": "목차 (Contents)", "type_tag": "toc", "내용": "로마자 Ⅰ~Ⅳ 대챕터만. active/inactive(current) 구분. 저작권 문구 하단 고정. 대형 제안서는 섹션 진입마다 목차 간지 반복.", "표준_섹션명": ["Ⅰ. 프로젝트 배경", "Ⅱ. 추진방안", "Ⅲ. 일정 및 조직", "Ⅳ. HCG 소개"]},
+      {"id": "S1_BACKGROUND", "name": "Ⅰ. 프로젝트 배경 / Overview", "목표": "문제 재정의 + HCG 해법의 당위 확립.", "장표_시퀀스": ["Project Overview(추진 내용/프로세스/방안=기간·인력·금액) [cards/process]", "고객 이해 & 내부 Issue(RFP 요약, 과거 시도와 잔존 문제) [bullets/cards]", "Client's Needs & Pain Point(As-Is, 절제된 톤) [compare]", "HCG's Approach(To-Be, As-Is와 1:1 대응) [compare]", "[참고] 高맥락/방법론 backup [bullets/cards]", "문제 본질 재정의(제도가 아니라 연계, RULE-2) [compare/columns]", "선진/실패 사례(MS·Google·Adobe / 두산·포스코) [cards]", "Ideal Model & 변화 전략(Top-down vs Seeding&Harvesting) [columns/process]", "Why HCG(경험/A-to-Z 코칭/자체 시스템) [compare/columns]"]},
+      {"id": "S2_APPROACH", "name": "Ⅱ. 추진방안", "목표": "무엇을 어떻게 — 3모듈 구조화. 변화관리 강조.", "장표_시퀀스": ["Overall Approach(전체 그림 1장, 3모듈+변화관리 동반, 간트와 동일 구조) [process]", "모듈1 현황진단·제도설계(진단 Framework→방법→이슈 정의→A 평가설계→B 보상설계, 좌=개요/우=아웃풋) [columns/matrix]", "모듈2 Implementation(운영 이슈→HCG 노하우→Testbed 교육→코칭→변화관리 Roadmap) [process]", "모듈3 시스템 Implementation(솔루션→데이터 활용→기존 HR 연동 API 탐색→업데이트→사용 Guide) [process/cards]"], "주의": "아웃풋 먼저 보여주고 '다년 매뉴얼로 체계적·신속'으로 받기. 앞서 나온 연계 로직 중복 제거. 정량 근거는 chart로."},
+      {"id": "S3_PLAN", "name": "Ⅲ. 일정 및 조직", "장표_시퀀스": ["전체 일정 간트(3 Phase, 비현실 압축 금지·최소 3개월) [process/table]", "수행 조직(고객+HCG R&R) [cards/columns]", "투입 인력 Profile(PM+컨설턴트, 필요시 PM 후보 복수) [cards/table]"]},
+      {"id": "S4_HCG", "name": "Ⅳ. HCG 소개", "장표_시퀀스": ["Overview [cards]", "사업 영역 [cards/columns]", "컨설팅 서비스 영역 [cards]", "주요 고객사(870여 곳) [cards/table]", "Long-term Relationship [bullets/chart]"]},
+      {"id": "END", "name": "End of document", "type_tag": "end", "내용": "마무리 간지(Thank you). Appendix는 선택."}
     ]
   },
   "background_development_pattern": {
     "DONT": "문제 나열 → 솔루션 제시 (평면적, 인사이트 부재).",
     "DO": "변화 상황 묘사 → 현상(징후/파열음) → 가설적 이슈 → HCG 관점 핵심 원인 → 대응 방향.",
-    "첫_슬라이드": "산업 현황 → 고객사 특유 현황 순서. 매출/이익/사건 등 팩트 기반 시작.",
-    "implication": "별도 강조 없이 헤드 메시지에 자연스럽게 녹임.",
+    "첫_슬라이드": "산업 현황 → 고객사 특유 현황 순서. 매출/이익/사건 등 팩트 기반 시작(정량은 chart).",
+    "implication": "별도 강조 없이 결론 제목(slide-title)에 자연스럽게 녹임.",
     "백업": "세부 데이터/논거는 [참고] 장표로 분리."
   },
   "section_blueprints": {
-    "Project_Overview": {"구성": "3행 — 추진 내용 / 추진 프로세스 / 추진 방안", "추진_방안_필수항목": ["추진 기간(예: 12주)", "투입 인력(예: PM 1 + 컨설턴트 2)", "추진 금액(예: 225,000천원, 부가세 별도, 협의 변동)"], "추진_프로세스": "4단계 박스+화살표(현황진단→직무분류체계→평가개선→보상개선)."},
-    "PainPoint_Approach": {"패턴": "As-Is(문제) ↔ To-Be(해법) 2컬럼 1:1 대응. 행마다 짝 일치.", "톤": "사실 기반 절제, 고객 비난 인상 금지."},
-    "Why_HCG": {"3대_축": ["유관 프로젝트 수행 경험(레퍼런스 구체화)", "제도수립~코칭 A-to-Z 경험", "자체 성과관리 솔루션/시스템 보유"], "비교": "일반 접근(기본 요구수준) vs HCG(가치 창출) 명확한 대비. 경쟁/대안은 회색.", "백업": "유사 사례는 [참고]/[Back-up]로 분리."}
+    "Project_Overview": {"구성": "3행 — 추진 내용 / 추진 프로세스 / 추진 방안", "type_tag": "cards (프로세스부 process)", "추진_방안_필수항목": ["추진 기간(예: 12주)", "투입 인력(예: PM 1 + 컨설턴트 2)", "추진 금액(예: 225,000천원, 부가세 별도, 협의 변동)"], "추진_프로세스": "4단계 박스+화살표(현황진단→직무분류체계→평가개선→보상개선)."},
+    "PainPoint_Approach": {"패턴": "As-Is(문제) ↔ To-Be(해법) 2컬럼 1:1 대응. 행마다 짝 일치.", "type_tag": "compare (To-Be 헤더 다크 칼럼)", "톤": "사실 기반 절제, 고객 비난 인상 금지."},
+    "Why_HCG": {"3대_축": ["유관 프로젝트 수행 경험(레퍼런스 구체화)", "제도수립~코칭 A-to-Z 경험", "자체 성과관리 솔루션/시스템 보유"], "type_tag": "compare / columns / cards", "비교": "일반 접근(기본 요구수준) vs HCG(가치 창출) 명확한 대비. 경쟁/대안은 회색.", "백업": "유사 사례는 [참고]/[Back-up]로 분리."}
   },
   "section_writing_principles": {
-    "제안_배경": "산업→고객사 순. 이슈는 발생구조(원인→현상→영향) 명확. implication은 헤드에 녹임. 세부는 [참고].",
+    "제안_배경": "산업→고객사 순. 이슈는 발생구조(원인→현상→영향) 명확. implication은 결론 제목에 녹임. 세부는 [참고]. 정량은 chart.",
     "Why_HCG": "비교 구조로 차별성. 경쟁대안=회색. 강점 3대 축 명시.",
-    "수행_방안": "4단계 표준(Modeling→실시→분석→개선방안). 각 단계 핵심 산출물만, 과도 나열 삭제. 단계마다 유사 프로젝트 경험 1~2줄.",
-    "레퍼런스": "고객사 산업/유사 과업 기준 선정, 무관 사례 금지. 서술형(고객사명+과업 한 줄+수행 요약). 그룹사는 별도 묶기. 오래된/부적합 연도 제거."
+    "수행_방안": "4단계 표준(Modeling→실시→분석→개선방안). 각 단계 핵심 산출물만, 과도 나열 삭제. 단계마다 유사 프로젝트 경험 1~2줄. 흐름=process, 모듈 Overview=columns.",
+    "레퍼런스": "고객사 산업/유사 과업 기준 선정, 무관 사례 금지. 서술형(고객사명+과업 한 줄+수행 요약). 그룹사는 별도 묶기. 오래된/부적합 연도 제거. type_tag=cards/bullets."
   },
   "slide_logic_rules": [
     "각 장표는 앞 장표 결론에서 자연 연결(50장 이슈→51장 그 포인트/포커스).",
-    "한 장표 = 한 메시지. 제목은 메시지 자체이거나 그 카테고리.",
-    "제목 카테고리/섹션 prefix를 전 장표 일관(예: 'Ⅰ. 프로젝트 배경  소제목').",
+    "한 장표 = 한 메시지. 제목(slide-title)은 그 장표의 결론 문장이다(명사 나열 금지). 토픽 분류는 kicker로.",
+    "kicker 토픽 라벨/chapter-indicator 위치를 전 장표 일관(예: kicker='HR DX 지향점', chapter='Ⅰ. 프로젝트 배경').",
     "비교 장표는 '차이 없음→그래서 본질은 연계' 결론으로 빠르게 전환.",
     "중복/유사 장표 통합 — 같은 메시지 두 장은 한 장의 근거로 합침.",
     "[참고]/[Back-up]은 본문 흐름에서 분리해 부담 감소.",
@@ -111,7 +118,7 @@
   ],
   "leader_feedback_playbook": [
     "스토리 흐름 점검: '어떤 흐름으로 장표가 배치되었는가'에 한 문장 답.",
-    "메시지 손질: 핵심 장표 메시지가 본질(연계)을 가리키는지 재확인.",
+    "메시지 손질: 핵심 장표 결론 제목이 본질(연계)을 가리키는지 재확인.",
     "배경 절제: 빈약해도 무리한 추정 진단 금지. 고객 정서 리스크 우선 점검.",
     "산출물 통제: 많아 보이면 축소. 맥락상 의미 없는 산출물 삭제(중압감 회피).",
     "패키지 딜 회피: 자사 시스템 전제 금지. '타 시스템도 가능' 열기.",
@@ -120,9 +127,9 @@
   ],
   "draft_to_final_evolution": {
     "Draft_v0": "방법론 중심, 내용 과다, 일반론 수준.",
-    "v0.2~v0.5": "고객사 맥락 구체화, 슬라이드 수 감소, 헤드 메시지 강화.",
+    "v0.2~v0.5": "고객사 맥락 구체화, 슬라이드 수 감소, 결론 제목 강화.",
     "v1": "레퍼런스 연결, 일정/팀 최적화, 불필요 산출물 삭제.",
-    "_final": "텍스트 자간/폰트 통일, 디자인 세부 보정(→ design 스킬 영역)."
+    "_final": "디자인 세부 구현(→ design 스킬 영역, HCG-Slide-Design-System v1.0 고정 적용)."
   },
   "standard_slide_counts": {
     "커버+목차": "2장(목차 대챕터만)",
@@ -145,11 +152,11 @@
     "배치_원칙": "모듈 성격에 맞춰 배치 — 제도설계 / Implementation(코칭) / 시스템 사례 구분. 관련성 낮은 사례 제외."
   },
   "do_and_dont": {
-    "헤드_메시지": {"DO": "결론/인사이트 담은 완결 문장", "DONT": "슬라이드 제목 수준 주제어"},
+    "결론_제목": {"DO": "결론/인사이트 담은 완결 문장(slide-title)", "DONT": "명사 나열·주제어 라벨(그건 kicker 몫)"},
     "배경_전개": {"DO": "변화→현상→가설 이슈 흐름", "DONT": "문제 직접 나열 후 솔루션"},
     "범위_설정": {"DO": "프로젝트 범위 내 구체 내용", "DONT": "비전/전략/가치 등 범위 초과 일반론"},
     "인사이트": {"DO": "HCG 고유 관점 언어", "DONT": "'~가 필요합니다' 류 뻔한 결론"},
-    "데이터": {"DO": "출처/시점 명시 구체 수치", "DONT": "출처 없는 임의 통계"},
+    "데이터": {"DO": "차트 우선 + 출처/시점 명시 구체 수치", "DONT": "표 떡칠·출처 없는 임의 통계"},
     "산출물": {"DO": "핵심 3~5개만", "DONT": "전체 목록식 나열"},
     "레퍼런스": {"DO": "고객 유관 서술형", "DONT": "관련성 낮은 로고 나열"},
     "목차": {"DO": "대챕터 3~4개", "DONT": "세부 항목까지 나열"}
@@ -157,40 +164,63 @@
   "deliverables": [
     "1페이지 맥락 요약",
     "한 문장 핵심 메시지",
-    "장표 목록(섹션 → 제목 → 헤드 메시지 → 슬라이드 타입 태그)",
-    "슬라이드 타입 태그(cover/toc/overview/painpoint2col/process/single/2col/reference/end) — design 스킬 입력용"
+    "장표 목록(섹션 → 결론 제목(slide-title) → 슬라이드 타입 태그 → (선택) kicker/chapter/source)",
+    "슬라이드 타입 태그(cover/toc/section/bullets/cards/columns/compare/kpi/process/matrix/chart/table/end) — design 스킬(skill_ppt_design) 입력용"
   ],
   "planning_quality_checklist": [
     "핵심 메시지가 한 문장으로 존재하고 모든 섹션이 backup하는가?",
     "fb_/_final 기준과 충돌하는 배치가 없는가? (RULE-1)",
     "문제 본질(연계 구조)이 제도 형식 비교에 묻히지 않았는가? (RULE-2)",
-    "각 헤드가 해당 장 결론/인사이트를 담는가? '뻔한 결론'·일반론 장표는 없는가? (P1)",
+    "각 결론 제목(slide-title)이 해당 장 결론/인사이트를 담는 완결 문장인가? '뻔한 결론'·명사 나열·일반론 장표는 없는가? (P1, 요구사항 6)",
     "고객사 특유 맥락(산업/전략/데이터)이 방법론에 연결됐는가? (P2)",
     "배경이 변화→현상→가설→HCG관점→대응 흐름인가? (문제 나열식 아님)",
     "고객 민감 포인트(첫 장 톤, 노조/세대, 패키지 딜)를 회피했는가? (RULE-3)",
     "장표 간 인과가 끊긴 곳이 없고 중복 장표를 통합했는가?",
-    "제목 카테고리/섹션 prefix가 일관되는가?",
+    "kicker 토픽 라벨·chapter 위치가 전 장표 일관되는가?",
+    "정량 데이터를 표가 아닌 차트로 기획하고, 수치 슬라이드에 차트 타입을 사전 지정했는가? (요구사항 3)",
+    "모든 콘텐츠 슬라이드에 출처(※ Source : , 내부=HCG Analysis/외부=출처명·연도)를 명시했는가? (요구사항 10)",
     "산출물/일정/비용이 중압감 없이 고객 요청·현실성에 부합하는가?",
     "레퍼런스가 고객 유관 사례로 선정·서술형인가?",
     "Why HCG 3대 축(경험/A-to-Z/시스템)이 모두 있는가?",
     "참고/백업 장표가 본문과 명확히 구분되는가?",
-    "확정 목차+헤드메시지+타입 태그를 design 스킬로 넘길 준비가 됐는가?"
+    "확정 목차 + 장표별 결론 제목 + 타입 태그(+선택 kicker/chapter/source)를 design 스킬로 넘길 준비가 됐는가?"
   ],
   "advanced_storyline_patterns": {
-    "_근거": "롯데알미늄 _final(25장) XML 실측 + 리더 _fb/회의록. 신규 제안서 생성 시 아래 패턴을 우선 적용.",
-    "module_overview_3step": "직무/평가/보상 각 모듈 Overview는 Step1/2/3 3컬럼 + 각 단계 하단 AI 콜아웃(예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona' / 평가: 'AI 평가 요약 리포트', 'talenX 상시성과관리'). 평면 process 박스 대신 이 패턴 사용.",
-    "pain_point_categorized": "Pain Point는 좌(고객 HR 운영 Issue) 6항목 ↔ 우(전통 Consulting 한계) 6항목. 각 항목에 카테고리 미니라벨(좌: 데이터부재/노후데이터/객관성시비/사후적관리/보상불일치/단편적접근), 중앙 해소 키워드 배지(Zero-base/현행화 노력/기준 확립/시스템 활용/보상 Align/1회성 설계), 하단에 묶음 요약 2개(예: '파편화된 데이터와 수동적 HR 운영의 악순환' / '유기적 연결이 부족한 컨설팅 결과물').",
-    "approach_vs": "HCG's Approach = Legacy Consulting vs HCG's Proposition 큰 블록 2개 + 중앙 'VS' 배지 + 하단 한 줄 takeaway(예: 'AI를 활용해 즉시 활용 가능한 고객 맞춤형 직무체계 구축').",
-    "eval_differentiated_matrix": "평가 핵심 장표 = '직군별 차별화 평가모델' 매트릭스. 행=직군(R&D·신사업 / 영업 / 생산 / 경영지원), 열=[업무 특성 | 핵심 인사이트(큰따옴표) | 평가 반영방안]. 생산=절대평가·조직성과 연계, R&D=마일스톤·장기성과급, 영업=목표달성 개인성과, 경영지원=핵심과제 상시관리·정성목표.",
-    "comp_4P": "보상은 4P 프레임으로 구조화 — Pay Level / Pay Structure / Pay Mix / Pay Policy (리더 _fb S16 반영). 변동급 상세설계보다 정책선 설정·재원 Simulation 중심."
+    "_근거": "롯데알미늄 _final(25장) XML 실측 + 리더 _fb/회의록. 신규 제안서 생성 시 아래 패턴을 우선 적용. 각 패턴에 디자인 계약 타입 태그를 부기.",
+    "module_overview_3step": "직무/평가/보상 각 모듈 Overview는 Step1/2/3 3컬럼 + 각 단계 하단 AI 콜아웃(예: 'AI 표준 직무체계', '직무 분류 AI Agent', '직무평가 AI Persona' / 평가: 'AI 평가 요약 리포트', 'talenX 상시성과관리'). 평면 process 박스 대신 이 패턴 사용. type_tag=columns.",
+    "pain_point_categorized": "Pain Point는 좌(고객 HR 운영 Issue) 6항목 ↔ 우(전통 Consulting 한계) 6항목. 각 항목에 카테고리 미니라벨(좌: 데이터부재/노후데이터/객관성시비/사후적관리/보상불일치/단편적접근), 중앙 해소 키워드 배지(Zero-base/현행화 노력/기준 확립/시스템 활용/보상 Align/1회성 설계), 하단에 묶음 요약 2개(예: '파편화된 데이터와 수동적 HR 운영의 악순환' / '유기적 연결이 부족한 컨설팅 결과물'). type_tag=compare.",
+    "approach_vs": "HCG's Approach = Legacy Consulting vs HCG's Proposition 큰 블록 2개 + 중앙 'VS' 배지 + 하단 한 줄 takeaway(예: 'AI를 활용해 즉시 활용 가능한 고객 맞춤형 직무체계 구축'). type_tag=compare.",
+    "eval_differentiated_matrix": "평가 핵심 장표 = '직군별 차별화 평가모델' 매트릭스. 행=직군(R&D·신사업 / 영업 / 생산 / 경영지원), 열=[업무 특성 | 핵심 인사이트 | 평가 반영방안]. 생산=절대평가·조직성과 연계, R&D=마일스톤·장기성과급, 영업=목표달성 개인성과, 경영지원=핵심과제 상시관리·정성목표. type_tag=matrix.",
+    "comp_4P": "보상은 4P 프레임으로 구조화 — Pay Level / Pay Structure / Pay Mix / Pay Policy (리더 _fb S16 반영). 변동급 상세설계보다 정책선 설정·재원 Simulation 중심. 재원 시뮬은 type_tag=chart(waterfall/bar)."
   },
-  "insight_quote_rule": "모든 핵심 장표는 큰따옴표로 감싼 한 줄 핵심 메시지(takeaway)를 하단 또는 중앙에 둔다. 역할 분담: 헤드(제목)=카테고리/주제, 서브헤드(idx10)=논리를 설명하는 완결 문장, 하단 quote=설득 한 방. 예: “각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성 제고”.",
-  "subhead_doctrine": "서브헤드(placeholder idx10)는 슬라이드 논리를 설명하는 완결 문장(구절 나열 금지). 컨설팅 그레이드 어휘. 예: '지주사의 직무 분류 철학을 계승하되, AI 기반의 글로벌 벤치마킹과 생산직 특성을 반영해 직무체계를 신속히 표준화'.",
+  "title_convention": {
+    "_원칙": "콘텐츠 슬라이드 제목(slide-title) = 그 슬라이드의 결론(So-What) 완결 문장 (요구사항 6). 신규 골격에는 서브헤드·하단 Insight Quote가 없으므로 결론은 제목이 전담하고, 토픽 라벨은 좌상단 kicker가 전담한다. McKinsey action title / Minto governing thought.",
+    "kicker": "좌상단 토픽 라벨 = 구 '카테고리/주제어' 역할. 핵심어 primary + 일반어 ink 2색(예: '평가제도 재설계'). chapter-indicator는 섹션 위치 표시.",
+    "slide-title": "결론 문장. [주어/대상] + [핵심 판단/서술어]. 2줄 이내. 핵심어 1~2개만 primary 강조.",
+    "content_takeaway": "본문 영역(content-area)에서 한 줄 강조가 더 필요할 때만 배치. 별도 하단 큰따옴표 인용구는 금지(구 insight_quote 폐기).",
+    "예": "kicker='평가제도 재설계' → slide-title='각 직군별 업무 특성을 반영한 평가제도 마련으로 인력 관리의 효과성을 제고함'",
+    "금지": "제목의 명사구 나열('보상체계 현황'), 단순 라벨, 의문문, 모호한 형용사('효과적인 방안'). 토픽 라벨이 필요하면 kicker로 분리."
+  },
+  "charts_first": {
+    "_원칙": "정량 데이터는 표가 아닌 차트로 기획 (요구사항 3). 비교·추이·구성비·달성률은 차트화. 수치 슬라이드는 type_tag=chart로 지정하고 차트 타입을 사전 명기.",
+    "차트_타입": "bar/column(항목 비교·연도별), stacked-bar(구성비 변화·보상 mix), line/area(시계열 추세·임금 경쟁력), donut/pie(단일 구성비·평가등급 분포, 5범주 이내), bullet(목표 대비 달성률), waterfall(증감 분해·인건비/재원 시뮬), radar(역량/직무 프로파일), heatmap(직급x항목 매트릭스).",
+    "표는_언제": "정성 비교·항목 대조·일정표 등 차트가 부적합할 때만 table. 수치 떡칠 표는 차트로 전환.",
+    "기획_지정": "장표별로 '이 추이는 line', '구성비는 stacked-bar', '재원 시뮬은 waterfall' 식으로 차트 타입을 사전 지정 → design 엔진이 그대로 렌더."
+  },
+  "source_convention": {
+    "_원칙": "모든 콘텐츠 슬라이드는 좌하단에 출처를 표기 (요구사항 10). 기획 시 장표별 출처를 명시. design source-note role(prefix '※ Source : ')에 채워짐.",
+    "내부": "※ Source : HCG Analysis",
+    "외부": "※ Source : 출처명·매체 + 연도 (예: 전자공시시스템 사업보고서·기업 홈페이지, 2024)",
+    "차트": "데이터 출처 + 기준 시점 병기 (예: n=327, 2024.12 기준)",
+    "표지": "중앙 하단 ㈜휴먼컨설팅그룹 저작권 고지문."
+  },
+  "subhead_doctrine_DEPRECATED": "v2.0 폐기 — 신규 골격에 서브헤드(placeholder idx10)가 없다. 구 서브헤드의 '논리 설명 완결 문장' 역할은 slide-title(결론 제목)이 흡수했다. title_convention 참조.",
+  "insight_quote_rule_DEPRECATED": "v2.0 폐기 — 신규 골격에 하단 큰따옴표 Insight Quote가 없다. 구 quote의 '설득 한 방' 역할은 slide-title(결론 제목)이 직접 전달한다. 필요 시 content-area 내부 한 줄 takeaway로만. title_convention 참조.",
   "salespoint_framing": {
     "_근거": "롯데알미늄 회의록(2026.02.26 / 03.04) 리더 디렉션 = _fb 1순위.",
     "직무": "Standard(글로벌/국내 표준 직무 + AI)를 '빠르게' 제시하고 사업장 Custom으로 맞춤 — selling point는 'custom 자동화'가 아니라 '표준 신속 제시'. 직무체계 표준 초안 약 1개월/6주 내.",
     "지주_맥락": "지주 표준 직무 가이드(사무직 중심)를 계승·정합. 생산직은 표준 제시 + 자료수집 기반 custom (생산직 specific 과다 금지).",
-    "평가_보상": "가설적 결론 단정 회피 → '도출 프로세스/순서'를 보여줌(프로세스맵). 평가=직무특성→일의 성격(성과/투입/역량) 분류→평가방식 차등 4단계 + TFT 협의. 보상=Pay Policy→Mix→Level→평가 연계(Contributor Connection)→Simulation 순서.",
+    "평가_보상": "가설적 결론 단정 회피 → '도출 프로세스/순서'를 보여줌(프로세스맵, type_tag=process). 평가=직무특성→일의 성격(성과/투입/역량) 분류→평가방식 차등 4단계 + TFT 협의. 보상=Pay Policy→Mix→Level→평가 연계(Contributor Connection)→Simulation 순서.",
     "도구": "talenX(목표수립·리뷰·상시성과관리), JobSkillEngine(직무·스킬 AI 자동 생성).",
     "거버넌스_분량": "직무가 주력. 평가·보상은 프로세스 위주 간략 터치. 회사소개 제외 핵심 10장 내 권장(고객 요청 시 확장). 제출 전 임원 리뷰→컨펌."
   },
@@ -199,35 +229,37 @@
     "_근거": "기아 AI Draft 32장·213자/장·5.5도식/장 vs 인간 _final 58장·502자/장·23도식/장. AI는 분량·근거 깊이가 과소.",
     "분량_스케일": "진단·BM형 대형 제안서는 40~60장이 표준. 기본 30장대는 과소 — 핵심 섹션을 충분히 전개. (단 고객이 분량 제한 명시 시 그 우선)",
     "why_hcg_전개": "Why HCG는 1~3장 압축 금지. (1)산업 이해(고객·계열·관계사 각각), (2)대기업 보상 경험, (3)직군별 차별화 노하우(사명 익명 K社/D社 등)를 각각 별도 장표로 전개.",
-    "backup_적극분리": "핵심 근거·사례·제도 상세·법 리스크는 [참고]/Back-up 장표로 적극 분리(인간본은 [참고] 다수). 본문=거버닝 메시지, [참고]=증빙.",
-    "mini_report_density": "본문 장표 = 미니리포트. 거버닝 메시지 1줄 + 구조화된 근거(목표 350~500자). 4줄 평면 텍스트 금지 — 도식 + 근거로 채운다."
+    "backup_적극분리": "핵심 근거·사례·제도 상세·법 리스크는 [참고]/Back-up 장표로 적극 분리(인간본은 [참고] 다수). 본문=결론 제목, [참고]=증빙.",
+    "mini_report_density": "본문 장표 = 미니리포트. 결론 제목 1줄 + 구조화된 근거(목표 350~500자)를 차트/도식으로. 4줄 평면 텍스트 금지."
   },
   "named_frameworks": {
     "원칙": "방법론·진단에 고유명(Proprietary)을 부여해 차별화·기억성 확보. 인간본 예: 'Benchmarking Connect', 'Global Big Data Analytics', 'Local Compensation', 'HCG HR Maturity', 'Process Overview'.",
-    "적용": "① 수행방안 진입에 시각적 'Process Overview' 로드맵 1장 ② 진단에 성숙도 모델/프레임워크 장표(예: HR Maturity) 포함 ③ 핵심 방법론 모듈에 명명된 이름 부여."
+    "적용": "① 수행방안 진입에 시각적 'Process Overview' 로드맵 1장(type_tag=process) ② 진단에 성숙도 모델/프레임워크 장표(예: HR Maturity, type_tag=matrix/cards) 포함 ③ 핵심 방법론 모듈에 명명된 이름 부여."
   },
-  "mece_submodules": "수행방안 하위는 1)/2)/3) 번호로 MECE 전개. 예: 벤치마킹 = 1) Benchmarking Connect, 2) Global Big Data Analytics, 3) Local Compensation. 섹션 prefix + 번호를 전 장표 일관 유지.",
-  "transition_governance": "섹션 간지(divider)는 풀비주얼 1장. 섹션 진입 직후 Overview/Framework로 전체 그림 제시 후 하위 모듈 전개(도입→전개→결론). 장표 제목에 '섹션  대모듈  소모듈' 3단 카테고리 일관.",
+  "mece_submodules": "수행방안 하위는 1)/2)/3) 번호로 MECE 전개. 예: 벤치마킹 = 1) Benchmarking Connect, 2) Global Big Data Analytics, 3) Local Compensation. kicker/chapter 카테고리 + 번호를 전 장표 일관 유지.",
+  "transition_governance": "섹션 간지(divider)는 풀비주얼 1장(type_tag=section/toc). 섹션 진입 직후 Overview/Framework로 전체 그림 제시 후 하위 모듈 전개(도입→전개→결론). kicker/chapter에 '섹션·대모듈·소모듈' 카테고리 일관.",
   "paradise_case_v13": {
     "_근거": "파라다이스 보상제도 제안서 — RFP·회의록·storyline + 리더 전략 fb(2025.04.29 CSP) + AI vs 인간 rev_final 비교.",
-    "brand_identity_theme": {
-      "_원칙": "★기획 단계에서 고객사 브랜드 정체성을 규정하고 design 테마를 지정. 브랜드 불일치(레드·골드 혼용) 차단.",
-      "매핑": "카지노/럭셔리(파라다이스) → 골드·크림(theme=paradise) / 제조·일반 → 레드(theme=hcg)",
-      "전달": "spec meta.theme 또는 DeckEngine(theme=). design 스킬 theme_system_v7 참조."
+    "design_standard_fixed": {
+      "_원칙": "디자인 표준은 HCG-Slide-Design-System v1.0 고정. 색/폰트/좌표는 기획이 선택하지 않는다.",
+      "테마_선택_폐기": "고객사 브랜드 = 팔레트 swap이 아니다. 카지노/럭셔리든 제조든 16:9 1280x720 / Pretendard / 단일 메인 블루(#356CB5) 하우스 스타일 동일 적용 (구 'theme=hcg 레드 / theme=paradise 골드' 선택 규약 폐기).",
+      "브랜드_반영": "고객 브랜드 정체성은 표지 hero-band 아이콘/일러스트·사례 선정·어휘 톤으로 반영하되 토큰(색/폰트/좌표)은 건드리지 않는다."
     },
     "leader_fb_priority_v2": {
       "_원칙": "_fb 텍스트 부재 시 회의록(전략 논의)·storyline 문서를 1순위 규칙으로 대체. 날조 금지.",
-      "왜_별도_프로젝트": "'인사제도 끝냈는데 왜 별도 보상?' → 제안 배경을 approach_vs(기존 인사제도 vs 금번 성과동인 기반 보상)로 구조화",
-      "직무평가_함정_회피": "직무 세분화/직무평가 단어 집착 금지 → CSF+시장가치 재정의 → diff_matrix(커리어 단계별 성과동인: Host→Executive Host)",
+      "왜_별도_프로젝트": "'인사제도 끝냈는데 왜 별도 보상?' → 제안 배경을 compare(기존 인사제도 vs 금번 성과동인 기반 보상)로 구조화",
+      "직무평가_함정_회피": "직무 세분화/직무평가 단어 집착 금지 → CSF+시장가치 재정의 → matrix(커리어 단계별 성과동인: Host→Executive Host)",
       "분량": "30장 내외(발표 20분)를 기획 제약으로 고정",
-      "기타": "회사소개 후치, 벤치마킹 메인, 총인건비 유지·성과급↑(CFO/형평성), 시뮬(성과%→매출/이익→PS·인센 비용비중)"
+      "기타": "회사소개 후치, 벤치마킹 메인, 총인건비 유지·성과급↑(CFO/형평성), 시뮬(성과%→매출/이익→PS·인센 비용비중)은 chart로"
     },
-    "overflow_safe_sizing": "키 메시지/근거를 카드당 3~4불릿·40~70자로 기획 → 엔진 fit_font_size/normAutofit(min 7.5pt)과 정합. 한 항목 3불릿↑이면 도식 후보.",
-    "diagram_type_pretagging": "기획안에 슬라이드별 도식타입 태그 명시: toc/section_agenda/blocks(N그리드)/container/approach_vs/diff_matrix/process_roadmap/compare_table/body_2col/body_process. '3등분 그리드'·'골드 컨테이너' 식으로 사전 지정."
+    "overflow_safe_sizing": "키 메시지/근거를 카드당 3~4불릿·40~70자로 기획 → 엔진 레이아웃(고밀도·견고성, 요구사항 5·8·9)과 정합. 한 항목 3불릿↑이면 도식/차트 후보(요구사항 3).",
+    "slide_type_pretagging": "기획안에 슬라이드별 타입 태그(디자인 계약 slide_types)를 명시: cover/toc/section/bullets/cards/columns/compare/kpi/process/matrix/chart/table/end. 정량 데이터는 chart로 지정하고 차트 타입까지 명기('이 추이는 line', '구성비는 stacked-bar'). '3등분 → cards/columns', '비교 → compare' 식 사전 지정 → 엔진이 그대로 렌더."
   },
   "handoff": {
-    "to": "skill_ppt_design.json / skill_ppt_design.md",
-    "전달물": "확정 목차, 장표별 헤드 메시지, 슬라이드 타입 태그. 좌표/색상/폰트/레이아웃은 design 스킬이 결정.",
-    "구현": "auto_ppt.py가 design 스킬 좌표 상수로 실제 PPTX 생성."
+    "to": "skill_ppt_design.json / HCG-slide-design-system.md",
+    "전달물": "확정 목차 + 장표별 결론 제목(slide-title) + 슬라이드 타입 태그(slide_types) + (선택) kicker/chapter/source. 색/폰트/좌표/레이아웃은 HCG-Slide-Design-System v1.0 고정 — 기획이 선택하지 않는다.",
+    "slide_types": ["cover", "toc", "section", "bullets", "cards", "columns", "compare", "kpi", "process", "matrix", "chart", "table", "end"],
+    "chart_spec": "type_tag=chart 장표는 chart={type, labels, series, unit?}까지 기획에서 지정(type: bar/column/stacked-bar/line/area/donut/pie/bullet/waterfall/radar/heatmap).",
+    "구현_엔진": "PPTX core/designer.py(python-pptx, px→EMU) + HTML core/html_renderer.py(HTML/CSS, Chart.js). 진입점 python main.py --client <name> [--html|--pptx|--both]."
   }
 }
